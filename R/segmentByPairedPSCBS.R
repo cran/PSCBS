@@ -14,16 +14,17 @@
 # @synopsis
 #
 # \arguments{
-#   \item{CT}{A @numeric @vector of J tumor total copy numbers to be segmented.}
-#   \item{betaT}{A @numeric @vector of J tumor allele B fractions (BAFs).}
-#   \item{betaN}{A @numeric @vector of J matched normal BAFs.}
+#   \item{CT}{A @numeric @vector of J tumor total tumor copy number (TCN) ratios in [0,+@Inf) (due to noise, small negative values are also allowed).  The TCN ratios are typically scaled such that copy-neutral diploid loci have a mean of two.}
+#   \item{betaT}{A @numeric @vector of J tumor allele B fractions (BAFs) in [0,1] (due to noise, values may be slightly outside as well).}
+#   \item{betaN}{A @numeric @vector of J matched normal BAFs in [0,1] (due to noise, values may be slightly outside as well).}
 #   \item{muN}{An optional @numeric @vector of J genotype calls in 
 #        \{0,1/2,1\} for AA, AB, and BB, respectively. If not given,
 #        they are estimated from the normal BAFs using
 #        @see "aroma.light::callNaiveGenotypes" as described in [2].}
-#   \item{chromosome}{(Optional) An @integer scalar 
-#       (or a @vector of length J contain a unique value).
-#       Only used for annotation purposes.}
+#   \item{chromosome}{(Optional) An @integer scalar (or a @vector of length J),
+#        which can be used to specify which chromosome each locus belongs to
+#        in case multiple chromosomes are segments.
+#        This argument is also used for annotation purposes.}
 #   \item{x}{Optional @numeric @vector of J genomic locations.
 #            If @NULL, index locations \code{1:J} are used.}
 #   \item{alphaTCN, alphaDH}{The significance levels for segmenting total
@@ -77,7 +78,7 @@
 #   Allele B fractions may contain missing values, because such are
 #   interpreted as representing non-polymorphic loci.
 #
-#   None of the input signals may have infinite values, i.e. -@Inf or @Inf.
+#   None of the input signals may have infinite values, i.e. -@Inf or +@Inf.
 #   If so, an informative error is thrown.
 # }
 #
@@ -617,7 +618,7 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
     # Append information on number of SNPs and hets in CN region
     tcnSegmentsKK <- cbind(
       tcnSegmentsKK, 
-      tcnNbrOrSNPs=nbrOfSnpsKK,
+      tcnNbrOfSNPs=nbrOfSnpsKK,
       tcnNbrOfHets=nbrOfHetsKK
     );
     verbose && cat(verbose, "Total CN segmentation table (expanded):");
@@ -725,6 +726,17 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
 
 ############################################################################
 # HISTORY:
+# 2011-07-06
+# o DOCUMENTATION: The description of argument 'chromosome' for 
+#   segmentByPairedPSCBS() did not describe how to segment multiple
+#   chromosomes in one call.
+# 2011-07-05
+# o BUG FIX: Output fields 'tcnNbrOfSNPs'and 'tcnNbrOfHets' were mistakenly
+#   labelled as 'tcnNbrOr...'.  Thanks Christine Ho at UC Berkeley for
+#   reporting on this.
+# 2011-06-28
+# o DOCUMENTATION: Clarified that argument 'CT' should be tumor copy
+#   number ratios relative to the normal.
 # 2011-06-14
 # o CONVENTION: Changed the column names of returned data frames. 
 #   They now follow the camelCase naming convention and are shorter.
