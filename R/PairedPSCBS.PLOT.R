@@ -350,6 +350,11 @@ setMethodS3("plot", "PairedPSCBS", function(x, ...) {
 
 
 setMethodS3("drawLevels", "PairedPSCBS", function(fit, what=c("tcn", "dh", "c1", "c2"), xScale=1e-6, ...) {
+  # WORKAROUND: If Hmisc is loaded after R.utils, it provides a buggy
+  # capitalize() that overrides the one we want to use. Until PSCBS
+  # gets a namespace, we do the following workaround. /HB 2011-07-14
+  capitalize <- R.utils::capitalize;
+
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Validate arguments
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
@@ -380,6 +385,11 @@ setMethodS3("drawLevels", "PairedPSCBS", function(fit, what=c("tcn", "dh", "c1",
 
 
 setMethodS3("drawConfidenceBands", "PairedPSCBS", function(fit, what=c("tcn", "dh", "c1", "c2"), quantiles=c(0.05,0.95), col=col, alpha=0.4, xScale=1e-6, ...) {
+  # WORKAROUND: If Hmisc is loaded after R.utils, it provides a buggy
+  # capitalize() that overrides the one we want to use. Until PSCBS
+  # gets a namespace, we do the following workaround. /HB 2011-07-14
+  capitalize <- R.utils::capitalize;
+
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Validate arguments
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
@@ -497,7 +507,7 @@ setMethodS3("arrowsC1C2", "PairedPSCBS", function(fit, length=0.05, ...) {
   x <- xy[,1,drop=TRUE];
   y <- xy[,2,drop=TRUE];
   s <- seq(length=length(x)-1);
-  arrows(x0=x[s],y=y[s], x1=x[s+1],y1=y[s+1], code=2, length=length, ...);
+  arrows(x0=x[s],y0=y[s], x1=x[s+1],y1=y[s+1], code=2, length=length, ...);
 }, private=TRUE)
 
 
@@ -507,7 +517,7 @@ setMethodS3("arrowsDeltaC1C2", "PairedPSCBS", function(fit, length=0.05, ...) {
   x <- xy[,1,drop=TRUE];
   y <- xy[,2,drop=TRUE];
   s <- seq(length=length(x)-1);
-  arrows(x0=x[s],y=y[s], x1=x[s+1],y1=y[s+1], code=2, length=length, ...);
+  arrows(x0=x[s],y0=y[s], x1=x[s+1],y1=y[s+1], code=2, length=length, ...);
 }, private=TRUE)
 
 
@@ -574,7 +584,10 @@ setMethodS3("tileChromosomes", "PairedPSCBS", function(fit, chrStarts=NULL, ...,
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Offset...
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  segFields <- grep("(start|end)$", colnames(segs), value=TRUE);
+  segFields <- grep("(Start|End)$", colnames(segs), value=TRUE);
+  # Sanity check
+  stopifnot(length(segFields) > 0);
+
   for (kk in seq(along=chromosomes)) {
     chromosome <- chromosomes[kk];
     chrTag <- sprintf("Chr%02d", chromosome);
@@ -904,6 +917,11 @@ setMethodS3("plotTracksManyChromosomes", "PairedPSCBS", function(x,   chromosome
 
 ############################################################################
 # HISTORY:
+# 2011-07-10
+# o BUG FIX: tileChromosomes() for PairedPSCBS was still assuming the
+#   old naming convention of column names.
+# o ROBUSTNESS: Fixed partial argument matchings in arrowsC1C2() and
+#   arrowsDeltaC1C2() for PairedPSCBS.
 # 2011-06-14
 # o Updated code to recognize new column names.
 # 2011-01-19

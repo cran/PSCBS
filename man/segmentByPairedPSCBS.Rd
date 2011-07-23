@@ -24,11 +24,12 @@
 
  \arguments{
    \item{CT}{A \code{\link[base]{numeric}} \code{\link[base]{vector}} of J tumor total tumor copy number (TCN) ratios in [0,+\code{\link[base:is.finite]{Inf}}) (due to noise, small negative values are also allowed).  The TCN ratios are typically scaled such that copy-neutral diploid loci have a mean of two.}
-   \item{betaT}{A \code{\link[base]{numeric}} \code{\link[base]{vector}} of J tumor allele B fractions (BAFs) in [0,1] (due to noise, values may be slightly outside as well).}
-   \item{betaN}{A \code{\link[base]{numeric}} \code{\link[base]{vector}} of J matched normal BAFs in [0,1] (due to noise, values may be slightly outside as well).}
+   \item{betaT}{A \code{\link[base]{numeric}} \code{\link[base]{vector}} of J tumor allele B fractions (BAFs) in [0,1] (due to noise, values may be slightly outside as well) or \code{\link[base]{NA}} for non-polymorphic loci.}
+   \item{betaN}{A \code{\link[base]{numeric}} \code{\link[base]{vector}} of J matched normal BAFs in [0,1] (due to noise, values may be slightly outside as well) or \code{\link[base]{NA}} for non-polymorphic loci.}
    \item{muN}{An optional \code{\link[base]{numeric}} \code{\link[base]{vector}} of J genotype calls in
-        \{0,1/2,1\} for AA, AB, and BB, respectively. If not given,
-        they are estimated from the normal BAFs using
+        \{0,1/2,1\} for AA, AB, and BB, respectively,
+        and \code{\link[base]{NA}} for non-polymorphic loci.
+        If not given, they are estimated from the normal BAFs using
         \code{\link[aroma.light]{callNaiveGenotypes}} as described in [2].}
    \item{chromosome}{(Optional) An \code{\link[base]{integer}} scalar (or a \code{\link[base]{vector}} of length J),
         which can be used to specify which chromosome each locus belongs to
@@ -78,6 +79,15 @@
    through random sampling for some estimates.  Because of this,
    repeated calls using the same signals may result in slightly
    different results, unless the random seed is set/fixed.
+ }
+
+ \section{Whole-genome segmentation is preferred}{
+   Although it is possible to segment each chromosome independently
+   using Paired PSCBS, we strongly recommend to segment whole-genome
+   (TCN,BAF) data at once.  The reason for this is that downstream
+   CN-state calling methods, such as the AB and the LOH callers,
+   performs much better on whole-genome data.  In fact, they may
+   fail to provide valid calls if done chromsome by chromosome.
  }
 
  \section{Missing and non-finite values}{

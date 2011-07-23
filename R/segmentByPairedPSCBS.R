@@ -15,11 +15,12 @@
 #
 # \arguments{
 #   \item{CT}{A @numeric @vector of J tumor total tumor copy number (TCN) ratios in [0,+@Inf) (due to noise, small negative values are also allowed).  The TCN ratios are typically scaled such that copy-neutral diploid loci have a mean of two.}
-#   \item{betaT}{A @numeric @vector of J tumor allele B fractions (BAFs) in [0,1] (due to noise, values may be slightly outside as well).}
-#   \item{betaN}{A @numeric @vector of J matched normal BAFs in [0,1] (due to noise, values may be slightly outside as well).}
+#   \item{betaT}{A @numeric @vector of J tumor allele B fractions (BAFs) in [0,1] (due to noise, values may be slightly outside as well) or @NA for non-polymorphic loci.}
+#   \item{betaN}{A @numeric @vector of J matched normal BAFs in [0,1] (due to noise, values may be slightly outside as well) or @NA for non-polymorphic loci.}
 #   \item{muN}{An optional @numeric @vector of J genotype calls in 
-#        \{0,1/2,1\} for AA, AB, and BB, respectively. If not given,
-#        they are estimated from the normal BAFs using
+#        \{0,1/2,1\} for AA, AB, and BB, respectively, 
+#        and @NA for non-polymorphic loci.
+#        If not given, they are estimated from the normal BAFs using
 #        @see "aroma.light::callNaiveGenotypes" as described in [2].}
 #   \item{chromosome}{(Optional) An @integer scalar (or a @vector of length J),
 #        which can be used to specify which chromosome each locus belongs to
@@ -71,6 +72,15 @@
 #   different results, unless the random seed is set/fixed.
 # }
 #
+# \section{Whole-genome segmentation is preferred}{
+#   Although it is possible to segment each chromosome independently
+#   using Paired PSCBS, we strongly recommend to segment whole-genome
+#   (TCN,BAF) data at once.  The reason for this is that downstream
+#   CN-state calling methods, such as the AB and the LOH callers,
+#   performs much better on whole-genome data.  In fact, they may
+#   fail to provide valid calls if done chromsome by chromosome.
+# }
+#
 # \section{Missing and non-finite values}{
 #   The total copy number signals as well as any optional positions
 #   must not contain missing values, i.e. @NAs or @NaNs.
@@ -101,6 +111,11 @@
 # @keyword IO
 #*/########################################################################### 
 setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NULL, chromosome=0, x=NULL, alphaTCN=0.009, alphaDH=0.001, undoTCN=Inf, undoDH=Inf, ..., flavor=c("tcn&dh", "tcn,dh", "sqrt(tcn),dh", "sqrt(tcn)&dh"), tbn=TRUE, joinSegments=TRUE, knownCPs=NULL, seed=NULL, verbose=FALSE) {
+  # WORKAROUND: If Hmisc is loaded after R.utils, it provides a buggy
+  # capitalize() that overrides the one we want to use. Until PSCBS
+  # gets a namespace, we do the following workaround. /HB 2011-07-14
+  capitalize <- R.utils::capitalize;
+
   require("R.utils") || throw("Package not loaded: R.utils");
   require("aroma.light") || throw("Package not loaded: aroma.light");
 
@@ -726,6 +741,20 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
 
 ############################################################################
 # HISTORY:
+# 2011-07-15
+# o DOCUMENTATION: Added a section to help("segmentByPairedPSCBS") on
+#   the importance of doing a whole-genome PSCBS segmentations if 
+#   calling AB and LOH states afterward.
+# 2011-07-14
+# o DOCUMENTATION: Added to the help that arguments betaT, betaN and muN
+#   may contain NAs for non-polymorphic loci.
+# o BUG FIX/ROBUSTNESS: In some cases, the segmentation table would 
+#   contain column names with incorrect capitalization, e.g. "tcnnbrOfLoci"
+#   instead of "tcnNbrOfLoci".  This would cause several downstream 
+#   methods to give an error.  The reason for this is that the Hmisc
+#   package, if loaded after R.utils, overrides capitalize() in R.utils
+#   with another (buggy?) capitalize() function.  To avoid this, we
+#   now everywhere specify explicitly that we want to the one in R.utils.
 # 2011-07-06
 # o DOCUMENTATION: The description of argument 'chromosome' for 
 #   segmentByPairedPSCBS() did not describe how to segment multiple
