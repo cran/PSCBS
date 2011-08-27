@@ -1,4 +1,4 @@
-9502a04dd01cd71f2e96538b8c10edb9 *DESCRIPTION
+37f8aa4416d2409eff678d6e8404a836 *DESCRIPTION
 c0da7863a96a5197ecd913622f5d7715 *NAMESPACE
 4c5504f490f7fc26549f826014942bdc *R/006.fixVarArgs.R
 dcb0e44d79e9859ee6006eb8c70b2837 *R/999.NonDocumentedObjects.R
@@ -26,13 +26,13 @@ b24171b05f1448d94158f167656e8988 *R/PairedPSCBS.estimateKappa.R
 7aa2b6ceb4cc42b373abb3d1f8da3ddb *R/segmentByCBS.R
 b42d0ece80bc624a77c777f99c6f2d30 *R/segmentByPairedPSCBS.R
 75169b11411696abdcb85c284156648f *R/weightedQuantile.R
-5fd049e337fafbd8db7636cfe72b7182 *R/zzz.R
+7c268c38e184269a3d9333a802f75795 *R/zzz.R
 98805715cd79617ca267b6156048a089 *incl/999.missingdocs.txt
 82749167ea1078d68532c400dadee525 *incl/OlshenA_etal_2011.Rd
 388605eb828f7513753b80ff726cfde8 *incl/segmentByCBS.Rex
 952722b54ecdf144131410133a7c5cbe *incl/segmentByPairedPSCBS,allLOH.Rex
 e8352fb54d2129c08befa55103bc78e3 *incl/segmentByPairedPSCBS.Rex
-6614bcf470f420429a44111e39a0ce36 *inst/NEWS
+0c78a498854f8c0e02ee234f402830fe *inst/NEWS
 e493db8d572c0c0665213feea8ee0b89 *inst/data-ex/PairedPSCBS,exData,chr01.Rbin
 b4a376094c9cc23333995cb7ac9b7620 *man/Non-documented_objects.Rd
 1cbec1dba3913c01f00e4087a11bc151 *man/PSCBS-package.Rd
