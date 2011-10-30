@@ -2,6 +2,130 @@
 Package: PSCBS
 ==============
 
+Version: 0.15.4 [2011-10-30]
+o Added save() and load() methods to AbstractCBS, which are wrappers
+  for saveObject() and loadObject() that assert the correct class
+  structure.  Also, the load() method will automatically update the
+  class hierarchy for CBS and PairedPSCBS objects that were saved
+  before adding class AbstractCBS.
+
+
+Version: 0.15.3 [2011-10-23]
+o BUG FIX: callAmplifications() for CBS generated an error, if
+  more than one chromosome were called.
+o BUG FIX: The length of a segment must be defined as 'end-start' 
+  and not 'end-start+1' so that the the total length of all segments
+  adds up correctly.
+o BUG FIX: highlightArmCalls() for CBS did not handle empty chromosomes.
+o BUG FIX: getCallStatisticsByArms() for CBS would thrown a error if
+  argument 'genomeData' did not contain exactly the same chromosomes
+  as in the CBS object.
+
+
+Version: 0.15.2 [2011-10-21]
+o Added mergeThreeSegments() to AbstractCBS.
+o BUG FIX: Recent updates caused segmentByPairedPSCBS(data) not to
+  work when 'data' is a data frame.
+
+
+Version: 0.15.1 [2011-10-21]
+o By setting 'start' and 'end' to NAs in 'knownSegments' (chromosome must
+  still be specified), it is possible to insert an empty segment that
+  disconnects the two flanking segments, e.g. centromere and the two arms.
+
+
+Version: 0.15.0 [2011-10-20]
+o Added support for specifying priorly known segments, such as chromosome
+  arms and centromeres, in segmentByCBS() via argument 'knownSegments'.
+o CLEANUP: Dropped a stray debug output message in segmentByPairedPSCBS().
+
+
+Version: 0.14.3 [2011-10-17]
+o Added argument 'asMissing' to dropRegions() for AbstractCBS.
+
+
+Version: 0.14.2 [2011-10-16]
+o Implemented extractCNs() for CBS and PairedPSCBS.
+o Added extractTotalCNs() for CBS.
+
+
+Version: 0.14.1 [2011-10-14]
+o Added implementation of extractRegions() for AbstractCBS, which
+  utilizes extractSegments().
+o Added abstract extractSegments() and extractSegment() for AbstractCBS.
+o Now extractTCNAndDHs() for PairedPSCBS passes '...' to getSegments().
+
+
+Version: 0.14.0 [2011-10-10]
+o CLEANUP: Harmonization of several method names.
+o CLEANUP: Internal restructuring of the source code files.
+
+
+Version: 0.13.5 [2011-10-10]
+o Added dropChangePoint() for AbstractCBS, which is just a
+  "name wrapper" for mergeTwoSegments().
+o Added dropRegion() and dropRegions() for AbstractPSCBS, where
+  the former is a wrapper for the latter dropRegions().
+o Added updateMeans() and mergeTwoSegments() for CBS in addition
+  already available PairedCBS versions.
+o Relabelled column 'id' to 'sampleName' returned by getSegments().
+o ROBUSTNESS: Now using getSegments() everywhere possible.
+o BUG FIX: For so called "splitter" rows, not all columns returned
+  by getSegments() of CBS were missing values.
+o BUG FIX: The object returned by as.CBS() of DNAcopy did not have the
+  correct class hierarchy.
+
+
+Version: 0.13.4 [2011-10-08]
+o Added all.equal() for AbstractCBS, which does not compare attributes.
+o Now internal getChromosomeRanges() of CBS returns a data.frame
+  instead of a matrix, and first column is now 'chromosome'.
+o Added optional argument 'regions' to getCallStatistics() of CBS
+  in order to calculate call statistics on subsets of chromosomes,
+  e.g. chromosome arms.
+o Added drawChromosomes() for CBS.
+o Added getCallStatisticsByArms(), callArms() and highlightArmCalls() 
+  for CBS objects.
+
+
+Version: 0.13.3 [2011-10-03]
+o GENERALIZATION: Now segmentByCBS() and segmentByPairedPSCBS()
+  also accepts a data.frame of locus-level data with column names
+  matching the locus-level arguments accepted by the corresponding
+  method.
+o GENERALIZATION: Now all segmentation result classes (CBS and PSCBS)
+  inherits from the AbstractCBS class, which provides methods such
+  as getSampleName(), getChromosomes() and getSegments().
+o DOCUMENTATION: Added lots of more help pages.
+o CLEANUP: Dropped empty callSegments() for PairedPSCBS.
+
+
+Version: 0.13.2 [2011-09-30]
+o GENERALIZATION: Now drawLevels() for PairedPSCBS allows for drawing
+  segmentation results in 'betaT' space.
+o BUG FIX: plotTracks2(..., panels="dh") gave an error due to a
+  forgotten assigment.
+
+
+Version: 0.13.1 [2011-09-06]
+o Added formal class CBS, which holds the segmentation results
+  returned by segmentByCBS().  Several methods are available for
+  CBS objects, e.g. nbrOfLoci(), nbrOfSegments(), nbrOfChromosomes(),
+  getChromosomes(), estimateStandardDeviation() etc.
+o Now segmentByCBS() always returns a CBS object.  To coerce to a
+  DNAcopy object (as defined in the DNAcopy class) use as.DNAcopy().
+o Added coerce methods as.DNAcopy() for CBS objects and as.CBS()
+  for DNAcopy objects.
+
+
+Version: 0.13.0 [2011-09-01]
+o GENERALIZATION: Now segmentByCBS() can process multiple chromosomes.
+o BUG FIX: Internal methods plotTracksManyChromosomes() and
+  tileChromosomes() for CBS did not work at all and therefore
+  neither plotTracks() for CBS with more than one chromosome.
+o Added append() for CBS objects.
+
+
 Version: 0.12.2 [2011-08-27]
 o CLEANUP: Now R CMD check is no longer giving a note that the
   package loads package 'DNAcopy' in .onAttach().

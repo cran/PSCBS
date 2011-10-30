@@ -8,15 +8,16 @@
 
  \name{PSCBS-package}
 \alias{PSCBS-package}
-\alias{PSCBS}
+
 \docType{package}
 
 \title{Package PSCBS}
 
 
+
  \description{
    Segments allele-specific DNA copy number data to detect regions
-with abnormal copy number within each parental chromosome.
+	with abnormal copy number within each parental chromosome.
 
    This package should be considered to be in an alpha or beta phase.
    You should expect the API to be changing over time.
@@ -24,8 +25,9 @@ with abnormal copy number within each parental chromosome.
 
  \section{Requirements}{
    This package requires external packages
-   R.methodsS3 (>= 1.2.1), R.utils (>= 1.7.5), DNAcopy (>= 1.24.0),
-   and also suggests DNAcopy (>= 1.24.0), aroma.light (>= 1.20.0), matrixStats (>= 0.2.2), R.oo (>= 1.8.0), Hmisc (>= 3.8-3).
+   R.methodsS3 (>= 1.2.1), R.utils (>= 1.8.5), DNAcopy (>= 1.24.0),
+   and also suggests DNAcopy (>= 1.24.0), aroma.light (>= 1.21.2), matrixStats (>=
+0.3.0), R.oo (>= 1.8.2), Hmisc (>= 3.8-3).
  }
 
  \section{Installation and updates}{
@@ -35,12 +37,17 @@ with abnormal copy number within each parental chromosome.
  \section{To get started}{
    To get started, see:
    \enumerate{
-     \item \code{\link{segmentByPairedPSCBS}}()
+     \item \code{\link{segmentByCBS}}() - segments total copy-numbers, or any
+           other unimodal genomic signals, using the CBS method [3,4].
+     \item \code{\link{segmentByPairedPSCBS}}() - segments allele-specific
+           tumor signal from a tumor with a matched normal
+           using the Paired PSCBS method [1,2].
    }
  }
 
- \section{How to cite this package}{
-   Please use [1] to cite this package.
+ \section{How to cite}{
+   Please use [1] and [2] to cite when using Paired PSCBS,
+   and [3] and [4] when using CBS.
  }
 
  \author{
@@ -52,7 +59,13 @@ with abnormal copy number within each parental chromosome.
  }
 
  \references{
-  [1] A.B. Olshen, H. Bengtsson, P. Neuvial, P.T. Spellman, R.A. Olshen, V.E. Seshan, \emph{Parent-specific copy number in paired tumor-normal studies using circular binary segmentation}, Bioinformatics 2011 (in press)\cr
+  [1] A.B. Olshen, H. Bengtsson, P. Neuvial, P.T. Spellman, R.A. Olshen, V.E. Seshan, \emph{Parent-specific copy number in paired tumor-normal studies using circular binary segmentation}, Bioinformatics, 2011
+ \cr
+  [2] H. Bengtsson, P. Neuvial and T.P. Speed, \emph{TumorBoost: Normalization of allele-specific tumor copy numbers from a single pair of tumor-normal genotyping microarrays}, BMC Bioinformatics, 2010
+ \cr
+  [3] A.B. Olshen, E.S. Venkatraman (aka Venkatraman E. Seshan), R. Lucito and M. Wigler, \emph{Circular binary segmentation for the analysis of array-based DNA copy number data}, Biostatistics, 2004
+ \cr
+  [4] E.S. Venkatraman and A.B. Olshen, \emph{A faster circular binary segmentation algorithm for the analysis of array CGH data}, Bioinformatics, 2007
  \cr
  }
 \keyword{package}

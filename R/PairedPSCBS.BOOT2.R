@@ -51,10 +51,10 @@ setMethodS3("bootstrapTCNandDHByRegion", "PairedPSCBS", function(fit, B=1000, st
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Extract data and estimates
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  data <- fit$data;
+  data <- getLocusData(fit);
   tcnSegRows <- fit$tcnSegRows;
   dhSegRows <- fit$dhSegRows;
-  segs <- fit$output;
+  segs <- getSegments(fit);
   params <- fit$params;
 
   # Sanity checks

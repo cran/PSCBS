@@ -9,6 +9,7 @@
  \name{segmentByPairedPSCBS}
 \alias{segmentByPairedPSCBS.default}
 \alias{segmentByPairedPSCBS}
+ \alias{segmentByPairedPSCBS.data.frame}
  \alias{segmentByPairedPSCBS}
 
  \title{Segment total copy numbers and allele B fractions using the Paired PSCBS method}
@@ -20,7 +21,7 @@
   It is intended to be applied to one tumor-normal sample at the time.
  }
 
- \usage{\method{segmentByPairedPSCBS}{default}(CT, betaT, betaN, muN=NULL, chromosome=0, x=NULL, alphaTCN=0.009, alphaDH=0.001, undoTCN=Inf, undoDH=Inf, ..., flavor=c("tcn&dh", "tcn,dh", "sqrt(tcn),dh", "sqrt(tcn)&dh"), tbn=TRUE, joinSegments=TRUE, knownCPs=NULL, seed=NULL, verbose=FALSE)}
+ \usage{\method{segmentByPairedPSCBS}{default}(CT, betaT, betaN, muN=NULL, chromosome=0, x=NULL, alphaTCN=0.009, alphaDH=0.001, undoTCN=Inf, undoDH=Inf, ..., flavor=c("tcn&dh", "tcn,dh", "sqrt(tcn),dh", "sqrt(tcn)&dh"), tbn=TRUE, joinSegments=TRUE, knownSegments=NULL, seed=NULL, verbose=FALSE)}
 
  \arguments{
    \item{CT}{A \code{\link[base]{numeric}} \code{\link[base]{vector}} of J tumor total tumor copy number (TCN) ratios in [0,+\code{\link[base:is.finite]{Inf}}) (due to noise, small negative values are also allowed).  The TCN ratios are typically scaled such that copy-neutral diploid loci have a mean of two.}
@@ -58,8 +59,9 @@
      is in the middle of multiple loci with the same position.
      The latter is what \code{DNAcopy::segment()} returns.
    }
-   \item{knownCPs}{Optional \code{\link[base]{numeric}} \code{\link[base]{vector}} of known
-     change point locations.}
+   \item{knownSegments}{Optional \code{\link[base]{data.frame}} specifying
+     \emph{non-overlapping} known segments.  These segments must
+     not share loci.}
    \item{seed}{An (optional) \code{\link[base]{integer}} specifying the random seed to be
      set before calling the segmentation method.  The random seed is
      set to its original state when exiting.  If \code{\link[base]{NULL}}, it is not set.}
@@ -72,9 +74,10 @@
 
  \details{
    Internally \code{\link{segmentByCBS}}() is used for segmentation.
+   The Paired PSCBS segmentation method does \emph{not} support weights.
+ }
 
-   This segmentation method does \emph{not} support weights.
-
+ \section{Reproducibility}{
    The "DNAcopy::segment" implementation of CBS uses approximation
    through random sampling for some estimates.  Because of this,
    repeated calls using the same signals may result in slightly
@@ -111,13 +114,13 @@
 pathname <- system.file("data-ex/PairedPSCBS,exData,chr01.Rbin", package="PSCBS")
 data <- R.utils::loadObject(pathname)
 
-# Order
-o <- order(data$position)
+# Order by chromosome and position
+o <- order(data$chromosome, data$position)
 data <- data[o,]
 str(data)
 R.oo::attachLocally(data)
 x <- position
-
+J <- length(x)
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Paired PSCBS segmentation
@@ -188,17 +191,21 @@ stopifnot(fit$params$deltaLOH == deltaLOH)
 
  \author{Henrik Bengtsson (\url{http://www.braju.com/R/})}
 
+ \references{
+  [1] A.B. Olshen, H. Bengtsson, P. Neuvial, P.T. Spellman, R.A. Olshen, V.E. Seshan, \emph{Parent-specific copy number in paired tumor-normal studies using circular binary segmentation}, Bioinformatics, 2011
+ \cr
+  [2] H. Bengtsson, P. Neuvial and T.P. Speed, \emph{TumorBoost: Normalization of allele-specific tumor copy numbers from a single pair of tumor-normal genotyping microarrays}, BMC Bioinformatics, 2010
+ \cr
+ }
+
  \seealso{
    Internally, \code{\link[aroma.light]{callNaiveGenotypes}} is used to
    call naive genotypes, \code{\link[aroma.light]{normalizeTumorBoost}} is
    used for TumorBoost normalization, and \code{\link{segmentByCBS}}() is used
    to segment TCN and DH separately.
- }
 
- \references{
-  [1] A.B. Olshen, H. Bengtsson, P. Neuvial, P.T. Spellman, R.A. Olshen, V.E. Seshan, \emph{Parent-specific copy number in paired tumor-normal studies using circular binary segmentation}, Bioinformatics 2011 (in press)\cr
- \cr
-   [2] H. Bengtsson, P. Neuvial and T.P. Speed, \emph{TumorBoost: Normalization of allele-specific tumor copy numbers from a single pair of tumor-normal genotyping microarrays}, BMC Bioinformatics, 2010.
+   To segment total copy-numbers, or any other unimodal signals,
+   see \code{\link{segmentByCBS}}().
  }
 
 

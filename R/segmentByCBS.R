@@ -1,13 +1,15 @@
 ###########################################################################/**
 # @RdocDefault segmentByCBS
+# @alias segmentByCBS.data.frame
+# @alias segmentByCBS.CNA
+# @alias segmentByCBS
 #
 # @title "Segment genomic signals using the CBS method"
 #
 # \description{
 #  @get "title" of the \pkg{DNAcopy} package.
 #  This is a convenient low-level wrapper for the \code{DNAcopy::segment()}
-#  method.  It is intended to be applied to one sample and one chromosome
-#  at the time.
+#  method.  It is intended to be applied to a sample at the time.
 #  For more details on the Circular Binary Segmentation (CBS) method 
 #  see [1,2].
 # }
@@ -16,16 +18,19 @@
 #
 # \arguments{
 #   \item{y}{A @numeric @vector of J genomic signals to be segmented.}
-#   \item{chromosome}{(Optional) An @integer scalar 
-#       (or a @vector of length J contain a unique value).
-#       Only used for annotation purposes.}
+#   \item{chromosome}{Optional @numeric @vector of length J, specifying
+#       the chromosome of each loci.  If a scalar, it is expanded to
+#       a vector of length J.}
 #   \item{x}{Optional @numeric @vector of J genomic locations.
 #            If @NULL, index locations \code{1:J} are used.}
+#   \item{index}{An optional @integer @vector of length J specifying
+#     the genomewide indices of the loci.}
 #   \item{w}{Optional @numeric @vector in [0,1] of J weights.}
 #   \item{undo}{A non-negative @numeric.  If less than +@Inf, then
 #       arguments \code{undo.splits="sdundo"} and \code{undo.SD=undo}
 #       are passed to \code{DNAcopy::segment()}.}
-#   \item{...}{Additional arguments passed to the segmentation function.}
+#   \item{...}{Additional arguments passed to the \code{DNAcopy::segment()}
+#       segmentation function.}
 #   \item{joinSegments}{If @TRUE, there are no gaps between neighboring
 #     segments.
 #     If @FALSE, the boundaries of a segment are defined by the support
@@ -35,12 +40,9 @@
 #     is in the middle of multiple loci with the same position.
 #     The latter is what \code{DNAcopy::segment()} returns.
 #   }
-#   \item{knownCPs}{Optional @numeric @vector of known 
-#     change point locations.}
-#   \item{index}{An @integer @vector of length J specifying the 
-#     genomewide indices of the loci.}
-#   \item{columnNamesFlavor}{A @character string specifying how column names
-#     of the returned data frame should be named.}
+#   \item{knownSegments}{Optional @data.frame specifying 
+#     \emph{non-overlapping} known segments.  These segments must
+#     not share loci.}
 #   \item{seed}{An (optional) @integer specifying the random seed to be 
 #     set before calling the segmentation method.  The random seed is
 #     set to its original state when exiting.  If @NULL, it is not set.}
@@ -48,14 +50,17 @@
 # }
 #
 # \value{
-#   Returns the fit object.
+#   Returns a @see "CBS" object.
 # }
 # 
 # \details{
-#   Internally @see "DNAcopy::segment" is used to segment the signals.
+#   Internally @see "DNAcopy::segment" of \pkg{DNAcopy} is used to
+#   segment the signals.
 #   This segmentation method support weighted segmentation.
+# }
 #
-#   The "DNAcopy::segment" implementation of CBS uses approximation
+# \section{Reproducibility}{
+#   The \code{DNAcopy::segment()} implementation of CBS uses approximation
 #   through random sampling for some estimates.  Because of this,
 #   repeated calls using the same signals may result in slightly 
 #   different results, unless the random seed is set/fixed.
@@ -70,23 +75,26 @@
 #   i.e. -@Inf or +@Inf. If so, an informative error is thrown.
 # }
 #
-# @examples "../incl/segmentByCBS.Rex"
+# \examples{
+#   @include "../incl/segmentByCBS.Rex"
+#   @include "../incl/segmentByCBS,plot.Rex"
+#   @include "../incl/segmentByCBS,tests.Rex"
+# }
 #
 # @author
 #
 # \references{
-#  [1] A.B. Olshen, E.S. Venkatraman (aka Venkatraman E. Seshan), 
-#      R. Lucito and M. Wigler, \emph{Circular binary segmentation for 
-#      the analysis of array-based DNA copy number data},
-#      Biostatistics, 2004.\cr
-#  [2] E.S. Venkatraman and A.B. Olshen, \emph{A faster circular binary
-#      segmentation algorithm for the analysis of array CGH data}. 
-#      Bioinformatics, 2007.\cr
+#  [1] @include "../incl/OlshenVenkatraman_2004.Rd" \cr
+#  [2] @include "../incl/VenkatramanOlshen_2007.Rd" \cr
 # }
 #
+# \seealso{
+#   To segment allele-specific tumor copy-number signals from a tumor
+#   with a matched normal, see @see "segmentByPairedPSCBS".
+# }
 # @keyword IO
 #*/########################################################################### 
-setMethodS3("segmentByCBS", "default", function(y, chromosome=0, x=NULL, index=seq(along=y), w=NULL, undo=Inf, ..., joinSegments=TRUE, knownCPs=NULL, columnNamesFlavor=c("PSCBS", "DNAcopy"), seed=NULL, verbose=FALSE) {
+setMethodS3("segmentByCBS", "default", function(y, chromosome=0L, x=NULL, index=seq(along=y), w=NULL, undo=Inf, ..., joinSegments=TRUE, knownSegments=NULL, seed=NULL, verbose=FALSE) {
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Validate arguments
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -98,21 +106,25 @@ setMethodS3("segmentByCBS", "default", function(y, chromosome=0, x=NULL, index=s
   length2 <- rep(nbrOfLoci, times=2);
 
   # Argument 'chromosome':
-  disallow <- c("Inf");
-  chromosome <- Arguments$getIntegers(chromosome, range=c(0,Inf), disallow=disallow);
-  if (length(chromosome) > 1) {
-    chromosome <- Arguments$getIntegers(chromosome, length=length2, disallow=disallow);
-    # If 'chromosome' is a vector of length J, then it must contain
-    # a unique chromosome.
-    chromosomes <- sort(unique(chromosome));
-    if (length(chromosomes) > 1) {
-      throw("Argument 'chromosome' specifies more than one unique chromosome: ", paste(seqToHumanReadable(chromosomes), collapse=", "));
+  if (is.null(chromosome)) {
+    chromosome <- 0L;
+  } else {
+    disallow <- c("Inf");
+    chromosome <- Arguments$getIntegers(chromosome, range=c(0,Inf), disallow=disallow);
+    if (length(chromosome) > 1) {
+      chromosome <- Arguments$getIntegers(chromosome, length=length2, disallow=disallow);
+  ##    # If 'chromosome' is a vector of length J, then it must contain
+  ##    # a unique chromosome.
+  ##    chromosomes <- sort(unique(chromosome));
+  ##    if (length(chromosomes) > 1) {
+  ##      throw("Argument 'chromosome' specifies more than one unique chromosome: ", paste(seqToHumanReadable(chromosomes), collapse=", "));
+  ##    }
+  ##    chromosome <- chromosomes;
     }
-    chromosome <- chromosomes;
   }
 
   # For future usage
-  chrom <- rep(chromosome, times=nbrOfLoci);
+  chrom <- rep(chromosome, length.out=nbrOfLoci);
 
   # Argument 'x':
   if (is.null(x)) {
@@ -123,7 +135,11 @@ setMethodS3("segmentByCBS", "default", function(y, chromosome=0, x=NULL, index=s
   }
 
   # Argument 'index':
-  index <- Arguments$getIndices(index);
+  if (is.null(index)) {
+    index <- seq(along=y);
+  } else {
+    index <- Arguments$getIndices(index);
+  }
 
   # Argument 'w':
   hasWeights <- !is.null(w);
@@ -138,24 +154,33 @@ setMethodS3("segmentByCBS", "default", function(y, chromosome=0, x=NULL, index=s
   # Argument 'cpFlavor':
   joinSegments <- Arguments$getLogical(joinSegments);
 
-  # Argument 'knownCPs':
-  if (!is.null(knownCPs)) {
-    if (is.null(x)) {
-      knownCPs <- Arguments$getIndices(knownCPs, max=nbrOfLoci);
-    } else {
-      knownCPs <- Arguments$getDoubles(knownCPs);
-    }
-    if (length(knownCPs) != 2) {
-      throw("Currently argument 'knownCPs' can be used to specify the boundaries of the region to be segmented: ", length(knownCPs));
-      throw("Support for specifying known change points (argument 'knownCPs') is not yet implemented as of 2010-10-02.");
-    }
-    if (!joinSegments) {
-      throw("Argument 'knownCPs' should only be specified if argument 'joinSegments' is TRUE.");
-    }
+  # Argument 'knownSegments':
+  if (is.null(knownSegments)) {
+    knownSegments <- data.frame(chromosome=integer(0), start=integer(0), end=integer(0));
+  } else {
+#    if (!joinSegments) {
+#      throw("Argument 'knownSegments' should only be specified if argument 'joinSegments' is TRUE.");
+#    }
   }
 
-  # Argument 'columnNamesFlavor':
-  columnNamesFlavor <- match.arg(columnNamesFlavor);
+  if (!is.data.frame(knownSegments)) {
+    throw("Argument 'knownSegments' is not a data.frame: ", class(knownSegments)[1]);
+  }
+
+  if (!all(is.element(c("chromosome", "start", "end"), colnames(knownSegments)))) {
+    throw("Argument 'knownSegments' does not have the required column names: ", hpaste(colnames(knownSegments)));
+  }
+
+  # Known segments must not share loci
+  for (chr in sort(unique(knownSegments$chromosome))) {
+    dd <- subset(knownSegments, chromosome == chr);
+    xs <- c(dd$start, dd$end);
+    xs <- xs[!is.na(xs)];
+    if (anyDuplicated(xs) > 0) {
+      print(knownSegments);
+      throw("Detected overlapping segments on chromosome ", chr, " in argument 'knownSegments', i.e. which share loci.");
+    }
+  }
 
   # Argument 'seed':
   if (!is.null(seed)) {
@@ -171,6 +196,309 @@ setMethodS3("segmentByCBS", "default", function(y, chromosome=0, x=NULL, index=s
 
 
   verbose && enter(verbose, "Segmenting by CBS");
+
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  # Set the random seed
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  if (!is.null(seed)) {
+    verbose && enter(verbose, "Setting (temporary) random seed");
+    oldRandomSeed <- NULL;
+    if (exists(".Random.seed", mode="integer")) {
+      oldRandomSeed <- get(".Random.seed", mode="integer");
+    }
+    on.exit({
+      if (!is.null(oldRandomSeed)) {
+        .Random.seed <<- oldRandomSeed;
+      }
+    }, add=TRUE);
+    verbose && cat(verbose, "The random seed will be reset to its original state afterward.");
+    verbose && cat(verbose, "Seed: ", seed);
+    set.seed(seed);
+    verbose && exit(verbose);
+  }
+
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  # Setup data
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  verbose && enter(verbose, "Setup up data");
+  data <- data.frame(chrom=chrom, x=x, y=y, index=index);
+  if (hasWeights) {
+    verbose && cat(verbose, "Adding locus-specific weights");
+    data$w <- w;
+  }
+  verbose && str(verbose, data);
+  rm(chrom, x, index, y, w); # Not needed anymore
+  verbose && exit(verbose);
+
+
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  # Drop data points without known genomic positions, because that
+  # is what DNAcopy::CNA() will do otherwise.  At the end, we will 
+  # undo this such that the returned 'data' object is complete.
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  ok <- (!is.na(data$chrom) & !is.na(data$x));
+  if (any(!ok)) {
+    verbose && enter(verbose, "Dropping loci with unknown locations");
+    verbose && cat(verbose, "Number of loci dropped: ", sum(!ok));
+    data <- data[ok,,drop=FALSE];
+    verbose && exit(verbose);
+  }
+  rm(ok); # Not needed anymore
+
+
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  # Reorder data points along the genome, because that is what
+  # DNAcopy::segment() will return.  At the end, we will undo
+  # the sort such that the returned 'data' object is always in
+  # the same order and number of loci as the input data.
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  verbose && enter(verbose, "Ordering data along genome");
+  o <- order(data$chrom, data$x, decreasing=FALSE, na.last=TRUE);
+  # Any change?
+  if (any(o != seq(along=o))) {
+    data <- data[o,,drop=FALSE];
+  }
+  rm(o); # Not needed anymore
+  verbose && str(verbose, data);
+  verbose && exit(verbose);
+
+
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  # Multiple chromosomes?
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  # Identify all chromosomes, excluding missing values
+  chromosomes <- sort(unique(data$chrom), na.last=NA);
+  nbrOfChromosomes <- length(chromosomes);
+  if (nbrOfChromosomes > 1) {
+    verbose && enter(verbose, "Segmenting multiple chromosomes");
+    verbose && cat(verbose, "Number of chromosomes: ", nbrOfChromosomes);
+
+    fitList <- list();
+    for (kk in seq(length=nbrOfChromosomes)) {
+      chromosomeKK <- chromosomes[kk];
+      chrTag <- sprintf("Chr%02d", chromosomeKK);
+      verbose && enter(verbose, sprintf("Chromosome #%d ('%s') of %d", kk, chrTag, nbrOfChromosomes));
+
+      # Extract subset of data and parameters for this chromosome
+      dataKK <- subset(data, chrom == chromosomeKK);
+      verbose && str(verbose, dataKK);
+      fields <- attachLocally(dataKK, fields=c("y", "chrom", "x", "index"));
+      rm(dataKK); # Not needed anymore
+
+      knownSegmentsKK <- NULL;
+      if (!is.null(knownSegments)) {
+        knownSegmentsKK <- subset(knownSegments, chromosome == chromosomeKK);
+        verbose && cat(verbose, "Known segments:");
+        verbose && print(verbose, knownSegmentsKK);
+      }
+
+      fit <- segmentByCBS(y=y,
+                chromosome=chrom, x=x,
+                index=index,
+                undo=undo,
+                joinSegments=joinSegments,
+                knownSegments=knownSegmentsKK,
+                ..., 
+                seed=NULL,
+                verbose=verbose);
+
+      # Sanity checks
+      if (nrow(knownSegmentsKK) == 0) {
+        stopifnot(nrow(fit$data) == length(y));
+        stopifnot(all.equal(fit$data$y, y));
+      }
+
+      rm(list=fields); # Not needed anymore
+
+      verbose && print(verbose, head(as.data.frame(fit)));
+      verbose && print(verbose, tail(as.data.frame(fit)));
+      
+      fitList[[chrTag]] <- fit;
+
+      # Not needed anymore
+      rm(fit);
+      verbose && exit(verbose);
+    } # for (kk ...)
+
+    verbose && enter(verbose, "Merging (independently segmented chromosome)");
+    fit <- Reduce(append, fitList);
+    # Not needed anymore
+    rm(fitList);
+    verbose && str(verbose, fit);
+    verbose && exit(verbose);
+
+    verbose && print(verbose, head(as.data.frame(fit)));
+    verbose && print(verbose, tail(as.data.frame(fit)));
+   
+    verbose && exit(verbose);
+
+    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    # Return results
+    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    return(fit);
+  } # if (nbrOfChromosomes > 1) 
+
+
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  # Subset 'knownSegments'
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  verbose && enter(verbose, "Keeping only current chromosome for 'knownSegments'");
+
+  currChromosome <- data$chrom[1];
+  verbose && cat(verbose, "Chromosome: ", currChromosome);
+
+  knownSegments <- subset(knownSegments, chromosome == currChromosome);
+  nbrOfSegments <- nrow(knownSegments);
+
+  verbose && cat(verbose, "Known segments for this chromosome:");
+  verbose && print(verbose, knownSegments);
+
+  verbose && exit(verbose);
+
+
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  # Sanity checks
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  # Here 'knownSegments' should specify at most a single chromosome
+  uChromosomes <- sort(unique(knownSegments$chromosome));
+  if (length(uChromosomes) > 1) {
+    throw("INTERNAL ERROR: Argument 'knownSegments' specifies more than one chromosome: ", hpaste(uChromosomes));
+  }
+
+
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  # Multiple segments?
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  # Sanity check of limitation  /HB 2011-10-19
+  if (nbrOfSegments > 1) {
+    verbose && enter(verbose, "Segmenting multiple segments on current chromosome");
+    verbose && cat(verbose, "Number of segments: ", nbrOfSegments);
+
+    # Create a splitter-only CBS object
+    splitter <- segmentByCBS(y=c(0,0), chromosome=c(1,2), x=c(0,0));
+    suppressWarnings({
+      splitter <- extractSegments(splitter, 2);
+      # Sanity check
+      stopifnot(nbrOfSegments(splitter, splitters=TRUE) == 1);
+    });
+    
+    fitList <- list();
+    for (jj in seq(length=nbrOfSegments)) {
+      seg <- knownSegments[jj,];
+      chromosomeJJ <- seg$chromosome;
+      xStart <- seg$start;      
+      xEnd <- seg$end;
+      segTag <- sprintf("chr%s:(%s,%s)", chromosomeJJ, xStart, xEnd);
+      verbose && enter(verbose, sprintf("Segment #%d ('%s') of %d", jj, segTag, nbrOfSegments));
+
+      isSplitter <- (is.na(xStart) && is.na(xEnd));
+      if (isSplitter) {
+        fit <- splitter;
+        verbose && cat(verbose, "Nothing to segment. Inserting an explicit splitter.");
+      } else {
+        # Extract subset of data and parameters for this segment
+        dataJJ <- subset(data, chrom == chromosomeJJ & xStart <= x & x <= xEnd);
+        verbose && str(verbose, dataJJ);
+        fields <- attachLocally(dataJJ, fields=c("y", "chrom", "x", "index"));
+        rm(dataJJ); # Not needed anymore
+
+        nbrOfLoci <- length(y);
+
+        # Empty segment? 
+        # [AD HOC. Should be done by segmentCBS(). /HB 2011-10-21]
+        if(nbrOfLoci == 0) {
+          fit <- splitter;
+          fit$output$chromosome <- chromosomeJJ;
+          fit$output$start <- xStart;
+          fit$output$end <- xEnd;
+          fit$output$nbrOfLoci <- nbrOfLoci;
+        } else {
+          fit <- segmentByCBS(y=y,
+                    chromosome=chrom, x=x,
+                    index=index,
+                    undo=undo,
+                    joinSegments=joinSegments,
+                    knownSegments=seg,
+                    ..., 
+                    seed=NULL,
+                    verbose=verbose);
+        }
+  
+        # Sanity checks
+        stopifnot(nrow(fit$data) == nbrOfLoci);
+        stopifnot(all.equal(fit$data$y, y));
+
+        rm(list=fields); # Not needed anymore
+
+        if (nbrOfSegments(fit) < 6) {
+          verbose && print(verbose, as.data.frame(fit));
+        } else {
+          verbose && print(verbose, head(as.data.frame(fit)));
+          verbose && print(verbose, tail(as.data.frame(fit)));
+        }
+      } # if (isSplitter)
+
+      # Sanity check
+      stopifnot(TRUE && nbrOfSegments(fit, splitters=TRUE) > 0);
+
+      fitList[[segTag]] <- fit;
+
+      # Not needed anymore
+      rm(fit);
+      verbose && exit(verbose);
+    } # for (jj ...)
+
+    verbose && enter(verbose, "Merging (independently segmented known segments)");
+    appendT <- function(...) append(..., addSplit=FALSE);
+    fit <- Reduce(appendT, fitList);
+    # Not needed anymore
+    rm(fitList);
+
+    verbose && str(verbose, fit);
+
+    verbose && exit(verbose);
+
+    verbose && print(verbose, head(as.data.frame(fit)));
+    verbose && print(verbose, tail(as.data.frame(fit)));
+
+    # Sanity check
+#    if (nrow(fit$data) != length(y)) {
+#      print(c(nrow(fit$data), nrow(data)));
+#    }
+#    stopifnot(nrow(fit$data) == nrow(data));
+#    stopifnot(all(fit$data$chromosome == data$chromosome));
+#    stopifnot(all(fit$data$x == data$x));
+#    stopifnot(all(fit$data$index == data$index));
+#    stopifnot(all.equal(fit$data$y, data$y));
+   
+    verbose && exit(verbose);
+
+    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    # Return results
+    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    return(fit);
+  } # if (nbrOfSegments > 1)
+
+
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  # Specific segment?
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  if (nbrOfSegments > 0) {
+    knownSegments <- subset(knownSegments, chromosome == chromosome);
+  }
+
+  if (nbrOfSegments == 1) {
+    seg <- knownSegments[1,];
+    chromosomeJJ <- seg$chromosome;
+    xStart <- seg$start;      
+    xEnd <- seg$end;
+    segTag <- sprintf("chr%s:(%s,%s)", chromosomeJJ, xStart, xEnd);
+    verbose && printf(verbose, "Extracting segment '%s'", segTag);
+  
+    # Extract subset of data and parameters for this segment
+    data <- subset(data, chrom == chromosomeJJ & xStart <= x & x <= xEnd);
+    verbose && str(verbose, data);
+  }
 
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -202,52 +530,6 @@ setMethodS3("segmentByCBS", "default", function(y, chromosome=0, x=NULL, index=s
  
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  # Setup data
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  verbose && enter(verbose, "Setup up data");
-  data <- data.frame(chrom=chrom, x=x, y=y, index=index);
-  if (hasWeights) {
-    verbose && cat(verbose, "Adding locus-specific weights");
-    data$w <- w;
-  }
-  verbose && str(verbose, data);
-  rm(chrom, x, index, y, w); # Not needed anymore
-  verbose && exit(verbose);
-
-
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  # Drop data points without known genomic positions, because that
-  # is what DNAcopy::CNA() will do otherwise.  At the end, we will 
-  # undo this such that the returned 'data' object is complete.
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  ok <- (!is.na(data$chrom) & !is.na(data$x));
-  if (any(!ok)) {
-    verbose && enter(verbose, "Dropping loci with unknown locations");
-    verbose && cat(verbose, "Number of loci dropped: ", sum(!ok));
-    data <- data[ok,];
-    verbose && exit(verbose);
-  }
-  rm(ok); # Not needed anymore
-
-
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  # Reorder data points along the genome, because that is what
-  # DNAcopy::segment() will return.  At the end, we will undo
-  # the sort such that the returned 'data' object is always in
-  # the same order and number of loci as the input data.
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  verbose && enter(verbose, "Ordering data along genome");
-  o <- order(data$chrom, data$x, decreasing=FALSE, na.last=TRUE);
-  # Any change?
-  if (any(o != seq(along=o))) {
-    data <- data[o,];
-  }
-  rm(o); # Not needed anymore
-  verbose && str(verbose, data);
-  verbose && exit(verbose);
-
-
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Setting up arguments to pass to segmentation function
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
   verbose && enter(verbose, "Setting up method arguments");
@@ -268,7 +550,7 @@ setMethodS3("segmentByCBS", "default", function(y, chromosome=0, x=NULL, index=s
   names(cnData)[3] <- sampleName;
   verbose && str(verbose, cnData);
   verbose && exit(verbose);
-  rm(sampleName);  # Not needed anymore
+#  rm(sampleName);  # Not needed anymore
 
   # Sanity check
   stopifnot(nrow(cnData) == nrow(data));
@@ -311,27 +593,6 @@ setMethodS3("segmentByCBS", "default", function(y, chromosome=0, x=NULL, index=s
  
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  # Set the random seed
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  if (!is.null(seed)) {
-    verbose && enter(verbose, "Setting (temporary) random seed");
-    oldRandomSeed <- NULL;
-    if (exists(".Random.seed", mode="integer")) {
-      oldRandomSeed <- get(".Random.seed", mode="integer");
-    }
-    on.exit({
-      if (!is.null(oldRandomSeed)) {
-        .Random.seed <<- oldRandomSeed;
-      }
-    }, add=TRUE);
-    verbose && cat(verbose, "The random seed will be reset to its original state afterward.");
-    verbose && cat(verbose, "Seed: ", seed);
-    set.seed(seed);
-    verbose && exit(verbose);
-  }
-
-
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Calling segmentation function
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   verbose && enter(verbose, sprintf("Calling %s() of %s", methodName, pkgName));
@@ -366,8 +627,28 @@ setMethodS3("segmentByCBS", "default", function(y, chromosome=0, x=NULL, index=s
     # Drop dummy data point...
     fit$data <- cnData; ## fit$data[-1,,drop=FALSE];
     # ...dummy region found
-    fit$output <- fit$output[-1,,drop=FALSE];
-    fit$segRows <- fit$segRows[-1,,drop=FALSE];
+    output <- fit$output;
+    segRows <- fit$segRows;
+
+    # Sanity check
+    stopifnot(nrow(output) == 1);
+
+    # Was a region specified?
+    if (nbrOfSegments == 1) {
+      seg <- knownSegments[1,];
+      output$ID <- sampleName;
+      output$chrom <- seg$chromosome;
+      output$loc.start <- seg$start;
+      output$loc.end <- seg$end;
+      output$num.mark <- 0L;
+      output$seg.mean <- as.double(NA);
+      segRows[1,] <- as.integer(NA);
+    } else {  
+      output <- output[-1,,drop=FALSE];
+      segRows <- segRows[-1,,drop=FALSE];
+    }
+    fit$output <- output;
+    fit$segRows <- segRows;
   }
 
   verbose && cat(verbose, "Captured output that was sent to stdout:");
@@ -402,13 +683,14 @@ setMethodS3("segmentByCBS", "default", function(y, chromosome=0, x=NULL, index=s
 
   params <- list(
     joinSegments = joinSegments,
-    knownCPs = knownCPs,
+    knownSegments = knownSegments,
     seed = seed
   );
 
   fit$params <- params;
 
-  class(fit) <- c("CBS", class(fit));
+#  class(fit) <- c("CBS", class(fit));
+  class(fit) <- c("CBS", "AbstractCBS");
 
   # Sanity checks
   segRows <- fit$segRows;
@@ -419,25 +701,42 @@ setMethodS3("segmentByCBS", "default", function(y, chromosome=0, x=NULL, index=s
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Renaming column names
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  if (columnNamesFlavor != "DNAcopy") {
-    segs <- fit$output;
-    names <- colnames(segs);
-    if (columnNamesFlavor == "PSCBS") {
-      names <- gsub("ID", "id", names, fixed=TRUE);
-      names <- gsub("seg.mean", "mean", names, fixed=TRUE);
-      names <- gsub("chrom", "chromosome", names, fixed=TRUE);
-      names <- gsub("num.mark", "nbrOfLoci", names, fixed=TRUE);
-      names <- gsub("loc.", "", names, fixed=TRUE); # loc.start, loc.end
-    }
-    colnames(segs) <- names;
-    fit$output <- segs;
-  }
+  data <- getLocusData(fit);
+  names <- colnames(data);
+  names <- gsub("chrom", "chromosome", names, fixed=TRUE);
+  names <- gsub("maploc", "x", names, fixed=TRUE);
+  colnames(data) <- names;
 
+  # Drop 'CNA' class and DNAcopy attributes
+  class(data) <- c("data.frame");
+  attr(data, "data.type") <- NULL;
+
+  fit$data <- data;
+
+  segs <- fit$output;
+
+  names <- colnames(segs);
+  names <- gsub("ID", "sampleName", names, fixed=TRUE);
+  names <- gsub("seg.mean", "mean", names, fixed=TRUE);
+  names <- gsub("chrom", "chromosome", names, fixed=TRUE);
+  names <- gsub("num.mark", "nbrOfLoci", names, fixed=TRUE);
+  names <- gsub("loc.", "", names, fixed=TRUE); # loc.start, loc.end
+  colnames(segs) <- names;
+  fit$output <- segs;
+
+  
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Join segments?
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   if (joinSegments) {
-    fit <- joinSegments(fit, range=knownCPs, verbose=verbose);
+    if (nbrOfSegments == 1) {
+      range <- c(knownSegments$start, knownSegments$end);
+      range <- range(range, na.rm=TRUE);
+    } else {
+      range <- NULL;
+    }
+   
+    fit <- joinSegments(fit, range=range, verbose=verbose);
 
     # Sanity checks
     segRows <- fit$segRows;
@@ -458,9 +757,39 @@ setMethodS3("segmentByCBS", "default", function(y, chromosome=0, x=NULL, index=s
 }) # segmentByCBS()
 
 
+setMethodS3("segmentByCBS", "data.frame", function(y, ...) {
+  # To please R CMD check
+  data <- y;
+
+  segmentByCBS(y=data$y, chromosome=data$chromosome, x=data$x, index=data$index, w=data$w, ...);
+})
+
+
 
 ############################################################################
 # HISTORY:
+# 2011-10-20
+# o Now the result of segmentByCBS() is guaranteed to include the
+#   segments given by argument 'knownSegments'.  Before empty segments
+#   would be dropped.
+# 2011-10-19
+# o Replaced argument 'knownCPs' with 'knownSegments' for  segmentByCBS().
+# o Added support for specifying known change points in segmentByCBS().
+# 2011-10-02
+# o Added segmentByCBS() for data.frame such that the locus-level data
+#   arguments can also be passed via a data.frame.
+# 2011-09-04
+# o ROBUSTNESS: Added drop=FALSE to matrix subsettings.
+# 2011-09-03
+# o Now segmentByCBS() always returns a CBS object.  To coerce to a
+#   DNAcopy object (as defined in the DNAcopy class) use as.DNAcopy().
+# o Removed argument 'columnNamesFlavor'.
+# 2011-09-02
+# o Forgot to pass on argument 'index' in multi-chromosome processing.
+# 2011-09-01
+# o GENERALIZATION: Now segmentByCBS() can process multiple chromosomes.
+# o Now the random seed is set at the very beginning of the code, which
+#   should not make a difference, i.e. it should give identical results.
 # 2011-06-14
 # o GENERALIZATION: Added argument 'columnNamesFlavor' to segmentByCBS().
 # o CONVENTION: Changed the column names of returned data frames. 

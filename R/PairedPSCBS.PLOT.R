@@ -116,7 +116,7 @@ setMethodS3("plotTracks", "PairedPSCBS", function(x, tracks=c("tcn", "dh", "tcn,
   verbose && enter(verbose, "Plotting PSCN tracks");
 
   # Extract the input data
-  data <- fit$data;
+  data <- getLocusData(fit);
   if (is.null(data)) {
     throw("Cannot plot segmentation results. No input data available.");
   }
@@ -349,7 +349,7 @@ setMethodS3("plot", "PairedPSCBS", function(x, ...) {
 }, private=TRUE)
 
 
-setMethodS3("drawLevels", "PairedPSCBS", function(fit, what=c("tcn", "dh", "c1", "c2"), xScale=1e-6, ...) {
+setMethodS3("drawLevels", "PairedPSCBS", function(fit, what=c("tcn", "betaTN", "dh", "c1", "c2"), xScale=1e-6, ...) {
   # WORKAROUND: If Hmisc is loaded after R.utils, it provides a buggy
   # capitalize() that overrides the one we want to use. Until PSCBS
   # gets a namespace, we do the following workaround. /HB 2011-07-14
@@ -368,19 +368,35 @@ setMethodS3("drawLevels", "PairedPSCBS", function(fit, what=c("tcn", "dh", "c1",
   # Get segmentation results
   segs <- as.data.frame(fit);
 
+  if (what == "betaTN") {
+    whatT <- "dh";
+  } else {
+    whatT <- what;
+  }
+
   # Extract subset of segments
   fields <- c("start", "end");
   fields <- sprintf("%s%s", ifelse(what == "tcn", what, "dh"), capitalize(fields));
-  fields <- c(fields, sprintf("%sMean", what));
+  fields <- c(fields, sprintf("%sMean", whatT));
   segsT <- segs[,fields, drop=FALSE];
   segsT <- unique(segsT);
 
-  # Reuse drawLevels() for the DNAcopy class
-  colnames(segsT) <- c("loc.start", "loc.end", "seg.mean");
-  dummy <- list(output=segsT);
-  class(dummy) <- "DNAcopy";
+  if (what == "betaTN") {
+    dh <- segsT[,"dhMean"];
+    bafU <- (1 + dh)/2;
+    bafL <- (1 - dh)/2;
+    segsT[,3] <- bafU;
+    segsT[,4] <- bafL;
+  }
 
-  drawLevels(dummy, xScale=xScale, ...);
+  # Reuse drawLevels() for the DNAcopy class
+  for (cc in seq(from=3, to=ncol(segsT))) {
+    segsTT <- segsT[,c(1:2,cc)];
+    colnames(segsTT) <- c("loc.start", "loc.end", "seg.mean");
+    dummy <- list(output=segsTT);
+    class(dummy) <- "DNAcopy";
+    drawLevels(dummy, xScale=xScale, ...);
+  } # for (cc ...)
 }, private=TRUE)
 
 
@@ -545,8 +561,8 @@ setMethodS3("tileChromosomes", "PairedPSCBS", function(fit, chrStarts=NULL, ...,
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Extract data and segments
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  data <- fit$data;
-  segs <- fit$output;
+  data <- getLocusData(fit);
+  segs <- getSegments(fit);
 
   # Identify all chromosome
   chromosomes <- getChromosomes(fit);
@@ -629,7 +645,7 @@ setMethodS3("tileChromosomes", "PairedPSCBS", function(fit, chrStarts=NULL, ...,
 #
 #   \item{verbose}{See @see "R.utils::Verbose".}
 #
-setMethodS3("plotTracksManyChromosomes", "PairedPSCBS", function(x,   chromosomes=getChromosomes(fit), tracks=c("tcn", "dh", "tcn,c1,c2", "betaN", "betaT", "betaTN")[1:3], scatter="*", calls=".*", quantiles=c(0.05,0.95), seed=0xBEEF, pch=".", Clim=c(0,6), Blim=c(0,1), xScale=1e-6, ..., subset=0.1, add=FALSE, onBegin=NULL, onEnd=NULL, verbose=FALSE) {
+setMethodS3("plotTracksManyChromosomes", "PairedPSCBS", function(x, chromosomes=getChromosomes(fit), tracks=c("tcn", "dh", "tcn,c1,c2", "betaN", "betaT", "betaTN")[1:3], scatter="*", calls=".*", quantiles=c(0.05,0.95), seed=0xBEEF, pch=".", Clim=c(0,6), Blim=c(0,1), xScale=1e-6, ..., subset=0.1, add=FALSE, onBegin=NULL, onEnd=NULL, verbose=FALSE) {
   # To please R CMD check
   fit <- x;
  
@@ -689,7 +705,7 @@ setMethodS3("plotTracksManyChromosomes", "PairedPSCBS", function(x,   chromosome
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   if (!is.null(chromosomes)) {
     verbose && enter(verbose, "Plotting a subset of the chromosomes");
-    fit <- extractByChromosomes(fit, chromosomes=chromosomes, verbose=verbose);
+    fit <- extractChromosomes(fit, chromosomes=chromosomes, verbose=verbose);
     verbose && exit(verbose);
   }
 
@@ -700,7 +716,7 @@ setMethodS3("plotTracksManyChromosomes", "PairedPSCBS", function(x,   chromosome
   verbose && str(verbose, fit);
 
   # Extract the input data
-  data <- fit$data;
+  data <- getLocusData(fit);
   if (is.null(data)) {
     throw("Cannot plot segmentation results. No input data available.");
   }
@@ -910,13 +926,16 @@ setMethodS3("plotTracksManyChromosomes", "PairedPSCBS", function(x,   chromosome
   verbose && exit(verbose);
 
   invisible(gh);
-}) # plotTracksManyChromosomes()
+}, private=TRUE) # plotTracksManyChromosomes()
 
 
 
 
 ############################################################################
 # HISTORY:
+# 2011-09-30
+# o GENERALIZATION: Now drawLevels() for PairedPSCBS allows for drawing
+#   segmentation results in 'betaT' space.
 # 2011-07-10
 # o BUG FIX: tileChromosomes() for PairedPSCBS was still assuming the
 #   old naming convention of column names.
