@@ -9,32 +9,37 @@
  \name{segmentByCBS}
 \alias{segmentByCBS.default}
 \alias{segmentByCBS}
+ \alias{segmentByCBS.data.frame}
+ \alias{segmentByCBS.CNA}
+ \alias{segmentByCBS}
 
  \title{Segment genomic signals using the CBS method}
 
  \description{
   Segment genomic signals using the CBS method of the \pkg{DNAcopy} package.
   This is a convenient low-level wrapper for the \code{DNAcopy::segment()}
-  method.  It is intended to be applied to one sample and one chromosome
-  at the time.
+  method.  It is intended to be applied to a sample at the time.
   For more details on the Circular Binary Segmentation (CBS) method
   see [1,2].
  }
 
- \usage{\method{segmentByCBS}{default}(y, chromosome=0, x=NULL, index=seq(along = y), w=NULL, undo=Inf, ..., joinSegments=TRUE, knownCPs=NULL, columnNamesFlavor=c("PSCBS", "DNAcopy"), seed=NULL, verbose=FALSE)}
+ \usage{\method{segmentByCBS}{default}(y, chromosome=0, x=NULL, index=seq(along = y), w=NULL, undo=Inf, ..., joinSegments=TRUE, knownSegments=NULL, seed=NULL, verbose=FALSE)}
 
  \arguments{
    \item{y}{A \code{\link[base]{numeric}} \code{\link[base]{vector}} of J genomic signals to be segmented.}
-   \item{chromosome}{(Optional) An \code{\link[base]{integer}} scalar
-       (or a \code{\link[base]{vector}} of length J contain a unique value).
-       Only used for annotation purposes.}
+   \item{chromosome}{Optional \code{\link[base]{numeric}} \code{\link[base]{vector}} of length J, specifying
+       the chromosome of each loci.  If a scalar, it is expanded to
+       a vector of length J.}
    \item{x}{Optional \code{\link[base]{numeric}} \code{\link[base]{vector}} of J genomic locations.
             If \code{\link[base]{NULL}}, index locations \code{1:J} are used.}
+   \item{index}{An optional \code{\link[base]{integer}} \code{\link[base]{vector}} of length J specifying
+     the genomewide indices of the loci.}
    \item{w}{Optional \code{\link[base]{numeric}} \code{\link[base]{vector}} in [0,1] of J weights.}
    \item{undo}{A non-negative \code{\link[base]{numeric}}.  If less than +\code{\link[base:is.finite]{Inf}}, then
        arguments \code{undo.splits="sdundo"} and \code{undo.SD=undo}
        are passed to \code{DNAcopy::segment()}.}
-   \item{...}{Additional arguments passed to the segmentation function.}
+   \item{...}{Additional arguments passed to the \code{DNAcopy::segment()}
+       segmentation function.}
    \item{joinSegments}{If \code{\link[base:logical]{TRUE}}, there are no gaps between neighboring
      segments.
      If \code{\link[base:logical]{FALSE}}, the boundaries of a segment are defined by the support
@@ -44,12 +49,9 @@
      is in the middle of multiple loci with the same position.
      The latter is what \code{DNAcopy::segment()} returns.
    }
-   \item{knownCPs}{Optional \code{\link[base]{numeric}} \code{\link[base]{vector}} of known
-     change point locations.}
-   \item{index}{An \code{\link[base]{integer}} \code{\link[base]{vector}} of length J specifying the
-     genomewide indices of the loci.}
-   \item{columnNamesFlavor}{A \code{\link[base]{character}} string specifying how column names
-     of the returned data frame should be named.}
+   \item{knownSegments}{Optional \code{\link[base]{data.frame}} specifying
+     \emph{non-overlapping} known segments.  These segments must
+     not share loci.}
    \item{seed}{An (optional) \code{\link[base]{integer}} specifying the random seed to be
      set before calling the segmentation method.  The random seed is
      set to its original state when exiting.  If \code{\link[base]{NULL}}, it is not set.}
@@ -57,14 +59,17 @@
  }
 
  \value{
-   Returns the fit object.
+   Returns a \code{\link{CBS}} object.
  }
 
  \details{
-   Internally \code{\link[DNAcopy]{segment}} is used to segment the signals.
+   Internally \code{\link[DNAcopy]{segment}} of \pkg{DNAcopy} is used to
+   segment the signals.
    This segmentation method support weighted segmentation.
+ }
 
-   The "DNAcopy::segment" implementation of CBS uses approximation
+ \section{Reproducibility}{
+   The \code{DNAcopy::segment()} implementation of CBS uses approximation
    through random sampling for some estimates.  Because of this,
    repeated calls using the same signals may result in slightly
    different results, unless the random seed is set/fixed.
@@ -80,7 +85,7 @@
  }
 
  \examples{
-
+  
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Simulating copy-number data
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -91,6 +96,7 @@ J <- 1000
 
 mu <- double(J)
 mu[200:300] <- mu[200:300] + 1
+mu[350:400] <- NA # centromere
 mu[650:800] <- mu[650:800] - 1
 eps <- rnorm(J, sd=1/2)
 y <- mu + eps
@@ -99,21 +105,22 @@ w <- runif(J)
 w[650:800] <- 0.001
 
 
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# Segmentation
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+fit <- segmentByCBS(y, x=x)
+print(fit)
+plotTracks(fit)
+
+
+      
 xlab <- "Position (Mb)"
 ylim <- c(-3,3)
 xMb <- x/1e6
 plot(xMb,y, pch=20, col="#aaaaaa", xlab=xlab, ylim=ylim)
-
-
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-# Segment
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-fit <- segmentByCBS(y, x=x)
-print(fit)
 drawLevels(fit, col="red", lwd=2, xScale=1e-6)
 
-
-
+  
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # TESTS
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -163,19 +170,47 @@ drawLevels(fit, col="red", lwd=2, xScale=1e-6)
 
 fitC <- segmentByCBS(y, x=x, joinSegments=FALSE, seed=0xBEEF)
 drawLevels(fitC, col="blue", lwd=2, xScale=1e-6)
-}
+
+
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# Multiple chromosomes
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# Appending CBS results
+fit1 <- segmentByCBS(y, chromosome=1, x=x)
+fit2 <- segmentByCBS(y, chromosome=2, x=x)
+fit <- append(fit1, fit2)
+print(fit)
+plotTracks(fit, subset=NULL, lwd=2, Clim=c(-3,3))
+
+
+# Segmenting multiple chromosomes at once
+chromosomeWG <- rep(1:2, each=J)
+xWG <- rep(x, times=2)
+yWG <- rep(y, times=2)
+fitWG <- segmentByCBS(yWG, chromosome=chromosomeWG, x=xWG)
+print(fitWG)
+plotTracks(fitWG, subset=NULL, lwd=2, Clim=c(-3,3))
+
+# Assert same results
+fit$data[,"index"] <- fitWG$data[,"index"] # Ignore 'index'
+stopifnot(all.equal(fitWG$data, fit$data))
+stopifnot(all.equal(fitWG$output, fit$output))
+
+ }
 
  \author{Henrik Bengtsson (\url{http://www.braju.com/R/})}
 
  \references{
-  [1] A.B. Olshen, E.S. Venkatraman (aka Venkatraman E. Seshan),
-      R. Lucito and M. Wigler, \emph{Circular binary segmentation for
-      the analysis of array-based DNA copy number data},
-      Biostatistics, 2004.\cr
-  [2] E.S. Venkatraman and A.B. Olshen, \emph{A faster circular binary
-      segmentation algorithm for the analysis of array CGH data}.
-      Bioinformatics, 2007.\cr
+  [1] A.B. Olshen, E.S. Venkatraman (aka Venkatraman E. Seshan), R. Lucito and M. Wigler, \emph{Circular binary segmentation for the analysis of array-based DNA copy number data}, Biostatistics, 2004
+ \cr
+  [2] E.S. Venkatraman and A.B. Olshen, \emph{A faster circular binary segmentation algorithm for the analysis of array CGH data}, Bioinformatics, 2007
+ \cr
  }
 
+ \seealso{
+   To segment allele-specific tumor copy-number signals from a tumor
+   with a matched normal, see \code{\link{segmentByPairedPSCBS}}().
+ }
 
 \keyword{IO}

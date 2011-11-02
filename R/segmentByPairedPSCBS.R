@@ -1,5 +1,6 @@
 ###########################################################################/**
 # @RdocDefault segmentByPairedPSCBS
+# @alias segmentByPairedPSCBS.data.frame
 # @alias segmentByPairedPSCBS
 #
 # @title "Segment total copy numbers and allele B fractions using the Paired PSCBS method"
@@ -49,8 +50,9 @@
 #     is in the middle of multiple loci with the same position.
 #     The latter is what \code{DNAcopy::segment()} returns.
 #   } 
-#   \item{knownCPs}{Optional @numeric @vector of known 
-#     change point locations.}
+#   \item{knownSegments}{Optional @data.frame specifying 
+#     \emph{non-overlapping} known segments.  These segments must
+#     not share loci.}
 #   \item{seed}{An (optional) @integer specifying the random seed to be 
 #     set before calling the segmentation method.  The random seed is
 #     set to its original state when exiting.  If @NULL, it is not set.}
@@ -63,9 +65,10 @@
 # 
 # \details{
 #   Internally @see "segmentByCBS" is used for segmentation.
+#   The Paired PSCBS segmentation method does \emph{not} support weights.
+# }
 #
-#   This segmentation method does \emph{not} support weights.
-#
+# \section{Reproducibility}{
 #   The "DNAcopy::segment" implementation of CBS uses approximation
 #   through random sampling for some estimates.  Because of this,
 #   repeated calls using the same signals may result in slightly 
@@ -96,21 +99,24 @@
 #
 # @author
 #
+# \references{
+#  [1] @include "../incl/OlshenA_etal_2011.Rd" \cr
+#  [2] @include "../incl/BengtssonH_etal_2010.Rd" \cr
+# }
+#
 # \seealso{
 #   Internally, @see "aroma.light::callNaiveGenotypes" is used to 
 #   call naive genotypes, @see "aroma.light::normalizeTumorBoost" is 
 #   used for TumorBoost normalization, and @see "segmentByCBS" is used 
 #   to segment TCN and DH separately.
-# }
 #
-# \references{
-#  [1] @include "../incl/OlshenA_etal_2011.Rd" \cr
-#   [2] H. Bengtsson, P. Neuvial and T.P. Speed, \emph{TumorBoost: Normalization of allele-specific tumor copy numbers from a single pair of tumor-normal genotyping microarrays}, BMC Bioinformatics, 2010.
+#   To segment total copy-numbers, or any other unimodal signals,
+#   see @see "segmentByCBS".
 # }
 #
 # @keyword IO
 #*/########################################################################### 
-setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NULL, chromosome=0, x=NULL, alphaTCN=0.009, alphaDH=0.001, undoTCN=Inf, undoDH=Inf, ..., flavor=c("tcn&dh", "tcn,dh", "sqrt(tcn),dh", "sqrt(tcn)&dh"), tbn=TRUE, joinSegments=TRUE, knownCPs=NULL, seed=NULL, verbose=FALSE) {
+setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NULL, chromosome=0, x=NULL, alphaTCN=0.009, alphaDH=0.001, undoTCN=Inf, undoDH=Inf, ..., flavor=c("tcn&dh", "tcn,dh", "sqrt(tcn),dh", "sqrt(tcn)&dh"), tbn=TRUE, joinSegments=TRUE, knownSegments=NULL, seed=NULL, verbose=FALSE) {
   # WORKAROUND: If Hmisc is loaded after R.utils, it provides a buggy
   # capitalize() that overrides the one we want to use. Until PSCBS
   # gets a namespace, we do the following workaround. /HB 2011-07-14
@@ -148,12 +154,15 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
   # Argument 'betaN':
   betaN <- Arguments$getDoubles(betaN, length=length2, disallow="Inf");
 
-
   # Argument 'chromosome':
-  disallow <- c("Inf");
-  chromosome <- Arguments$getIntegers(chromosome, range=c(0,Inf), disallow=disallow);
-  if (length(chromosome) > 1) {
-    chromosome <- Arguments$getIntegers(chromosome, length=length2, disallow=disallow);
+  if (is.null(chromosome)) {
+    chromosome <- 0L; 
+  } else {
+    disallow <- c("Inf");
+    chromosome <- Arguments$getIntegers(chromosome, range=c(0,Inf), disallow=disallow);
+    if (length(chromosome) > 1) {
+      chromosome <- Arguments$getIntegers(chromosome, length=length2, disallow=disallow);
+    }
   }
 
   # Argument 'x':
@@ -187,17 +196,23 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
   # Argument 'joinSegments':
   joinSegments <- Arguments$getLogical(joinSegments);
 
-  # Argument 'knownCPs':
-  if (!is.null(knownCPs)) {
-    knownCPs <- Arguments$getDoubles(knownCPs);
-    if (length(knownCPs) != 2) {
-      throw("Currently argument 'knownCPs' can be used to specify the boundaries of the region to be segmented: ", length(knownCPs));
-      throw("Support for specifying known change points (argument 'knownCPs') is not yet implemented as of 2010-10-02.");
-    }
+  # Argument 'knownSegments':
+  if (is.null(knownSegments)) {
+    knownSegments <- data.frame(chromosome=integer(0), start=integer(0), end=integer(0));
+  } else {
     if (!joinSegments) {
-      throw("Argument 'knownCPs' should only be specified if argument 'joinSegments' is TRUE.");
+##      warning("Argument 'knownSegments' should only be specified if argument 'joinSegments' is TRUE.");
     }
   }
+
+  if (!is.data.frame(knownSegments)) {
+    throw("Argument 'knownSegments' is not a data.frame: ", class(knownSegments)[1]);
+  }
+
+  if (!all(is.element(c("chromosome", "start", "end"), colnames(knownSegments)))) {
+    throw("Argument 'knownSegments' does not have the required column names: ", hpaste(colnames(knownSegments)));
+  }
+
 
   # Argument 'seed':
   if (!is.null(seed)) {
@@ -291,7 +306,7 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
   if (any(!ok)) {
     verbose && enter(verbose, "Dropping loci with unknown locations");
     verbose && cat(verbose, "Number of loci dropped: ", sum(!ok));
-    data <- data[ok,];
+    data <- data[ok,,drop=FALSE];
     verbose && exit(verbose);
   }
   rm(ok); # Not needed anymore
@@ -307,7 +322,7 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
   o <- order(data$chromosome, data$x, decreasing=FALSE, na.last=TRUE);
   # Any change?
   if (any(o != seq(along=o))) {
-    data <- data[o,];
+    data <- data[o,,drop=FALSE];
   }
   rm(o); # Not needed anymore
   verbose && str(verbose, data);
@@ -333,25 +348,35 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
       chrTag <- sprintf("Chr%02d", chromosomeKK);
       verbose && enter(verbose, sprintf("Chromosome #%d ('%s') of %d", kk, chrTag, nbrOfChromosomes));
 
-      # Extract subset
+      # Extract subset of data and parameters for this chromosome
       dataKK <- subset(data, chromosome == chromosomeKK);
       verbose && str(verbose, dataKK);
       fields <- attachLocally(dataKK, fields=c("CT", "betaT", "betaTN", "betaN", "muN", "chromosome", "x"));
       rm(dataKK); # Not needed anymore
-     
+
+      knownSegmentsKK <- NULL;
+      if (!is.null(knownSegments)) {
+        knownSegmentsKK <- subset(knownSegments, chromosome == chromosomeKK);
+        verbose && cat(verbose, "Known segments:");
+        verbose && print(verbose, knownSegmentsKK);
+      }
+
       fit <- segmentByPairedPSCBS(CT=CT, betaT=betaTN, 
                 betaN=betaN, muN=muN, 
                 chromosome=chromosome, x=x,
                 tbn=FALSE, joinSegments=joinSegments,
+                knownSegments=knownSegmentsKK,
                 alphaTCN=alphaTCN, alphaDH=alphaDH,
                 undoTCN=undoTCN, undoDH=undoDH,
                 flavor=flavor,
                 ..., verbose=verbose);
 
       # Sanity checks
-      stopifnot(nrow(fit$data) == length(CT));
-      stopifnot(all.equal(fit$data$CT, CT));
-      stopifnot(all.equal(fit$data$muN, muN));
+      if (nrow(knownSegmentsKK) == 0) {
+        stopifnot(nrow(fit$data) == length(CT));
+        stopifnot(all.equal(fit$data$CT, CT));
+        stopifnot(all.equal(fit$data$muN, muN));
+      }
 
       # Updata betaT (which is otherwise equals betaTN)
       fit$data$betaT <- betaT;
@@ -368,7 +393,7 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
       verbose && exit(verbose);
     } # for (kk ...)
 
-    verbose && enter(verbose, "Merging");
+    verbose && enter(verbose, "Merging (independently segmented chromosome)");
     fit <- Reduce(append, fitList);
     # Not needed anymore
     rm(fitList);
@@ -387,6 +412,31 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
   } # if (nbrOfChromosomes > 1)
 
 
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  # Subset 'knownSegments'
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  verbose && enter(verbose, "Keeping only current chromosome for 'knownSegments'");
+
+  currChromosome <- data$chromosome[1];
+  verbose && cat(verbose, "Chromosome: ", currChromosome);
+
+  knownSegments <- subset(knownSegments, chromosome == currChromosome);
+  nbrOfSegments <- nrow(knownSegments);
+
+  verbose && cat(verbose, "Known segments for this chromosome:");
+  verbose && print(verbose, knownSegments);
+
+  verbose && exit(verbose);
+
+
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  # Sanity checks
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  # Here 'knownSegments' should specify at most a single chromosome
+  uChromosomes <- sort(unique(knownSegments$chromosome));
+  if (length(uChromosomes) > 1) {
+    throw("INTERNAL ERROR: Argument 'knownSegments' specifies more than one chromosome: ", hpaste(uChromosomes));
+  }
 
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -432,19 +482,22 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
   # Physical positions of loci
   fit <- segmentByCBS(CT, 
                       chromosome=chromosome, x=x, index=index,
-                      joinSegments=joinSegments, knownCPs=knownCPs,
+                      joinSegments=joinSegments,
+                      knownSegments=knownSegments,
                       alpha=alphaTCN, undo=undoTCN, ...,
-                      columnNamesFlavor="PSCBS", verbose=verbose);
+                      verbose=verbose);
   verbose && str(verbose, fit);
 
   rm(list=fields); # Not needed anymore
 
   # Sanity check
-  stopifnot(nrow(fit$data) == nrow(data));
-  stopifnot(all(fit$data$chrom == data$chromosome));
-  stopifnot(all(fit$data$maploc == data$x));
-  stopifnot(all(fit$data$index == data$index));
-  stopifnot(all.equal(fit$data$y, data$CT));
+  if (nrow(knownSegments) == 0) {
+    stopifnot(nrow(fit$data) == nrow(data));
+    stopifnot(all(fit$data$chromosome == data$chromosome));
+    stopifnot(all(fit$data$x == data$x));
+    stopifnot(all(fit$data$index == data$index));
+    stopifnot(all.equal(fit$data$y, data$CT));
+  }
 
   tcnSegments <- fit$output;
   tcnSegRows <- fit$segRows;
@@ -457,13 +510,12 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
   verbose && exit(verbose);
 
 
-
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # 1b. Restructure TCN segmentation results
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   verbose && enter(verbose, "Restructure TCN segmentation results");
   # Drop dummy columns
-  keep <- setdiff(colnames(tcnSegments), c("id"));
+  keep <- setdiff(colnames(tcnSegments), c("sampleName"));
   tcnSegments <- tcnSegments[,keep,drop=FALSE];
 
   # Tag fields by TCN
@@ -503,19 +555,54 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
     nbrOfTCNLociKK <- tcnSegments[kk,"tcnNbrOrLoci"];
     verbose && cat(verbose, "Number of TCN loci in segment: ", nbrOfTCNLociKK);
 
-    # Extract locus data for TCN segment
     rowStart <- tcnSegRows[kk,1];
     rowEnd <- tcnSegRows[kk,2];
+
+    # Empty segment or a segment separator?
+    isSplitter <- (is.na(rowStart) && is.na(rowEnd));
+    if (isSplitter) {
+      verbose && cat(verbose, "No signals to segment. Just a \"splitter\" segment. Skipping.");
+
+      # Sanity check
+      stopifnot(kk > 1);
+
+      # Add a splitter segment
+      segT <- segs[[kk-1]];
+      segT <- segT[as.integer(NA),];
+      keys <- colnames(tcnSegments);
+      segT[,keys] <- tcnSegments[kk,keys];
+      segT[,"tcnId"] <- tcnId;
+      segT[,"dhId"] <- 1L;
+      segT[,c("tcnNbrOfSNPs", "tcnNbrOfHets", "dhNbrOfLoci")] <- 0L;
+      segT[,"dhStart"] <- xStart;
+      segT[,"dhEnd"] <- xEnd;
+      segs[[kk]] <- segT;
+      verbose && print(verbose, segT);
+
+      # Add a splitter to TCN and DH segment row matrix
+      segRowsT <- dhSegRows[as.integer(NA),];
+      dhSegRows <- rbind(dhSegRows, segRowsT);
+
+      segRowsT <- tcnSegsExpanded[as.integer(NA),];
+      tcnSegsExpanded <- rbind(tcnSegsExpanded, segRowsT);
+
+      verbose && exit(verbose);
+      next;
+    }
+
+    # Extract locus data for TCN segment
     rows <- rowStart:rowEnd;
-    dataKK <- data[rows,];
+    dataKK <- data[rows,,drop=FALSE];
     nbrOfLociKK <- nrow(dataKK);
 
     # Sanity check
     stopifnot(sum(!is.na(dataKK$CT)) == nbrOfTCNLociKK);
     gammaT <- tcnSegments[kk,"tcnMean"];
 
-    print(all.equal(mean(dataKK$CT, na.rm=TRUE), gammaT, tolerance=tol));
-    stopifnot(all.equal(mean(dataKK$CT, na.rm=TRUE), gammaT, tolerance=tol));
+##    if (nrow(knownSegments) == 0) {
+##      verbose && print(verbose, all.equal(mean(dataKK$CT, na.rm=TRUE), gammaT, tolerance=tol));
+##      stopifnot(all.equal(mean(dataKK$CT, na.rm=TRUE), gammaT, tolerance=tol));
+##    }
 
     verbose && cat(verbose, "Locus data for TCN segment:");
     verbose && str(verbose, dataKK);
@@ -531,12 +618,19 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
 
     verbose && enter(verbose, "Segmenting DH signals");
     fields <- attachLocally(dataKK, fields=c("chromosome", "x", "rho", "index"));
-    knownCPsKK <- if (joinSegments) c(xStart, xEnd) else NULL;
+
+    # Since segments in 'knownSegments' has already been used in the TCN
+    # segmentation, they are not needed in the DH segmentation.
+    currChromosome <- data$chromosome[1];
+    verbose && cat(verbose, "Chromosome: ", currChromosome);
+    knownSegmentsT <- data.frame(chromosome=currChromosome, start=xStart, end=xEnd);
+
     fit <- segmentByCBS(rho, 
                         chromosome=chromosome, x=x,
-                        joinSegments=joinSegments, knownCPs=knownCPsKK,
+                        joinSegments=joinSegments,
+                        knownSegments=knownSegmentsT,
                         alpha=alphaDH, undo=undoDH, ...,
-                        columnNamesFlavor="PSCBS", verbose=verbose);
+                        verbose=verbose);
     verbose && str(verbose, fit);
     dhSegments <- fit$output;
     dhSegRowsKK <- fit$segRows;
@@ -559,7 +653,7 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
     verbose && exit(verbose);
 
     # Drop dummy columns
-    keep <- setdiff(colnames(dhSegments), c("id", "chromosome"));
+    keep <- setdiff(colnames(dhSegments), c("sampleName", "chromosome"));
     dhSegments <- dhSegments[,keep,drop=FALSE];
 
     # Tag fields by DH
@@ -571,8 +665,8 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
 
     # Special case: If there where not enough data to segment DH...
     if (nrow(dhSegments) == 0) {
-      dhSegments <- dhSegments[as.integer(NA),];
-      dhSegRowsKK <- dhSegRowsKK[as.integer(NA),];
+      dhSegments <- dhSegments[as.integer(NA),,drop=FALSE];
+      dhSegRowsKK <- dhSegRowsKK[as.integer(NA),,drop=FALSE];
     }
 
     verbose && cat(verbose, "DH segmentation table:");
@@ -701,7 +795,7 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
     flavor = flavor,
     tbn = tbn,
     joinSegments = joinSegments,
-    knownCPs = knownCPs,
+    knownSegments = knownSegments,
     seed = seed
   );
 
@@ -720,7 +814,7 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
     params = params
   );
 
-  class(fit) <- c("PairedPSCBS", "PSCBS");
+  class(fit) <- c("PairedPSCBS", "PSCBS", "AbstractCBS");
 
   # Update 
   if (is.element(flavor, c("tcn&dh", "sqrt(tcn)&dh"))) {
@@ -762,8 +856,34 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN, muN=NU
 }) # segmentByPairedPSCBS()
 
 
+
+setMethodS3("segmentByPairedPSCBS", "data.frame", function(CT, ...) {
+  # To please R CMD check
+  data <- CT;
+
+
+  segmentByPairedPSCBS(CT=data$CT, betaT=data$betaT, betaN=data$betaN, 
+                   muN=data$muN, chromosome=data$chromosome, x=data$x, ...);
+})
+
+
 ############################################################################
 # HISTORY:
+# 2011-10-21
+# o Now segmentByPairedCBS() handles forced separators in 'knownSegments'.
+# 2011-10-20
+# o CLEANUP: Dropped a stray debug output message in segmentByPairedPSCBS().
+# o Replaced argument 'knownCPs' with 'knownSegments' for  segmentByCBS().
+# 2011-10-02
+# o Added segmentByPairedPSCBS() for data.frame such that the locus-level
+#   data arguments can also be passed via a data.frame. 
+# 2011-09-04
+# o ROBUSTNESS: Added drop=FALSE to matrix subsettings.
+# o CLEANUP: Removed all references to/usage of DNAcopy fields, which
+#   are no longer part of the CBS class.
+# 2011-09-03
+# o Updated code to not use deprecated argument 'columnNamesFlavor'
+#   of segmentByCBS().
 # 2011-08-08
 # o BUG FIX: If dropSegmentationOutliers() would drop an outlier next to
 #   a change point, such that total copy-number signal would become NA,

@@ -17,12 +17,17 @@ setMethodS3("joinSegments", "CBS", function(fit, range=NULL, ..., verbose=FALSE)
 
 
   verbose && enter(verbose, "Joining segments");  
-  segs <- fit$output;
+  segs <- getSegments(fit);
+  verbose && cat(verbose, "Segments:");
+  verbose && print(verbose, segs);
+  verbose && cat(verbose, "Range:");
+  verbose && print(verbose, range);
 
   nbrOfSegs <- nrow(segs);
   if (nbrOfSegs > 1) {
     verbose && enter(verbose, "Centering change points");
-    x <- fit$data$maploc;
+    data <- getLocusData(fit);
+    x <- data$x;
     prevSeg <- segs[1L,];
     for (ss in 2:nbrOfSegs) {
       currSeg <- segs[ss,];
@@ -42,17 +47,18 @@ setMethodS3("joinSegments", "CBS", function(fit, range=NULL, ..., verbose=FALSE)
   } # if (nbrOfSegs > 1)
 
 
-  knownCPs <- range;
-  if (!is.null(knownCPs)) {
+  if (!is.null(range)) {
+    xMin <- min(range, na.rm=TRUE);
+    xMax <- max(range, na.rm=TRUE);
     if (nbrOfSegs > 0) {
       # Sanity check
-      stopifnot(knownCPs[1L] <= segs[1L,"start"]);
-      segs[1L,"start"] <- knownCPs[1L];
+      stopifnot(xMin <= segs[1L,"start"]);
+      segs[1L,"start"] <- xMin;
       # Sanity check
-      stopifnot(segs[1L,"end"] <= knownCPs[length(knownCPs)]);
-      segs[nbrOfSegs,"end"] <- knownCPs[length(knownCPs)];
+      stopifnot(segs[1L,"end"] <= xMax);
+      segs[nbrOfSegs,"end"] <- xMax;
     } # if (nbrOfSegs > 0)
-  } # if (!is.null(knownCPs))
+  } # if (!is.null(range))
 
   fit$output <- segs;
 
@@ -61,11 +67,13 @@ setMethodS3("joinSegments", "CBS", function(fit, range=NULL, ..., verbose=FALSE)
   verbose && exit(verbose);
 
   fit;
-}) # joinSegments()
+}, private=TRUE) # joinSegments()
 
 
 ############################################################################
 # HISTORY:
+# 2011-09-04
+# o Updated joinSegments() to be aware of new column names in CBS.
 # 2011-06-14
 # o Updated code to recognize new column names.
 # 2010-11-21
