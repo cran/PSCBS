@@ -2,6 +2,60 @@
 Package: PSCBS
 ==============
 
+Version: 0.17.1 [2011-11-19]
+o BUG FIX: The internal sanity check of testROH() on weights was
+  slightly too conservative (required to high precision) when it
+  came to asserting that the sum of the weights equals one.
+
+
+Version: 0.17.0 [2011-11-19]
+o GENERALIZATION: Now it is possible to run Paired PSCBS (without
+  TumorBoost) when only genotypes but not BAFs are available for the
+  matched normal.
+
+
+Version: 0.16.3 [2011-11-17]
+o Added resegment() for CBS and PairedPSCBS for easy resegmentation.
+o Adjusted segmentByCBS() such that it can handle 'knownSegments'
+  with chromosome boundaries given as -Inf and +Inf.
+o Now argument 'mar' for plotTracks() defaults to NULL.
+o ROBUSTNESS: Added redundancy tests for segmentByCBS() and
+  segmentByPairedPSCBS() with argument 'knownSegments'.
+o ROBUSTNESS: Now segmentByCBS() does more validation of 'knownSegments'.
+o FIX: extractRegions() for AbstractCBS would also show verbose output.
+o BUG FIX: Now argument/parameter 'seed' is correctly preserved by
+  segmentByCBS().  So is 'tbn' for segmentByPairedPSCBS().
+o BUG FIX: segmentByPairedPSCBS() would give an error when trying to
+  segment DH if the TCN segment contains no data points, which could
+  happen if 'knownSegments' specifies an empty segment, e.g. centromere.
+o BUG FIX: extractSegments() for CBS would throw an error when
+  there were multiple chromosomes.
+
+
+Version: 0.16.2 [2011-11-16]
+o Now segmentByCBS(..., w) stores weights 'w', if given, in the 
+  locus-level data table of the returned CBS object.
+o Added pruneBySdUndo() for CBS, which does what undo.splits="sdundo"'
+  for DNA::segment(), but on the already segmented results.
+o Now updateMeans() uses locus-specific weights, iff available.
+o Added updateBoundaries() for CBS to update (start,stop) per segment.
+o CORRECTNESS: Now updateMeans() for CBS identifies loci via internal
+  'segRows' field and no longer by locations of segment boundaries,
+  which gave slightly incorrect estimates for "tied" loci.
+
+
+Version: 0.16.1 [2011-11-15]
+o Now more segmentation parameters are stored in the CBS object.
+o SPEEDUP: Now segmentByCBS() will use memoization to retrieve 
+  so called "sequential boundaries for early stopping", iff any of
+  the DNAcopy::segment() arguments 'alpha', 'nperm' and 'eta' are
+  specified.  See also DNAcopy::getbdry().
+o Added method="DNAcopy" to estimateStandardDeviation() for CBS, which
+  estimates the std. dev. using DNAcopy:::trimmed.variance().
+o BUG FIX: extractSegments() for CBS would throw an error, because in
+  most cases it would created a corrupt internal 'segRows' field.
+
+
 Version: 0.16.0 [2011-11-12]
 o Added argument 'oma' and 'mar' to plotTracksManyChromosomes() for
   PairedPSCBS for setting graphical parameters when 'add' == FALSE.

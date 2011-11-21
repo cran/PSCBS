@@ -1,6 +1,7 @@
 ###########################################################################/**
 # @RdocDefault segmentByCBS
 # @alias segmentByCBS.data.frame
+# @alias segmentByCBS.CBS
 # @alias segmentByCBS.CNA
 # @alias segmentByCBS
 #
@@ -96,6 +97,30 @@
 #*/########################################################################### 
 setMethodS3("segmentByCBS", "default", function(y, chromosome=0L, x=NULL, index=seq(along=y), w=NULL, undo=Inf, ..., joinSegments=TRUE, knownSegments=NULL, seed=NULL, verbose=FALSE) {
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  # Local functions
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  # DNAcopy::getbdry() is slow for now default settings.  Below we 
+  # implement a memoized version of this function.
+  getbdry2 <- function(eta, nperm, alpha, tol=0.01, verbose=FALSE) {
+    require("R.cache") || throw("Package not loaded: R.cache");
+
+    key <- list(method="segmentByCBS",
+                eta=eta, nperm=as.integer(nperm), alpha=alpha, tol=tol,
+                version="0.16.1");
+    dirs <- c("PSCBS", "segmentByCBS", "sbdry");
+    bdry <- loadCache(key=key, dirs=dirs);
+    if (!is.null(bdry)) return(bdry);
+
+    max.ones <- floor(nperm * alpha) + 1L;
+    bdry <- DNAcopy::getbdry(eta=eta, nperm=nperm, max.ones=max.ones, tol=tol);
+
+    saveCache(bdry, key=key, dirs=dirs);
+
+    bdry;
+  } # getbdry2()
+
+
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Validate arguments
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Argument 'y':
@@ -171,9 +196,17 @@ setMethodS3("segmentByCBS", "default", function(y, chromosome=0L, x=NULL, index=
     throw("Argument 'knownSegments' does not have the required column names: ", hpaste(colnames(knownSegments)));
   }
 
-  # Known segments must not share loci
+  # Detailed validation of 'knownSegments'.
   for (chr in sort(unique(knownSegments$chromosome))) {
     dd <- subset(knownSegments, chromosome == chr);
+
+    # Known segments must not overlap
+    if (!all(dd$start[-1] >= dd$end[-nrow(dd)], na.rm=TRUE)) {
+      print(knownSegments);
+      throw("Detected overlapping segments on chromosome ", chr, " in argument 'knownSegments'.");
+    }
+
+    # Known segments must not share loci
     xs <- c(dd$start, dd$end);
     xs <- xs[!is.na(xs)];
     if (anyDuplicated(xs) > 0) {
@@ -233,8 +266,7 @@ setMethodS3("segmentByCBS", "default", function(y, chromosome=0L, x=NULL, index=
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Drop data points without known genomic positions, because that
-  # is what DNAcopy::CNA() will do otherwise.  At the end, we will 
-  # undo this such that the returned 'data' object is complete.
+  # is what DNAcopy::CNA() will do otherwise.
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   ok <- (!is.na(data$chrom) & !is.na(data$x));
   if (any(!ok)) {
@@ -324,11 +356,20 @@ setMethodS3("segmentByCBS", "default", function(y, chromosome=0L, x=NULL, index=
     fit <- Reduce(append, fitList);
     # Not needed anymore
     rm(fitList);
+
+    # Update parameters that otherwise may be incorrect
+    fit$params$seed <- seed;
+
     verbose && str(verbose, fit);
     verbose && exit(verbose);
 
-    verbose && print(verbose, head(as.data.frame(fit)));
-    verbose && print(verbose, tail(as.data.frame(fit)));
+    segs <- as.data.frame(fit);
+    if (nrow(segs) < 6) {
+      verbose && print(verbose, segs);
+    } else {
+      verbose && print(verbose, head(segs));
+      verbose && print(verbose, tail(segs));
+    }
    
     verbose && exit(verbose);
 
@@ -381,7 +422,7 @@ setMethodS3("segmentByCBS", "default", function(y, chromosome=0L, x=NULL, index=
       # Sanity check
       stopifnot(nbrOfSegments(splitter, splitters=TRUE) == 1);
     });
-    
+
     fitList <- list();
     for (jj in seq(length=nbrOfSegments)) {
       seg <- knownSegments[jj,];
@@ -430,11 +471,12 @@ setMethodS3("segmentByCBS", "default", function(y, chromosome=0L, x=NULL, index=
 
         rm(list=fields); # Not needed anymore
 
-        if (nbrOfSegments(fit) < 6) {
-          verbose && print(verbose, as.data.frame(fit));
+        segs <- as.data.frame(fit);
+        if (nrow(segs) < 6) {
+          verbose && print(verbose, segs);
         } else {
-          verbose && print(verbose, head(as.data.frame(fit)));
-          verbose && print(verbose, tail(as.data.frame(fit)));
+          verbose && print(verbose, head(segs));
+          verbose && print(verbose, tail(segs));
         }
       } # if (isSplitter)
 
@@ -454,12 +496,25 @@ setMethodS3("segmentByCBS", "default", function(y, chromosome=0L, x=NULL, index=
     # Not needed anymore
     rm(fitList);
 
-    verbose && str(verbose, fit);
+    # Update parameters that otherwise may be incorrect
+    fit$params$seed <- seed;
 
+    verbose && str(verbose, fit);
     verbose && exit(verbose);
 
-    verbose && print(verbose, head(as.data.frame(fit)));
-    verbose && print(verbose, tail(as.data.frame(fit)));
+    segs <- getSegments(fit);
+    if (nrow(segs) > 6) {
+      verbose && print(verbose, head(segs));
+      verbose && print(verbose, tail(segs));
+    } else {
+      verbose && print(verbose, segs);
+    }
+
+    # Sanity checks
+    segs <- getSegments(fit);
+    stopifnot(all(segs$start[-1] >= segs$end[-nrow(segs)], na.rm=TRUE));
+    stopifnot(all(diff(segs$start) > 0, na.rm=TRUE));
+    stopifnot(all(diff(segs$end) > 0, na.rm=TRUE)); 
 
     # Sanity check
 #    if (nrow(fit$data) != length(y)) {
@@ -479,12 +534,18 @@ setMethodS3("segmentByCBS", "default", function(y, chromosome=0L, x=NULL, index=
     return(fit);
   } # if (nbrOfSegments > 1)
 
+  # Sanity check
+  nbrOfSegments <- nrow(knownSegments);
+  stopifnot(nbrOfSegments <= 1);
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Specific segment?
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   if (nbrOfSegments > 0) {
     knownSegments <- subset(knownSegments, chromosome == chromosome);
+    nbrOfSegments <- nrow(knownSegments);
+    # Sanity check
+    stopifnot(nbrOfSegments <= 1);
   }
 
   if (nbrOfSegments == 1) {
@@ -555,7 +616,34 @@ setMethodS3("segmentByCBS", "default", function(y, chromosome=0L, x=NULL, index=
   # Sanity check
   stopifnot(nrow(cnData) == nrow(data));
 
+
+  userArgs <- list(...);
+  if (length(userArgs) > 0) {
+    verbose && cat(verbose, "User arguments:");
+    verbose && str(verbose, userArgs);
+  }
+
+  # Check if 'sbdry' can/should be precalculated.  This uses memoization
+  # so that next time you segment with same 'nperm', 'alpha' and 'eta'
+  # parameters, there will be much less startup overhead.
+  if (length(userArgs) > 0 && !is.element("sbdry", names(userArgs))) {
+    keys <- c("nperm", "alpha", "eta");
+    keep <- is.element(keys, names(userArgs));
+    if (any(keep)) {
+      verbose && enter(verbose, "Precalculating argument 'sbdry' (with memoization)");
+      # Precalculate boundaries
+      argsT <- formals[keys];
+      keys <- keys[keep];
+      argsT[keys] <- userArgs[keys];
+      argsT$verbose <- less(verbose, 5);
+      sbdry <- do.call(getbdry2, args=argsT);
+      userArgs$sbdry <- sbdry;
+      verbose && exit(verbose);
+    }
+  }
+
   params <- list();
+
   if (hasWeights) {
     params$weights <- data$w;
   }
@@ -568,11 +656,8 @@ setMethodS3("segmentByCBS", "default", function(y, chromosome=0L, x=NULL, index=
   verbose && cat(verbose, "Segmentation parameters:");
   verbose && str(verbose, params);
 
-  userArgs <- list(...);
+  # Assign/overwrite by user arguments
   if (length(userArgs) > 0) {
-    verbose && cat(verbose, "User arguments:");
-    verbose && str(verbose, userArgs);
-    # Assign/overwrite by user arguments
     for (ff in names(userArgs)) {
       params[[ff]] <- userArgs[[ff]];
     }
@@ -638,8 +723,12 @@ setMethodS3("segmentByCBS", "default", function(y, chromosome=0L, x=NULL, index=
       seg <- knownSegments[1,];
       output$ID <- sampleName;
       output$chrom <- seg$chromosome;
-      output$loc.start <- seg$start;
-      output$loc.end <- seg$end;
+      if (is.finite(seg$start)) {
+        output$loc.start <- seg$start;
+      }
+      if (is.finite(seg$end)) {
+        output$loc.end <- seg$end;
+      }
       output$num.mark <- 0L;
       output$seg.mean <- as.double(NA);
       segRows[1,] <- as.integer(NA);
@@ -649,7 +738,7 @@ setMethodS3("segmentByCBS", "default", function(y, chromosome=0L, x=NULL, index=
     }
     fit$output <- output;
     fit$segRows <- segRows;
-  }
+  } # if (nbrOfNonMissingLoci == 0)
 
   verbose && cat(verbose, "Captured output that was sent to stdout:");
   stdout <- paste(stdout, collapse="\n");
@@ -675,18 +764,25 @@ setMethodS3("segmentByCBS", "default", function(y, chromosome=0L, x=NULL, index=
 
   # Store genomewide index
   fit$data$index <- data$index;
+
+  # Store weights
+  fit$data$w <- data$w;
+
   rm(data);
 
   verbose && exit(verbose);
 
 
-
-  params <- list(
-    joinSegments = joinSegments,
-    knownSegments = knownSegments,
-    seed = seed
-  );
-
+  # Store also interesting parameters to DNAcopy::segment()
+  keys <- setdiff(names(formals), c("x", "weights", "sbdry", "verbose"));
+  keys <- c(keys, "undo", "seed");
+  keep <- is.element(names(params), keys);
+  keep <- names(params)[keep];
+  params <- params[keep];
+  params$undo <- undo;
+  params$joinSegments <- joinSegments;
+  params$knownSegments <- knownSegments;
+  params$seed <- seed;
   fit$params <- params;
 
 #  class(fit) <- c("CBS", class(fit));
@@ -730,8 +826,11 @@ setMethodS3("segmentByCBS", "default", function(y, chromosome=0L, x=NULL, index=
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   if (joinSegments) {
     if (nbrOfSegments == 1) {
-      range <- c(knownSegments$start, knownSegments$end);
-      range <- range(range, na.rm=TRUE);
+      starts <- knownSegments$start;
+      ends <- knownSegments$end;
+      if (is.infinite(starts)) starts <- segs$start;
+      if (is.infinite(ends)) ends <- segs$end;
+      range <- range(c(starts, ends), na.rm=TRUE);
     } else {
       range <- NULL;
     }
@@ -765,9 +864,29 @@ setMethodS3("segmentByCBS", "data.frame", function(y, ...) {
 })
 
 
+setMethodS3("segmentByCBS", "CBS", function(...) {
+  resegment(...);
+}) # segmentByCBS()
+
+
 
 ############################################################################
 # HISTORY:
+# 2011-11-17
+# o BUG FIX: Now parameter 'seed' is preserved by segmentByCBS().
+# o Added segmentByCBS() for CBS, which is just a wrapper for resegment().
+# o ROBUSTNESS: Now segmentByCBS() does more validation of 'knownSegments'.
+# o ROBUSTNESS: Added more sanity checks for (start,end) of segments
+#   after merging segments that have been segmented separately due
+#   to 'knownSegments'.
+# o Adjusted segmentByCBS() such that it can handle 'knownSegments' with
+#   chromosome boundaries given as -Inf and +Inf.
+# 2011-11-15
+# o Now more segmentation parameters are stored in the CBS object.
+# o SPEEDUP: Now segmentByCBS() will use memoization to retrieve 
+#   so called "sequential boundaries for early stopping", iff any of
+#   the DNAcopy::segment() arguments 'alpha', 'nperm' and 'eta' are
+#   specified.  See also DNAcopy::getbdry().
 # 2011-10-20
 # o Now the result of segmentByCBS() is guaranteed to include the
 #   segments given by argument 'knownSegments'.  Before empty segments

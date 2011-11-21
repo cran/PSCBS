@@ -240,6 +240,13 @@
 \alias{callROHOneSegment.PairedPSCBS}
 \alias{testROH}
 \alias{testROH.numeric}
+\alias{pruneBySdUndo}
+\alias{updateBoundaries}
+\alias{updateBoundaries.CBS}
+\alias{resegment}
+\alias{resegment.AbstractCBS}
+\alias{resegment.CBS}
+\alias{resegment.PairedPSCBS}
 
 \description{
   This page contains aliases for all "non-documented" objects that
