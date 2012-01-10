@@ -2,10 +2,97 @@
 Package: PSCBS
 ==============
 
-Version: 0.17.1 [2011-11-19]
+Version: 0.19.4 [2012-01-10]
+o Now example(segmentByPairedPSCBS) and the system tests that are run
+  by R CMD check are tuned to (by default) run much faster by segmenting
+  using fewer data points and bootstrapping using fewer samples.  This
+  update was done to meet the new CRAN policy.  By setting environment
+  variable _R_CHECK_FULL_ to '1' the full data set is used instead.
+
+
+Version: 0.19.3 [2012-01-09]
+o ROBUSTNESS: Now extractSegments() for PairedPSCBS gives an informative
+  error message that it is not supported if CNs were segmented using 
+  flavor "tcn,dh".
+o BUG FIX: postsegmentTCN() for PairedPSCBS could generate an invalid
+  'tcnSegRows' matrix, where the indices for two consecutive segments
+  would overlap, which is invalid.  Thanks to Minya Pu for reporting
+  on failed sanity check related to this.
+
+
+Version: 0.19.2 [2011-12-29]
+o ROBUSTNESS: Explicitly added 'digest' to the list of suggested packages.
+
+
+Version: 0.19.1 [2011-12-13]
+o Added support for callGainsAndLosses(..., method="ucsf-dmad")
+  of CBS objects.
+
+
+Version: 0.19.0 [2011-12-12]
+o Added optional argument 'indices' to getLocusData() to be able
+  to retrieve the locus-level data as indexed by input data.
+o BUG FIX: Now gapsToSegments() gave invalid segments for chromosomes
+  with more than one gap.  Now gapsToSegments() validates argument 
+  'gaps' and asserts that it returns non-overlapping segments.
+o DOCUMENTATION: Clarified in help("segmentByCBS") how missing
+  values are dealt with.
+
+
+Version: 0.18.2 [2011-12-07]
+o Now plotTracks() for CBS always returns an invisible object.
+o BUG FIX: pruneBySdUndo() for CBS did not work with more than
+  one array.
+
+
+Version: 0.18.1 [2011-12-03]
+o Added drawChangePoints() for AbstractCBS.
+o Now pruneByHClust() for AbstractCBS updates the segment means.
+o Added writeSegments() for PSCBS object.
+o Now print() for AbstractCBS returns getSegments(..., simplify=TRUE).
+o Added argument 'simplify' to getSegments().
+o Added arguments 'name', 'tags' and 'exts' to writeSegments() and
+  writeLocusData() and dropped 'filename'.
+
+
+Version: 0.18.0 [2011-11-28]
+o Added pruneByHClust() for AbstractCBS, with implementation
+  for CBS and PairedPSCBS.
+o extractCNs() for CBS would not return a matrix but a data.frame.
+o BUG FIX: extractTotalCNs() for CBS would give an error.
+
+
+Version: 0.17.4 [2011-11-26]
+o Added argument 'updateMeans=TRUE' to callROH() for PairedPSCBS.
+o Now bootstrapTCNandDHByRegion() for PairedPSCBS preserves NAs 
+  for DH and (C1,C2) quantiles, if the DH mean level is NA, which
+  can happen when a segment is called ROH.  This also makes sure
+  that a segment called ROH will not be called AB.
+o An internal sanity check of bootstrapTCNandDHByRegion() for
+  PairedPSCBS would give an error if DH mean levels had been set
+  to NA for segments called ROH.
+
+
+Version: 0.17.3 [2011-11-24]
+o Added callSegmentationOutliers() and dropSegmentationOutliers()
+  for data frames.
+o CLEANUP: Renamed field 'position' of the example data to 'x'.
+  This helps us clean up some of the examples.
+o BUG FIX: bootstrapTCNandDHByRegion() for PairedPSCBS would give
+  an error, if a segment did not have any TCN signals, which can
+  occur when known segments are specified for Paired PSCBS.
+
+
+Version: 0.17.2 [2011-11-22]
+o Added findLargeGaps() and gapsToSegments().
+
+
+Version: 0.17.1 [2011-11-21]
 o BUG FIX: The internal sanity check of testROH() on weights was
   slightly too conservative (required to high precision) when it
   came to asserting that the sum of the weights equals one.
+o BUG FIX: resegment() for PairedPSCBS called segmentByCBS()
+  instead of segmentByPairedPSCBS().
 
 
 Version: 0.17.0 [2011-11-19]

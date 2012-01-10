@@ -1,102 +1,5 @@
-setMethodS3("writeLocusData", "CBS", function(fit, name=getSampleName(fit), tags=NULL, ext="tsv", path=NULL, sep="\t", nbrOfDecimals=4L, addHeader=TRUE, createdBy=NULL, overwrite=FALSE, skip=FALSE, ...) {
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  # Validate arguments
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  # Argument 'name' and 'tags':
-  name <- Arguments$getCharacter(name);
-  tags <- Arguments$getCharacters(tags);
-
-  # Argument 'ext':
-  ext <- Arguments$getCharacter(ext);
-
-  # Arguments 'path':
-  path <- Arguments$getWritablePath(path);
-
-  # Argument 'nbrOfDecimals':
-  nbrOfDecimals <- Arguments$getInteger(nbrOfDecimals);
-
-
-
-  fullname <- paste(c(name, tags), collapse=",");
-  filename <- sprintf("%s.%s", fullname, ext);
-  pathname <- Arguments$getWritablePathname(filename, path=path, mustNotExist=(!overwrite && !skip));
-
-  # File already exists?
-  if (isFile(pathname)) {
-    # Skip?
-    if (skip) {
-      return(pathname);
-    }
-
-    # Overwrite!
-    file.remove(pathname);
-  }
-
-  # Write to temporary file
-  pathnameT <- pushTemporaryFile(pathname);
-
-
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  # Extract data
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  data <- getLocusData(fit, ...);
-
-  # Round of floating points
-  if (!is.null(nbrOfDecimals)) {
-    cols <- colnames(data);
-    for (key in cols) {
-      values <- data[[key]];
-      if (is.double(values)) {
-        values <- round(values, digits=nbrOfDecimals);
-        data[[key]] <- values;
-      }
-    } # for (key ...)
-  }
-
-
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  # Build header
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  if (addHeader) {
-    sigmaDelta <- estimateStandardDeviation(fit, method="diff");
-#    sigmaResiduals <- estimateStandardDeviation(fit, method="res");
-
-    createdOn <- format(Sys.time(), format="%Y-%m-%d %H:%M:%S %Z");
-    hdr <- c(
-      name=name,
-      tags=tags,
-      fullname=fullname,
-      segmentationMethod=sprintf("segment() of %s", attr(fit, "pkgDetails")),
-      nbrOfLoci=nbrOfLoci(fit),
-      nbrOfSegments=nbrOfSegments(fit),
-      joinSegments=fit$params$joinSegments,
-      signalType=getSignalType(fit),
-      sigmaDelta=sprintf("%.4f", sigmaDelta),
-#      sigmaResiduals=sprintf("%.4f", sigmaResiduals),
-      createdBy=createdBy,
-      createdOn=createdOn,
-      nbrOfDecimals=nbrOfDecimals,
-      nbrOfColumns=ncol(data),
-      columnNames=paste(colnames(data), collapse=", "),
-      columnClasses=paste(sapply(data, FUN=function(x) class(x)[1]), collapse=", ")
-    );
-    bfr <- paste("# ", names(hdr), ": ", hdr, sep="");
-
-    cat(file=pathnameT, bfr, sep="\n");
-  } # if (addHeader)
-
-  write.table(file=pathnameT, data, append=TRUE, quote=FALSE, sep=sep, 
-                                          row.names=FALSE, col.names=TRUE);
-
-  pathname <- popTemporaryFile(pathnameT);
-
-  pathname;  
-}, protected=TRUE) # writeLocusData()
-
-
-
 ###########################################################################/**
-# @set "class=CBS"
+# @set "class=PSCBS"
 # @RdocMethod writeSegments
 #
 # @title "Writes the table of segments to file"
@@ -132,7 +35,7 @@ setMethodS3("writeLocusData", "CBS", function(fit, name=getSampleName(fit), tags
 #
 # @keyword internal
 #*/###########################################################################  
-setMethodS3("writeSegments", "CBS", function(fit, name=getSampleName(fit), tags=NULL, ext="tsv", path=NULL, addHeader=TRUE, createdBy=NULL, sep="\t", nbrOfDecimals=4L, splitters=FALSE, overwrite=FALSE, skip=FALSE, ...) {
+setMethodS3("writeSegments", "PSCBS", function(fit, name=getSampleName(fit), tags=NULL, ext="tsv", path=NULL, addHeader=TRUE, createdBy=NULL, sep="\t", nbrOfDecimals=4L, splitters=FALSE, overwrite=FALSE, skip=FALSE, ...) {
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Validate arguments
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -148,7 +51,6 @@ setMethodS3("writeSegments", "CBS", function(fit, name=getSampleName(fit), tags=
 
   # Argument 'nbrOfDecimals':
   nbrOfDecimals <- Arguments$getInteger(nbrOfDecimals);
-
 
 
   fullname <- paste(c(name, tags), collapse=",");
@@ -209,7 +111,8 @@ setMethodS3("writeSegments", "CBS", function(fit, name=getSampleName(fit), tags=
   # Build header
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   if (addHeader) {
-    sigmaDelta <- estimateStandardDeviation(fit, method="diff");
+#    sigmaDelta <- estimateStandardDeviation(fit, method="diff");
+   sigmaDelta <- NA;
 #    sigmaResiduals <- estimateStandardDeviation(fit, method="res");
 
     createdOn <- format(Sys.time(), format="%Y-%m-%d %H:%M:%S %Z");
@@ -221,7 +124,7 @@ setMethodS3("writeSegments", "CBS", function(fit, name=getSampleName(fit), tags=
       nbrOfLoci=nbrOfLoci(fit),
       nbrOfSegments=nbrOfSegments(fit),
       joinSegments=fit$params$joinSegments,
-      signalType=getSignalType(fit),
+#      signalType=getSignalType(fit),
       sigmaDelta=sprintf("%.4f", sigmaDelta),
 #      sigmaResiduals=sprintf("%.4f", sigmaResiduals),
       createdBy=createdBy,
@@ -246,14 +149,8 @@ setMethodS3("writeSegments", "CBS", function(fit, name=getSampleName(fit), tags=
 
 
 
-
-
 ############################################################################
 # HISTORY:
 # 2011-12-03
-# o Added arguments 'name', 'tags' and 'exts' to writeSegments() and
-#   writeLocusData() and dropped 'filename'.
-# 2011-09-04
-# o Added writeSegments() for CBS.
-# o Added writeLocusData() for CBS.
+# o Added writeSegments() for PSCBS.
 ############################################################################

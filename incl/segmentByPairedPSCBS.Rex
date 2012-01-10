@@ -6,32 +6,30 @@
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 pathname <- system.file("data-ex/PairedPSCBS,exData,chr01.Rbin", package="PSCBS")
 data <- R.utils::loadObject(pathname)
-
-# Order by chromosome and position
-o <- order(data$chromosome, data$position)
-data <- data[o,]
 str(data)
-R.oo::attachLocally(data)
-x <- position
-J <- length(x)
+
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Paired PSCBS segmentation
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Drop single-locus outliers
-CTs <- dropSegmentationOutliers(CT, chromosome=1, x=x, verbose=-10)
+dataS <- dropSegmentationOutliers(data)
+
+# Speed up example by segmenting fewer loci
+dataS <- dataS[seq(from=1, to=nrow(data), by=5),]
+
+str(dataS)
+
+R.oo::attachLocally(dataS)
 
 # Paired PSCBS segmentation
-fit <- segmentByPairedPSCBS(CTs, betaT=betaT, betaN=betaN,
-                            chromosome=1, x=x, 
+fit <- segmentByPairedPSCBS(CT, betaT=betaT, betaN=betaN,
+                            chromosome=chromosome, x=x, 
                             seed=0xBEEF, verbose=-10)
 print(fit)
 
 # Plot results
 plotTracks(fit)
-
-# Sanity check
-stopifnot(nbrOfSegments(fit) == 12)
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
