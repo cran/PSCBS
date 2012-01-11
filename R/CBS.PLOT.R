@@ -60,7 +60,7 @@ setMethodS3("plotTracks", "CBS", function(x, scatter=TRUE, pch=20, col="gray", m
   # Argument 'fit':
   if (nbrOfChromosomes(fit) > 1) {
     res <- plotTracksManyChromosomes(fit, scatter=scatter, pch=pch, Clim=Clim, xScale=xScale, Clab=Clab, ..., byIndex=byIndex, mar=mar, add=add);
-    return(res);
+    return(invisible(res));
   }
 
   # Argument 'xScale':
@@ -621,8 +621,29 @@ setMethodS3("highlightArmCalls", "CBS", function(fit, genomeData, minFraction=0.
 
 
 
+
+setMethodS3("drawChangePoints", "CBS", function(fit, labels=FALSE, cex=0.5, col="#666666", xScale=1e-6, side=3, line=-1, xpd=TRUE, ..., verbose=FALSE) {
+  segs <- getSegments(fit, splitters=FALSE);
+  xStarts <- segs[,"start"];
+  xEnds <- segs[,"end"];
+
+  xs <- sort(unique(c(xStarts, xEnds)));
+  abline(v=xScale*xs, lty=1, col=col);
+
+  if (labels) {
+    xMids <- xScale * (xEnds + xStarts) / 2;
+    labels <- rownames(segs);
+    mtext(side=side, at=xMids, labels, line=line, cex=cex, col=col, xpd=xpd, ...);
+  }
+}, protected=TRUE)
+
+
 ############################################################################
 # HISTORY:
+# 2011-12-06
+# o Now plotTracks() for CBS always returns an invisible object.
+# 2011-12-03
+# o Added drawChangePoints() for CBS.
 # 2011-10-23
 # o BUG FIX: highlightArmCalls() for CBS did not handle empty chromosomes.
 # 2011-10-08

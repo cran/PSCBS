@@ -8,20 +8,24 @@ library("PSCBS")
 pathname <- system.file("data-ex/PairedPSCBS,exData,chr01.Rbin", package="PSCBS")
 data <- R.utils::loadObject(pathname)
 
-# Order by chromosome and position
-o <- order(data$chromosome, data$position)
-data <- data[o,]
-str(data)
-R.oo::attachLocally(data)
-x <- position
-J <- length(x)
-
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Paired PSCBS segmentation
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Drop single-locus outliers
-CTs <- dropSegmentationOutliers(CT, chromosome=1, x=x, verbose=-10)
+dataS <- dropSegmentationOutliers(data)
 
+# Run light-weight tests by default
+if (Sys.getenv("_R_CHECK_FULL_") == "") {
+  # Use only every 5th data point
+  dataS <- dataS[seq(from=1, to=nrow(data), by=5),]
+  # Number of segments (for assertion)
+  nSegs <- 4L
+} else {
+  # Full tests
+  nSegs <- 12L
+}
+
+str(dataS)
 
 fig <- 1;
 
@@ -31,15 +35,13 @@ fig <- 1;
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 knownSegments <- data.frame(
   chromosome = c(        1,  1,         1),
-  start      = c(     x[1], NA, 141510003),
-  end        = c(120992603, NA,      x[J])
+  start      = c(     -Inf, NA, 141510003),
+  end        = c(120992603, NA,      +Inf)
 )
 
 
 # Paired PSCBS segmentation
-fit <- segmentByPairedPSCBS(CTs, betaT=betaT, betaN=betaN,
-                            chromosome=1, x=x, 
-                            knownSegments=knownSegments, 
+fit <- segmentByPairedPSCBS(dataS, knownSegments=knownSegments, 
                             seed=0xBEEF, verbose=-10)
 print(fit)
 
@@ -48,7 +50,7 @@ devSet(list(fit, "tracks"));
 plotTracks(fit)
 
 # Sanity check
-stopifnot(nbrOfSegments(fit) == 12)
+stopifnot(nbrOfSegments(fit) == nSegs)
 
 fit1 <- fit
 
@@ -58,15 +60,13 @@ fit1 <- fit
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 knownSegments <- data.frame(
   chromosome = c(        1,         1,         1),
-  start      = c(     x[1], 120992604, 141510003),
-  end        = c(120992603, 141510002,      x[J])
+  start      = c(     -Inf, 120992604, 141510003),
+  end        = c(120992603, 141510002,      +Inf)
 )
 
 
 # Paired PSCBS segmentation
-fit <- segmentByPairedPSCBS(CTs, betaT=betaT, betaN=betaN,
-                            chromosome=1, x=x, 
-                            knownSegments=knownSegments, 
+fit <- segmentByPairedPSCBS(dataS, knownSegments=knownSegments, 
                             seed=0xBEEF, verbose=-10)
 print(fit)
 
@@ -75,7 +75,7 @@ devSet(list(fit, "tracks"));
 plotTracks(fit)
 
 # Sanity check [TO FIX: See above]
-stopifnot(nbrOfSegments(fit) == 12)
+stopifnot(nbrOfSegments(fit) == nSegs)
 
 fit2 <- fit
 
@@ -85,14 +85,12 @@ fit2 <- fit
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 knownSegments <- data.frame(
   chromosome = c(        1,         1),
-  start      = c(     x[1], 141510003),
-  end        = c(120992603,       x[J])
+  start      = c(     -Inf, 141510003),
+  end        = c(120992603,      +Inf)
 )
 
 # Paired PSCBS segmentation
-fit <- segmentByPairedPSCBS(CTs, betaT=betaT, betaN=betaN,
-                            chromosome=1, x=x, 
-                            knownSegments=knownSegments, 
+fit <- segmentByPairedPSCBS(dataS, knownSegments=knownSegments, 
                             seed=0xBEEF, verbose=-10)
 print(fit)
 
@@ -101,6 +99,6 @@ devSet(list(fit, "tracks"));
 plotTracks(fit)
 
 # Sanity check
-stopifnot(nbrOfSegments(fit) == 11)
+stopifnot(nbrOfSegments(fit) == nSegs-1L)
 
 fit3 <- fit

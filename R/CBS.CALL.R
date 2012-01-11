@@ -52,7 +52,7 @@
 #
 # @keyword internal 
 #*/###########################################################################  
-setMethodS3("callGainsAndLosses", "CBS", function(fit, adjust=1.0, method=c("ucsf-mad"), ..., verbose=FALSE) {
+setMethodS3("callGainsAndLosses", "CBS", function(fit, adjust=1.0, method=c("ucsf-mad", "ucsf-dmad"), ..., verbose=FALSE) {
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
   # Validate arguments
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
@@ -86,7 +86,7 @@ setMethodS3("callGainsAndLosses", "CBS", function(fit, adjust=1.0, method=c("ucs
   verbose && cat(verbose, "Number of segments to be called: ", nbrOfSegments);
   verbose && cat(verbose, "Call method: ", method);
 
-  if (method == "ucsf-mad") {
+  if (is.element(method, c("ucsf-mad", "ucsf-dmad"))) {
     # Default arguments
     args <- list(
       chromosomes = intersect(getChromosomes(fit), c(0L, 1:22)),
@@ -107,8 +107,17 @@ setMethodS3("callGainsAndLosses", "CBS", function(fit, adjust=1.0, method=c("ucs
     scale <- Arguments$getDouble(scale, range=c(0,Inf));
 
     # Estimate the whole-genome standard deviation of the TCNs
-    sigma <- estimateStandardDeviation(fit, chromosomes=chromosomes, 
-                                       method="res", estimator="mad");
+    if (method == "ucsf-mad") {
+      sigma <- estimateStandardDeviation(fit, chromosomes=chromosomes, 
+                                         method="res", estimator="mad");
+      sigmaKey <- "sigmaMAD";
+    } else if (method == "ucsf-dmad") {
+      sigma <- estimateStandardDeviation(fit, chromosomes=chromosomes, 
+                                         method="diff", estimator="mad");
+      sigmaKey <- "sigmaDelta";
+    } else {
+      throw("INTERNAL ERROR: Unknown method: ", method);
+    }
 
     # Sanity check
     sigma <- Arguments$getDouble(sigma, range=c(0,Inf));
@@ -148,7 +157,7 @@ setMethodS3("callGainsAndLosses", "CBS", function(fit, adjust=1.0, method=c("ucs
     # Call parameters used
     params$method <- method;
     params$adjust <- adjust;
-    params$sigmaMAD <- sigma;
+    params[[sigmaKey]] <- sigma;
     params$scale <- scale;
     params$muR <- muR;
     params$tau <- tau;
@@ -587,10 +596,10 @@ setMethodS3("callOutliers", "CBS", function(fit, adjust=1.0, method=c("ucsf-mad"
 
 
 setMethodS3("extractCallsByLocus", "CBS", function(fit, ...) {
-  nbrOfLoci <- nbrOfLoci(fit);
-
   # Extract locus data
-  data <- getLocusData(fit);
+  data <- getLocusData(fit, ...);
+
+  nbrOfLoci <- nrow(data);
 
   # Extract segment data
   segs <- getSegments(fit, splitters=TRUE);
@@ -1158,6 +1167,11 @@ setMethodS3("mergeNonCalledSegments", "CBS", function(fit, ..., verbose=FALSE) {
 
 ############################################################################
 # HISTORY:
+# 2011-12-13
+# o Added "ucsf-dmad" to argument 'method' for callGainsAndLosses() of CBS.
+# 2011-12-12
+# o Now extractCallsByLocus() for CBS passes arguments
+#   '...' to getLocusData(). 
 # 2011-10-23
 # o BUG FIX: getCallStatisticsByArms() for CBS would thrown a error if
 #   argument 'genomeData' did not contain exactly the same chromosomes

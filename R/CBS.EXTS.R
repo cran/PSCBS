@@ -97,14 +97,16 @@ setMethodS3("as.CBS", "DNAcopy", function(fit, sample=1, ...) {
 
 
 setMethodS3("extractTotalCNs", "CBS", function(fit, ...) {
-  segs <- getSegments(fit, ...);
-  data <- data[,c("mean", "nbrOfLoci"), drop=FALSE];
+  data <- getSegments(fit, ...);
+  data[,c("mean", "nbrOfLoci"), drop=FALSE];
 }, protected=TRUE)
 
 
 setMethodS3("extractCNs", "CBS", function(fit, ...) {
   data <- extractTotalCNs(fit, ...);
-  data[,c("mean"), drop=FALSE];
+  data <- data[,c("mean"), drop=FALSE];
+  data <- as.matrix(data);
+  data;
 }, protected=TRUE)
 
 
@@ -200,7 +202,7 @@ setMethodS3("subset", "CBS", function(x, chromlist=NULL, ...) {
 # @synopsis
 #
 # \arguments{
-#  \item{...}{Not used.}
+#  \item{...}{Arguments passed to @seemethod "getLocusData".}
 # }
 #
 # \value{
@@ -216,14 +218,14 @@ setMethodS3("subset", "CBS", function(x, chromlist=NULL, ...) {
 # @keyword internal 
 #*/###########################################################################  
 setMethodS3("extractSegmentMeansByLocus", "CBS", function(fit, ...) {
-  data <- getLocusData(fit);
+  data <- getLocusData(fit, ...);
   chromosome <- data$chromosome;
   x <- data$x;
   y <- data[,3];
 
   segs <- getSegments(fit);
   nbrOfSegments <- nrow(segs);
-  nbrOfLoci <- nbrOfLoci(fit);
+  nbrOfLoci <- nrow(data);
 
   yS <- y;
   for (ss in seq(length=nbrOfSegments)) {
@@ -420,6 +422,12 @@ setMethodS3("getChromosomeRanges", "CBS", function(fit, ...) {
 
 ############################################################################
 # HISTORY:
+# 2011-12-12
+# o Now extractSegmentMeansByLocus() for CBS passes arguments
+#   '...' to getLocusData().
+# 2011-11-28
+# o extractCNs() for CBS would not return a matrix but a data.frame.
+# o BUG FIX: extractTotalCNs() for CBS would give an error.
 # 2011-11-15
 # o Added method="DNAcopy" to estimateStandardDeviation() for CBS, which
 #   estimates the std. dev. using DNAcopy:::trimmed.variance().

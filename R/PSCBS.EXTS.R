@@ -42,8 +42,26 @@ setMethodS3("as.data.frame", "PSCBS", function(x, ...) {
 }, protected=TRUE)
 
 
-setMethodS3("getLocusData", "PSCBS", function(fit, ...) {
+setMethodS3("getLocusData", "PSCBS", function(fit, indices=NULL, ...) {
+  # Argument 'indices':
+  if (!is.null(indices)) {
+    indices <- Arguments$getIndices(indices);
+  }
+
   data <- fit$data;
+
+  # Return requested indices
+  if (!is.null(indices)) {
+    # Map of final indices to current indices
+    map <- match(indices, data$index);
+
+    # Extract/expand...
+    data <- data[map,];
+
+    # Sanity check
+    stopifnot(nrow(data) == length(indices));
+  }
+
   data;
 }, protected=TRUE)
 
@@ -70,7 +88,7 @@ setMethodS3("isSegmentSplitter", "PSCBS", function(fit, ...) {
 # @synopsis
 #
 # \arguments{
-#  \item{splitters}{If @TRUE, "splitters" between chromosomes are 
+#  \item{simplify}{If @TRUE, redundant and intermediate information is dropped.}#  \item{splitters}{If @TRUE, "splitters" between chromosomes are 
 #     preserved, otherwise dropped.}
 #  \item{...}{Not used.}
 # }
@@ -86,7 +104,7 @@ setMethodS3("isSegmentSplitter", "PSCBS", function(fit, ...) {
 #   @seeclass
 # }
 #*/###########################################################################  
-setMethodS3("getSegments", "PSCBS", function(fit, splitters=TRUE, ...) {
+setMethodS3("getSegments", "PSCBS", function(fit, simplify=FALSE, splitters=TRUE, ...) {
   # Argument 'splitters':
   splitters <- Arguments$getLogical(splitters);
 
@@ -102,13 +120,39 @@ setMethodS3("getSegments", "PSCBS", function(fit, splitters=TRUE, ...) {
 ##    segs$id <- getSampleName(fit);
 ##  }
 
+  if (simplify) {
+    # If joinSegments was used (i.e. (start,end) are equal for TCN and DH)...
+    if (fit$params$joinSegments) {
+      # Sanity check
+      stopifnot(all(segs$tcnStart == segs$dhStart, na.rm=TRUE));
+      stopifnot(all(segs$tcnEnd == segs$dhEnd, na.rm=TRUE));
+
+      names <- colnames(segs);
+      keep <- !is.element(names, c("dhStart", "dhEnd"));
+      segs <- segs[,keep];
+      names <- colnames(segs);
+      names[names == "tcnStart"] <- "start";
+      names[names == "tcnEnd"] <- "end";
+      colnames(segs) <- names;
+    }
+
+    # Drop bootstrap columns, if any
+    names <- colnames(segs);
+    keep <- (regexpr("_[0-9]+(|[.][0-9]+)%$", names) == -1);
+    segs <- segs[,keep];
+  }
+
   segs;
 }, private=TRUE) 
 
 
-
 ############################################################################
 # HISTORY:
+# 2011-12-12
+# o Added optional argument 'indices' to getLocusData() to be able
+#   to retrieve the locus-level data as indexed by input data.
+# 2011-12-03
+# o Added argument 'simplify' to getSegments().
 # 2011-10-16
 # o Added isSegmentSplitter().
 # 2011-10-02

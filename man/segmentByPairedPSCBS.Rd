@@ -22,12 +22,19 @@
   It is intended to be applied to one tumor-normal sample at the time.
  }
 
- \usage{\method{segmentByPairedPSCBS}{default}(CT, betaT, betaN, muN=NULL, chromosome=0, x=NULL, alphaTCN=0.009, alphaDH=0.001, undoTCN=Inf, undoDH=Inf, ..., flavor=c("tcn&dh", "tcn,dh", "sqrt(tcn),dh", "sqrt(tcn)&dh"), tbn=TRUE, joinSegments=TRUE, knownSegments=NULL, seed=NULL, verbose=FALSE)}
+ \usage{\method{segmentByPairedPSCBS}{default}(CT, betaT, betaN=NULL, muN=NULL, chromosome=0, x=NULL, alphaTCN=0.009, alphaDH=0.001, undoTCN=Inf, undoDH=Inf, ..., flavor=c("tcn&dh", "tcn,dh", "sqrt(tcn),dh", "sqrt(tcn)&dh"), tbn=TRUE, joinSegments=TRUE, knownSegments=NULL, seed=NULL, verbose=FALSE)}
 
  \arguments{
-   \item{CT}{A \code{\link[base]{numeric}} \code{\link[base]{vector}} of J tumor total tumor copy number (TCN) ratios in [0,+\code{\link[base:is.finite]{Inf}}) (due to noise, small negative values are also allowed).  The TCN ratios are typically scaled such that copy-neutral diploid loci have a mean of two.}
-   \item{betaT}{A \code{\link[base]{numeric}} \code{\link[base]{vector}} of J tumor allele B fractions (BAFs) in [0,1] (due to noise, values may be slightly outside as well) or \code{\link[base]{NA}} for non-polymorphic loci.}
-   \item{betaN}{A \code{\link[base]{numeric}} \code{\link[base]{vector}} of J matched normal BAFs in [0,1] (due to noise, values may be slightly outside as well) or \code{\link[base]{NA}} for non-polymorphic loci.}
+   \item{CT}{A \code{\link[base]{numeric}} \code{\link[base]{vector}} of J tumor total tumor copy number (TCN)
+        ratios in [0,+\code{\link[base:is.finite]{Inf}}) (due to noise, small negative values are
+        also allowed).  The TCN ratios are typically scaled such that
+        copy-neutral diploid loci have a mean of two.}
+   \item{betaT}{A \code{\link[base]{numeric}} \code{\link[base]{vector}} of J tumor allele B fractions (BAFs)
+        in [0,1] (due to noise, values may be slightly outside as well)
+        or \code{\link[base]{NA}} for non-polymorphic loci.}
+   \item{betaN}{A \code{\link[base]{numeric}} \code{\link[base]{vector}} of J matched normal BAFs in [0,1]
+        (due to noise, values may be slightly outside as well) or \code{\link[base]{NA}}
+        for non-polymorphic loci.}
    \item{muN}{An optional \code{\link[base]{numeric}} \code{\link[base]{vector}} of J genotype calls in
         \{0,1/2,1\} for AA, AB, and BB, respectively,
         and \code{\link[base]{NA}} for non-polymorphic loci.
@@ -105,6 +112,14 @@
    If so, an informative error is thrown.
  }
 
+ \section{Paired PSCBS with only genotypes}{
+   If allele B fractions for the matched normal (\code{betaN}) are
+   not available, but genotypes (\code{muN}) are, then it is possible
+   to run a version of Paired PSCBS where TumorBoost normalization
+   of the tumor allele B fractions is skipped.  In order for this
+   to work, argument \code{tbn} must be set to \code{\link[base:logical]{FALSE}}.
+ }
+
  \examples{
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -114,32 +129,30 @@
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 pathname <- system.file("data-ex/PairedPSCBS,exData,chr01.Rbin", package="PSCBS")
 data <- R.utils::loadObject(pathname)
-
-# Order by chromosome and position
-o <- order(data$chromosome, data$position)
-data <- data[o,]
 str(data)
-R.oo::attachLocally(data)
-x <- position
-J <- length(x)
+
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Paired PSCBS segmentation
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Drop single-locus outliers
-CTs <- dropSegmentationOutliers(CT, chromosome=1, x=x, verbose=-10)
+dataS <- dropSegmentationOutliers(data)
+
+# Speed up example by segmenting fewer loci
+dataS <- dataS[seq(from=1, to=nrow(data), by=5),]
+
+str(dataS)
+
+R.oo::attachLocally(dataS)
 
 # Paired PSCBS segmentation
-fit <- segmentByPairedPSCBS(CTs, betaT=betaT, betaN=betaN,
-                            chromosome=1, x=x,
+fit <- segmentByPairedPSCBS(CT, betaT=betaT, betaN=betaN,
+                            chromosome=chromosome, x=x,
                             seed=0xBEEF, verbose=-10)
 print(fit)
 
 # Plot results
 plotTracks(fit)
-
-# Sanity check
-stopifnot(nbrOfSegments(fit) == 12)
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

@@ -1,17 +1,17 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Do not modify this file since it was automatically generated from:
 % 
-%  CBS.IO.R
+%  PSCBS.IO.R
 % 
 % by the Rdoc compiler part of the R.oo package.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
- \name{writeSegments.CBS}
-\alias{writeSegments.CBS}
-\alias{CBS.writeSegments}
-\alias{writeSegments.CBS}
-\alias{writeSegments,CBS-method}
+ \name{writeSegments.PSCBS}
+\alias{writeSegments.PSCBS}
+\alias{PSCBS.writeSegments}
+\alias{writeSegments.PSCBS}
+\alias{writeSegments,PSCBS-method}
 
 
  \title{Writes the table of segments to file}
@@ -20,7 +20,7 @@
   Writes the table of segments to file.
  }
 
- \usage{\method{writeSegments}{CBS}(fit, name=getSampleName(fit), tags=NULL, ext="tsv", path=NULL, addHeader=TRUE, createdBy=NULL, sep="	", nbrOfDecimals=4, splitters=FALSE, overwrite=FALSE, skip=FALSE, ...)}
+ \usage{\method{writeSegments}{PSCBS}(fit, name=getSampleName(fit), tags=NULL, ext="tsv", path=NULL, addHeader=TRUE, createdBy=NULL, sep="	", nbrOfDecimals=4, splitters=FALSE, overwrite=FALSE, skip=FALSE, ...)}
 
  \arguments{
    \item{name, tags}{Name and optional tags part of the filename}.
@@ -41,8 +41,8 @@
  \author{Henrik Bengtsson (\url{http://www.braju.com/R/})}
 
  \seealso{
-   Utilizes \code{\link[PSCBS:getSegments.CBS]{*getSegments}()}.
-   For more information see \code{\link{CBS}}..
+   Utilizes \code{\link[PSCBS:getSegments.PSCBS]{*getSegments}()}.
+   For more information see \code{\link{PSCBS}}..
  }
 
 
