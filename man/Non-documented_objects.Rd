@@ -247,7 +247,6 @@
 \alias{resegment.AbstractCBS}
 \alias{resegment.CBS}
 \alias{resegment.PairedPSCBS}
-\alias{gapsToSegments}
 \alias{callSegmentationOutliers.data.frame}
 \alias{dropSegmentationOutliers.data.frame}
 \alias{hclustCNs}
@@ -259,6 +258,22 @@
 \alias{drawChangePoints.PSCBS}
 \alias{drawChangePointsC1C2}
 \alias{drawChangePointsC1C2.PairedPSCBS}
+\alias{extractDhSegment}
+\alias{extractDhSegment.PairedPSCBS}
+\alias{callCN}
+\alias{callCopyNeutral}
+\alias{callCopyNeutralByTCNofAB}
+\alias{dropChangePoints}
+\alias{calcStatsForCopyNeutralABs}
+\alias{calcStatsForCopyNeutralABs.PairedPSCBS}
+\alias{callGNLcallGNLByTCNofAB}
+\alias{callGNLByTCNofAB.PairedPSCBS}
+\alias{callGainNeutralLoss}
+\alias{callGNL}
+\alias{callGNLByTCNofAB}
+\alias{renameChromosomes}
+\alias{renameChromosomes.AbstractCBS}
+\alias{report}
 
 \description{
   This page contains aliases for all "non-documented" objects that

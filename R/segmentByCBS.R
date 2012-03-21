@@ -43,7 +43,7 @@
 #   }
 #   \item{knownSegments}{Optional @data.frame specifying 
 #     \emph{non-overlapping} known segments.  These segments must
-#     not share loci.}
+#     not share loci.  See @see "findLargeGaps" and @see "gapsToSegments".}
 #   \item{seed}{An (optional) @integer specifying the random seed to be 
 #     set before calling the segmentation method.  The random seed is
 #     set to its original state when exiting.  If @NULL, it is not set.}
@@ -207,18 +207,24 @@ setMethodS3("segmentByCBS", "default", function(y, chromosome=0L, x=NULL, index=
   for (chr in sort(unique(knownSegments$chromosome))) {
     dd <- subset(knownSegments, chromosome == chr);
 
+    # Order segments by 'start'.
+    o <- order(dd$start);
+    dd <- dd[o,];
+
+    # Known segments must not share 'start' or 'end' loci
+    for (field in c("start", "end")) {
+      xs <- dd[[field]];
+      xs <- xs[!is.na(xs)];
+      if (anyDuplicated(xs) > 0) {
+        print(knownSegments);
+        throw(sprintf("Detected segments on chromosome %s with non-unique '%s' positions in argument 'knownSegments'", chr, field));
+      }
+    } # for (field ...)
+
     # Known segments must not overlap
     if (!all(dd$start[-1] >= dd$end[-nrow(dd)], na.rm=TRUE)) {
       print(knownSegments);
       throw("Detected overlapping segments on chromosome ", chr, " in argument 'knownSegments'.");
-    }
-
-    # Known segments must not share loci
-    xs <- c(dd$start, dd$end);
-    xs <- xs[!is.na(xs)];
-    if (anyDuplicated(xs) > 0) {
-      print(knownSegments);
-      throw("Detected overlapping segments on chromosome ", chr, " in argument 'knownSegments', i.e. which share loci.");
     }
   }
 
@@ -361,7 +367,7 @@ setMethodS3("segmentByCBS", "default", function(y, chromosome=0L, x=NULL, index=
       verbose && exit(verbose);
     } # for (kk ...)
 
-    verbose && enter(verbose, "Merging (independently segmented chromosome)");
+    verbose && enter(verbose, "Merging (independently) segmented chromosome");
     fit <- Reduce(append, fitList);
     # Not needed anymore
     rm(fitList);
@@ -428,7 +434,7 @@ setMethodS3("segmentByCBS", "default", function(y, chromosome=0L, x=NULL, index=
     # Create a splitter-only CBS object
     splitter <- segmentByCBS(y=c(0,0), chromosome=c(1,2), x=c(0,0));
     suppressWarnings({
-      splitter <- extractSegments(splitter, 2);
+      splitter <- extractSegment(splitter, 2);
       # Sanity check
       stopifnot(nbrOfSegments(splitter, splitters=TRUE) == 1);
     });
@@ -500,7 +506,7 @@ setMethodS3("segmentByCBS", "default", function(y, chromosome=0L, x=NULL, index=
       verbose && exit(verbose);
     } # for (jj ...)
 
-    verbose && enter(verbose, "Merging (independently segmented known segments)");
+    verbose && enter(verbose, "Merging (independently) segmented known segments");
     appendT <- function(...) append(..., addSplit=FALSE);
     fit <- Reduce(appendT, fitList);
     # Not needed anymore
@@ -579,7 +585,7 @@ setMethodS3("segmentByCBS", "default", function(y, chromosome=0L, x=NULL, index=
   pkgName <- "DNAcopy";
   # Assert that package is installed
   isPackageInstalled(pkgName) || throw("Package is not installed: ", pkgName);
-  pkg <- packageDescription(pkgName);
+  pkg <- utils::packageDescription(pkgName);
   pkgVer <- pkg$Version;
   pkgDetails <- sprintf("%s v%s", pkgName, pkgVer);
 
@@ -883,6 +889,10 @@ setMethodS3("segmentByCBS", "CBS", function(...) {
 
 ############################################################################
 # HISTORY:
+# 2012-02-22
+# o BUG FIX: segmentByCBS(..., knownSegments=knownSegments) would
+#   incorrectly throw a sanity-check exception if 'knownSegments'
+#   contains a segment with 'start' and 'stop' positions being equal.
 # 2011-11-17
 # o BUG FIX: Now parameter 'seed' is preserved by segmentByCBS().
 # o Added segmentByCBS() for CBS, which is just a wrapper for resegment().

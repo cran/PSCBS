@@ -59,7 +59,7 @@ setMethodS3("plotTracks", "PairedPSCBS", function(x, tracks=c("tcn", "dh", "tcn,
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
   # Argument 'fit':
   if (nbrOfChromosomes(fit) > 1) {
-    return(plotTracksManyChromosomes(fit, tracks=tracks, scatter=scatter, pch=pch, Clim=Clim, Blim=Blim, xScale=xScale, ..., add=add, verbose=verbose));
+    return(plotTracksManyChromosomes(fit, tracks=tracks, scatter=scatter, calls=calls, pch=pch, Clim=Clim, Blim=Blim, xScale=xScale, ..., add=add, verbose=verbose));
   }
 
   # Argument 'tracks':
@@ -246,7 +246,7 @@ setMethodS3("plotTracks", "PairedPSCBS", function(x, tracks=c("tcn", "dh", "tcn,
     if (track == "betaN") {
       colT <- ifelse(is.null(colT), colMu, colT);
       if (add) {
-        points(x, CT, pch=pchT, cex=cex, col="black");
+        points(x, betaN, pch=pchT, cex=cex, col="black");
       } else {
         plot(x, betaN, pch=pchT, cex=cex, col=colT, xlim=xlim, ylim=Blim, ylab=expression(BAF[N]));
         stext(side=3, pos=1, chrTag);
@@ -256,7 +256,7 @@ setMethodS3("plotTracks", "PairedPSCBS", function(x, tracks=c("tcn", "dh", "tcn,
     if (track == "betaT") {
       colT <- ifelse(is.null(colT), colMu, colT);
       if (add) {
-        points(x, CT, pch=pchT, cex=cex, col="black");
+        points(x, betaT, pch=pchT, cex=cex, col="black");
       } else {
         plot(x, betaT, pch=pchT, cex=cex, col=colT, xlim=xlim, ylim=Blim, ylab=expression(BAF[T]));
         stext(side=3, pos=1, chrTag);
@@ -266,7 +266,7 @@ setMethodS3("plotTracks", "PairedPSCBS", function(x, tracks=c("tcn", "dh", "tcn,
     if (track == "betaTN") {
       colT <- ifelse(is.null(colT), colMu, colT);
       if (add) {
-        points(x, CT, pch=pchT, cex=cex, col="black");
+        points(x, betaTN, pch=pchT, cex=cex, col="black");
       } else {
         plot(x, betaTN, pch=pchT, cex=cex, col=colT, xlim=xlim, ylim=Blim, ylab=expression(BAF[T]^"*"));
         stext(side=3, pos=1, chrTag);
@@ -281,7 +281,7 @@ setMethodS3("plotTracks", "PairedPSCBS", function(x, tracks=c("tcn", "dh", "tcn,
       rho[isHet] <- 2*abs(betaTN[isHet]-1/2);
       colT <- ifelse(is.null(colT), colMu[isHet], colT);
       if (add) {
-        points(x, CT, pch=pchT, cex=cex, col="black");
+        points(x, rho, pch=pchT, cex=cex, col="black");
       } else {
         plot(x, rho, pch=pchT, cex=cex, col=colT, xlim=xlim, ylim=Blim, ylab="DH");
         stext(side=3, pos=1, chrTag);
@@ -669,7 +669,8 @@ setMethodS3("plotTracksManyChromosomes", "PairedPSCBS", function(x, chromosomes=
 
   # Argument 'chromosomes':
   if (!is.null(chromosomes)) {
-    chromosomes <- Arguments$getIntegers(chromosomes);
+    disallow <- c("NaN", "Inf");
+    chromosomes <- Arguments$getIntegers(chromosomes, range=c(0,Inf), disallow=disallow);
     stopifnot(is.element(chromosomes, getChromosomes(fit)));
   }
 
@@ -963,6 +964,12 @@ setMethodS3("drawChangePoints", "PSCBS", function(fit, labels=FALSE, col="#66666
 
 ############################################################################
 # HISTORY:
+# 2012-02-29
+# o BUG FIX: plotTracks(..., add=TRUE) for PairedPSCBS would add TCNs
+#   when BAFs and DHs where intended.
+# 2012-02-22
+# o BUG FIX: Argument 'calls' of plotTracks() for PairedPSCBS was ignored
+#   if more than one chromosome was plotted.
 # 2011-12-03
 # o Added drawChangePointsC1C2() for PairedPSCBS.
 # o Added drawChangePoints() for PairedPSCBS.
