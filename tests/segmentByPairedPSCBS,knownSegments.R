@@ -22,7 +22,7 @@ if (Sys.getenv("_R_CHECK_FULL_") == "") {
   nSegs <- 4L
 } else {
   # Full tests
-  nSegs <- 12L
+  nSegs <- 13L
 }
 
 str(dataS)
@@ -46,7 +46,7 @@ fit <- segmentByPairedPSCBS(dataS, knownSegments=knownSegments,
 print(fit)
 
 # Plot results
-devSet(list(fit, "tracks"));
+dev.set(2L)
 plotTracks(fit)
 
 # Sanity check
@@ -71,7 +71,7 @@ fit <- segmentByPairedPSCBS(dataS, knownSegments=knownSegments,
 print(fit)
 
 # Plot results
-devSet(list(fit, "tracks"));
+dev.set(3L)
 plotTracks(fit)
 
 # Sanity check [TO FIX: See above]
@@ -95,7 +95,7 @@ fit <- segmentByPairedPSCBS(dataS, knownSegments=knownSegments,
 print(fit)
 
 # Plot results
-devSet(list(fit, "tracks"));
+dev.set(4L)
 plotTracks(fit)
 
 # Sanity check

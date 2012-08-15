@@ -30,16 +30,14 @@
 #
 # @keyword internal
 #*/########################################################################### 
-setMethodS3("as.CBS", "DNAcopy", function(fit, sample=1, ...) {
+setMethodS3("as.CBS", "DNAcopy", function(fit, sample=1L, ...) {
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Validate arguments
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   data <- fit$data;
   sample <- Arguments$getIndex(sample, max=ncol(data)-2L);
 
-
-  sampleName <- colnames(data)[3];
-  if (sampleName == "<NA>") sampleName <- as.character(NA);
+  sampleName <- colnames(data)[sample+2L];
 
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -51,7 +49,7 @@ setMethodS3("as.CBS", "DNAcopy", function(fit, sample=1, ...) {
   data <- data.frame(
     chromosome = data$chrom,
     x          = data$maploc,
-    y          = data[,3],
+    y          = data[,sample+2L,drop=TRUE],
     stringsAsFactors=FALSE
   );
   rownames(data) <- rownames;
@@ -61,6 +59,8 @@ setMethodS3("as.CBS", "DNAcopy", function(fit, sample=1, ...) {
   # Setup the 'output' field
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   output <- fit$output;
+  ID <- NULL; rm(ID); # To please R CMD check
+  output <- subset(output, ID == sampleName);
   rownames <- rownames(output);
 
   output <- data.frame(
@@ -76,15 +76,17 @@ setMethodS3("as.CBS", "DNAcopy", function(fit, sample=1, ...) {
   # Add chromosome splitter
   ats <- which(diff(output$chromosome) != 0) + 1L;
   if (length(ats) > 0) {
-    idxs <- seq(length=nrow(output)+length(ats));
-    expand <- match(idxs, idxs[-ats]);
+    idxs <- seq(length=nrow(output));
+    values <- rep(as.integer(NA), times=length(ats));
+    expand <- insert(idxs, ats=ats, values=values); # R.utils::insert()
     output <- output[expand,];
+    rownames(output) <- NULL;
   }
-
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Setup up 'CBS' object
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  if (sampleName == "<NA>") sampleName <- as.character(NA);
   res <- list();
   res$sampleName <- sampleName;
   res$data <- data;
@@ -423,6 +425,13 @@ setMethodS3("getChromosomeRanges", "CBS", function(fit, ...) {
 
 ############################################################################
 # HISTORY:
+# 2012-06-03
+# o BUG FIT: The recent updates of as.CBS() for DNAcopy would not work
+#   for samples with name '<NA>'.
+# 2012-05-30
+# o BUG FIX: as.CNA() for DNAcopy added incorrect chromosome splitters.
+# o BUG FIX: as.CNA() for DNAcopy would ignore argument 'sample' and
+#   always return the first sample.
 # 2011-12-12
 # o Now extractSegmentMeansByLocus() for CBS passes arguments
 #   '...' to getLocusData().

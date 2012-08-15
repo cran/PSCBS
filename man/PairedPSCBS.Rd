@@ -48,27 +48,27 @@ extends \emph{\link[PSCBS]{PSCBS}}\cr
   \bold{Methods:}\cr
 \tabular{rll}{
  \tab \code{\link[PSCBS:callAB.PairedPSCBS]{callAB}} \tab Calls segments that are in allelic balance.\cr
- \tab \code{\link[PSCBS:callCN.PairedPSCBS]{callCN}} \tab Calls segments that are copy neutral.\cr
- \tab \code{callCopyNeutral} \tab  -\cr
+ \tab \code{\link[PSCBS:callCopyNeutral.PairedPSCBS]{callCopyNeutral}} \tab Calls segments that have a neutral total copy number.\cr
  \tab \code{callGainNeutralLoss} \tab  -\cr
  \tab \code{\link[PSCBS:callGNL.PairedPSCBS]{callGNL}} \tab Calls segments that are gained, copy neutral, or lost.\cr
  \tab \code{\link[PSCBS:callLOH.PairedPSCBS]{callLOH}} \tab Calls segments that are in LOH.\cr
+ \tab \code{callNTCN} \tab  -\cr
  \tab \code{\link[PSCBS:callROH.PairedPSCBS]{callROH}} \tab Calls segments that are in ROH.\cr
  \tab \code{\link[PSCBS:estimateDeltaAB.PairedPSCBS]{estimateDeltaAB}} \tab Estimate a threshold for calling allelic balance from DH.\cr
  \tab \code{\link[PSCBS:estimateDeltaLOH.PairedPSCBS]{estimateDeltaLOH}} \tab Estimate a threshold for calling LOH from DH.\cr
  \tab \code{\link[PSCBS:estimateKappa.PairedPSCBS]{estimateKappa}} \tab Estimate global background in segmented copy numbers.\cr
  \tab \code{extractCNs} \tab  -\cr
- \tab \code{getSegmentSizes} \tab  -\cr
  \tab \code{\link[PSCBS:plotTracks.PairedPSCBS]{plotTracks}} \tab Plots parental specific copy numbers along the genome.\cr
+ \tab \code{segmentByNonPairedPSCBS} \tab  -\cr
  \tab \code{segmentByPairedPSCBS} \tab  -\cr
 }
 
 
  \bold{Methods inherited from PSCBS}:\cr
-append, as.data.frame, drawChangePoints, extractChromosomes, getLocusData, isSegmentSplitter, writeSegments
+append, as.data.frame, drawChangePoints, extractChromosomes, getLocusData, getSegmentSizes, isSegmentSplitter, writeSegments
 
  \bold{Methods inherited from AbstractCBS}:\cr
-all.equal, append, as.data.frame, drawChangePoints, dropChangePoint, dropChangePoints, dropRegion, dropRegions, extractChromosome, extractChromosomes, extractCNs, extractRegions, extractSegments, getChromosomes, getLocusData, getSampleName, getSegments, getSegmentSizes, load, mergeThreeSegments, mergeTwoSegments, nbrOfChangePoints, nbrOfChromosomes, nbrOfLoci, nbrOfSegments, plotTracks, print, pruneByHClust, renameChromosomes, resegment, sampleCNs, sampleName, sampleName<-, save, setLocusData, setSampleName, setSegments, tileChromosomes, updateMeans
+all.equal, append, as.data.frame, drawChangePoints, dropChangePoint, dropChangePoints, dropRegion, dropRegions, extractChromosome, extractChromosomes, extractCNs, extractRegions, extractSegments, getChromosomes, getLocusData, getSampleName, getSegments, getSegmentSizes, load, mergeThreeSegments, mergeTwoSegments, nbrOfChangePoints, nbrOfChromosomes, nbrOfLoci, nbrOfSegments, plotTracks, print, pruneByHClust, renameChromosomes, report, resegment, sampleCNs, sampleName, sampleName<-, save, setLocusData, setSampleName, setSegments, tileChromosomes, updateMeans
 
  \bold{Methods inherited from list}:\cr
 all.equal, as.data.frame, attachLocally, callHooks, relist, within
