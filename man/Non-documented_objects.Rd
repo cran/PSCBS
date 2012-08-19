@@ -206,10 +206,6 @@
 \alias{tileChromosomes.AbstractCBS}
 \alias{tileChromosomes.CBS}
 \alias{tileChromosomes.PairedPSCBS}
-\alias{updateMeans}
-\alias{updateMeans.AbstractCBS}
-\alias{updateMeans.CBS}
-\alias{updateMeans.PairedPSCBS}
 \alias{writeLocusData}
 \alias{writeLocusData.CBS}
 \alias{writeSegments}
@@ -231,7 +227,7 @@
 \alias{getSegmentSizes}
 \alias{getSegmentSizes.AbstractCBS}
 \alias{getSegmentSizes.CBS}
-\alias{getSegmentSizes.PairedPSCBS}
+\alias{getSegmentSizes.PSCBS}
 \alias{sampleCNs}
 \alias{sampleCNs.AbstractCBS}
 \alias{mergeThreeSegments}
@@ -252,6 +248,7 @@
 \alias{hclustCNs}
 \alias{pruneByHClust}
 \alias{updateMeansTogether}
+\alias{updateMeans}
 \alias{drawChangePoints}
 \alias{drawChangePoints.AbstractCBS}
 \alias{drawChangePoints.CBS}
@@ -260,7 +257,7 @@
 \alias{drawChangePointsC1C2.PairedPSCBS}
 \alias{extractDhSegment}
 \alias{extractDhSegment.PairedPSCBS}
-\alias{callCN}
+\alias{callNTCN}
 \alias{callCopyNeutral}
 \alias{callCopyNeutralByTCNofAB}
 \alias{dropChangePoints}
@@ -274,6 +271,9 @@
 \alias{renameChromosomes}
 \alias{renameChromosomes.AbstractCBS}
 \alias{report}
+\alias{writeSegments.DNAcopy}
+\alias{estimateDeltaCN}
+\alias{estimateDeltaCN.PairedPSCBS}
 
 \description{
   This page contains aliases for all "non-documented" objects that

@@ -2,13 +2,108 @@
 Package: PSCBS
 ==============
 
+Version: 0.28.1 [2012-08-15]
+o Minor grammatical corrections of the Paired PSCBS vignette.
+
+
+Version: 0.28.0 [2012-07-22]
+o Added argument 'minLength' to gapsToSegments().  The default is no
+  longer to drop zero-length (minLength == -1L) segments, because
+  if (and only if) such a segment contains a locus, then segmentByNnn()
+  will currently generate an (internal) error.
+o GENERALIZATION/BUG FIX: Now segmentByPairedPSCBS() drops loci for
+  which CT is missing (regardless of betaT). For instance, in rare cases
+  when the reference (e.g. the normal) is missing, then it may be that
+  CT is missing while betaT is not.
+
+
+Version: 0.27.4 [2012-07-22]
+o Now verbose output of segmentByPairedPSCBS() specifies region
+  ranges with greater precision.
+
+
+Version: 0.27.3 [2012-07-10]
+o DOCUMENTATION: Minor updates to the Paired PSCBS vignettes.
+o CLEANUP: One redundancy tests relied on a non-critical function
+  that will be removed in R.utils 1.16.0 (now in R.devices 2.1.1).
+
+
+Version: 0.27.2 [2012-07-08]
+o Updated package dependencies.
+
+
+Version: 0.27.1 [2012-07-02]
+o Now we refer to "copy neutral" segments as "neutral TCN" segments
+  with acronym 'NTCN'.  The corresponding column in the segmentation
+  results are labeled correspondingly.  The Paired PSCBS vignette 
+  was updated accordingly.
+
+
+Version: 0.27.0 [2012-06-24]
+o (An update that should be ignored)
+o DOCUMENTATION: Some grammar corrections of the 'Paired PSCBS' vignette.
+
+
+Version: 0.26.1 [2012-06-05]
+o Now segmentByCBS() for data frame:s does a better job identifying
+  the CN signals.
+
+
+Version: 0.26.0 [2012-06-03]
+o DOCUMENTATION: Added details to the Paired PSCBS vignette on how
+  to call segments that are copy neutral (typically diploid).
+o Now argument 'delta' for callCopyNeutralByTCNofAB() of PairedPSCBS
+  is calculated via estimateDeltaCN(), which estimates the width
+  of the acceptance regions, used for calling copy neutral states,
+  to be a function of the normal contamination.
+
+
+Version: 0.25.3 [2012-06-03]
+o BUG FIX: all.equal(target, current) for CBS objects would give an
+  error if either 'target' or 'current' had zero segments.
+
+
+Version: 0.25.2 [2012-05-30]
+o Added writeSegments() for DNAcopy objects.
+o BUG FIX: as.CNA() for DNAcopy added incorrect chromosome splitters.
+o BUG FIX: as.CNA() for DNAcopy would ignore argument 'sample' and
+  always return the first sample.
+
+
+Version: 0.25.1 [2012-05-30]
+o DOCUMENTATION: Added details to the Paired PSCBS vignette on how
+  to tune the various callers.
+o Now callROH() records parameter 'deltaROH' in the results.
+o BUG FIX: callLOH(..., force=TRUE) would append multiple 'lohCall' 
+  columns, if called multiple times.
+
+
+Version: 0.25.0 [2012-04-20]
+o Added a trial (very much true) version of segmentByNonPairedPSCBS().
+
+
+Version: 0.24.0 [2012-04-20]
+o Now it is possible to skip the DH segmentation in Paired PSCBS, i.e.
+  segmentByPairedPSCBS(..., flavor="tcn").
+
+
+Version: 0.23.2 [2012-04-20]
+o BUG FIX: segmentByPairedPSCBS() would throw "error in `$<-.data.frame
+  `(`*tmp*`, "rho" ..." if some loci had unknown genomic positions.
+
+
+Version: 0.23.1 [2012-04-20]
+o Added RSP report for CBS objects (adopted from ditto for PairedPSCBS).
+o DOCUMENTATION: Updated the 'Paired PSCBS' vignette.
+
+
 Version: 0.23.0 [2012-03-20]
-o Added a package vignette.
+o DOCUMENTATION: Added a package vignette.
 
 
 Version: 0.22.2 [2012-02-29]
 o BUG FIX: plotTracks(..., add=TRUE) for PairedPSCBS would add TCNs
-  when BAFs and DHs where intended.
+  when BAFs and DHs were intended.
 
 
 Version: 0.22.1 [2012-02-28]
