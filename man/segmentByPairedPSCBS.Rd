@@ -22,7 +22,7 @@
   It is intended to be applied to one tumor-normal sample at the time.
  }
 
- \usage{\method{segmentByPairedPSCBS}{default}(CT, betaT, betaN=NULL, muN=NULL, chromosome=0, x=NULL, alphaTCN=0.009, alphaDH=0.001, undoTCN=Inf, undoDH=Inf, ..., flavor=c("tcn&dh", "tcn,dh", "sqrt(tcn),dh", "sqrt(tcn)&dh", "tcn"), tbn=TRUE, joinSegments=TRUE, knownSegments=NULL, seed=NULL, verbose=FALSE)}
+ \usage{\method{segmentByPairedPSCBS}{default}(CT, betaT, betaN=NULL, muN=NULL, chromosome=0, x=NULL, alphaTCN=0.009, alphaDH=0.001, undoTCN=0, undoDH=0, ..., flavor=c("tcn&dh", "tcn,dh", "sqrt(tcn),dh", "sqrt(tcn)&dh", "tcn"), tbn=TRUE, joinSegments=TRUE, knownSegments=NULL, dropMissingCT=TRUE, seed=NULL, verbose=FALSE)}
 
  \arguments{
    \item{CT}{A \code{\link[base]{numeric}} \code{\link[base]{vector}} of J tumor total copy number (TCN)
@@ -49,7 +49,7 @@
    \item{alphaTCN, alphaDH}{The significance levels for segmenting total
         copy numbers (TCNs) and decrease-in-heterozygosity signals (DHs),
         respectively.}
-   \item{undoTCN, undoDH}{Non-negative \code{\link[base]{numeric}}s.  If less than +\code{\link[base:is.finite]{Inf}},
+   \item{undoTCN, undoDH}{Non-negative \code{\link[base]{numeric}}s.  If greater than 0,
         then a cleanup of segmentions post segmentation is done.
         See argument \code{undo} of \code{\link{segmentByCBS}}() for more
         details.}
@@ -70,6 +70,8 @@
    \item{knownSegments}{Optional \code{\link[base]{data.frame}} specifying
      \emph{non-overlapping} known segments.  These segments must
      not share loci.  See \code{\link{findLargeGaps}}() and \code{\link{gapsToSegments}}().}
+   \item{dropMissingCT}{If \code{\link[base:logical]{TRUE}}, loci for which 'CT' is missing
+     are dropped, otherwise not.}
    \item{seed}{An (optional) \code{\link[base]{integer}} specifying the random seed to be
      set before calling the segmentation method.  The random seed is
      set to its original state when exiting.  If \code{\link[base]{NULL}}, it is not set.}
@@ -121,6 +123,7 @@
  }
 
  \examples{
+verbose <- Arguments$getVerbose(-10*interactive(), timestamp=TRUE)
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Load SNP microarray data
@@ -139,7 +142,7 @@ str(data)
 dataS <- dropSegmentationOutliers(data)
 
 # Speed up example by segmenting fewer loci
-dataS <- dataS[seq(from=1, to=nrow(data), by=5),]
+dataS <- dataS[seq(from=1, to=nrow(data), by=10),]
 
 str(dataS)
 
@@ -148,7 +151,7 @@ R.oo::attachLocally(dataS)
 # Paired PSCBS segmentation
 fit <- segmentByPairedPSCBS(CT, betaT=betaT, betaN=betaN,
                             chromosome=chromosome, x=x,
-                            seed=0xBEEF, verbose=-10)
+                            seed=0xBEEF, verbose=verbose)
 print(fit)
 
 # Plot results
@@ -160,7 +163,7 @@ plotTracks(fit)
 # (used by the AB caller, which, if skipped here,
 #  will do it automatically)
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-fit <- bootstrapTCNandDHByRegion(fit, verbose=-10)
+fit <- bootstrapTCNandDHByRegion(fit, B=100, verbose=verbose)
 print(fit)
 plotTracks(fit)
 
@@ -171,11 +174,11 @@ plotTracks(fit)
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Explicitly estimate the threshold in DH for calling AB
 # (which be done by default by the caller, if skipped here)
-deltaAB <- estimateDeltaAB(fit, flavor="qq(DH)", verbose=-10)
+deltaAB <- estimateDeltaAB(fit, flavor="qq(DH)", verbose=verbose)
 print(deltaAB)
 ## [1] 0.1657131
 
-fit <- callAB(fit, delta=deltaAB, verbose=-10)
+fit <- callAB(fit, delta=deltaAB, verbose=verbose)
 print(fit)
 plotTracks(fit)
 
@@ -190,11 +193,11 @@ stopifnot(fit$params$deltaAB == deltaAB)
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Explicitly estimate the threshold in C1 for calling LOH
 # (which be done by default by the caller, if skipped here)
-deltaLOH <- estimateDeltaLOH(fit, flavor="minC1|nonAB", verbose=-10)
+deltaLOH <- estimateDeltaLOH(fit, flavor="minC1|nonAB", verbose=verbose)
 print(deltaLOH)
 ## [1] 0.625175
 
-fit <- callLOH(fit, delta=deltaLOH, verbose=-10)
+fit <- callLOH(fit, delta=deltaLOH, verbose=verbose)
 print(fit)
 plotTracks(fit)
 

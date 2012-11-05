@@ -236,9 +236,20 @@ setMethodS3("plotTracks", "PairedPSCBS", function(x, tracks=c("tcn", "dh", "tcn,
         }
         if (is.element("c2", subtracks)) {
           drawLevels(fit, what="c2", col="red", xScale=xScale);
+          # In case C2 overlaps with TCN
+          if (is.element("tcn", subtracks)) {
+            drawLevels(fit, what="tcn", col="purple", lty="22", xScale=xScale);
+          }
         }
         if (is.element("c1", subtracks)) {
           drawLevels(fit, what="c1", col="blue", xScale=xScale);
+          # In case C1 overlaps with C1
+          if (is.element("c2", subtracks)) {
+            drawLevels(fit, what="c2", col="red", lty="22", xScale=xScale);
+            if (is.element("tcn", subtracks)) {
+              drawLevels(fit, what="tcn", col="purple", lty="22", xScale=xScale);
+            }
+          }
         }
       }
     }
@@ -346,7 +357,7 @@ setMethodS3("plot", "PairedPSCBS", function(x, ...) {
 }, private=TRUE)
 
 
-setMethodS3("drawLevels", "PairedPSCBS", function(fit, what=c("tcn", "betaTN", "dh", "c1", "c2"), xScale=1e-6, ...) {
+setMethodS3("drawLevels", "PairedPSCBS", function(fit, what=c("tcn", "betaTN", "dh", "c1", "c2"), lend=1L, xScale=1e-6, ...) {
   # WORKAROUND: If Hmisc is loaded after R.utils, it provides a buggy
   # capitalize() that overrides the one we want to use. Until PSCBS
   # gets a namespace, we do the following workaround. /HB 2011-07-14
@@ -392,7 +403,7 @@ setMethodS3("drawLevels", "PairedPSCBS", function(fit, what=c("tcn", "betaTN", "
     colnames(segsTT) <- c("loc.start", "loc.end", "seg.mean");
     dummy <- list(output=segsTT);
     class(dummy) <- "DNAcopy";
-    drawLevels(dummy, xScale=xScale, ...);
+    drawLevels(dummy, lend=lend, xScale=xScale, ...);
   } # for (cc ...)
 }, private=TRUE)
 
@@ -488,7 +499,7 @@ setMethodS3("linesC1C2", "PairedPSCBS", function(fit, ...) {
 
 
 setMethodS3("drawChangePointsC1C2", "PairedPSCBS", function(fit, col="#00000033", labels=FALSE, lcol="#333333", cex=0.7, adj=c(+1.5,+0.5), ...) {
-  xy <- extractMinorMajorCNs(fit);
+  xy <- extractMinorMajorCNs(fit, splitters=TRUE, addGaps=TRUE);
   xy <- xy[,1:2,drop=FALSE];
   res <- lines(xy, col=col, ...);
 
@@ -531,7 +542,7 @@ setMethodS3("linesDeltaC1C2", "PairedPSCBS", function(fit, ...) {
 
 
 setMethodS3("arrowsC1C2", "PairedPSCBS", function(fit, length=0.05, ...) {
-  xy <- extractMinorMajorCNs(fit);
+  xy <- extractMinorMajorCNs(fit, splitters=TRUE, addGaps=TRUE);
   xy <- xy[,1:2,drop=FALSE];
   x <- xy[,1,drop=TRUE];
   y <- xy[,2,drop=TRUE];
@@ -576,6 +587,7 @@ setMethodS3("tileChromosomes", "PairedPSCBS", function(fit, chrStarts=NULL, ...,
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   data <- getLocusData(fit);
   segs <- getSegments(fit);
+  knownSegments <- fit$params$knownSegments;
 
   # Identify all chromosome
   chromosomes <- getChromosomes(fit);
@@ -635,13 +647,23 @@ setMethodS3("tileChromosomes", "PairedPSCBS", function(fit, chrStarts=NULL, ...,
     idxs <- which(segs$chromosome == chromosome);
     segs[idxs,segFields] <- offset + segs[idxs,segFields];
 
+    # Offset known segments
+    idxs <- which(knownSegments$chromosome == chromosome);
+    knownSegments[idxs,c("start", "end")] <- offset + knownSegments[idxs,c("start", "end")];
+
     verbose && exit(verbose);
   } # for (kk ...)
 
+
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Update results
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   fit$data <- data;
   fit$output <- segs;
   fit$chromosomeStats <- chromosomeStats;
+  fit$params$knownSegments <- knownSegments;
+#  fitT$params$chrOffsets <- chrOffsets;
+
 
   verbose && exit(verbose);
 
@@ -848,7 +870,12 @@ setMethodS3("plotTracksManyChromosomes", "PairedPSCBS", function(x, chromosomes=
       drawConfidenceBands(fit, what="c1", quantiles=quantiles, col="blue", xScale=xScale);
       drawLevels(fit, what="tcn", col="purple", xScale=xScale);
       drawLevels(fit, what="c2", col="red", xScale=xScale);
-      drawLevels(fit, what="c1", col="blue", xScale=xScale);
+      # In case C2 overlaps with TCN
+      drawLevels(fit, what="tcn", col="purple", lty="22", xScale=xScale);
+      # In case C1 overlaps with C1
+      drawLevels(fit, what="c1", col="blue", xScale=xScale); 
+      drawLevels(fit, what="c2", col="red", lty="22", xScale=xScale);
+      drawLevels(fit, what="tcn", col="purple", lty="22", xScale=xScale);
       if (!is.null(onEnd)) onEnd(gh=gh);
     }
   
@@ -962,8 +989,71 @@ setMethodS3("drawChangePoints", "PSCBS", function(fit, labels=FALSE, col="#66666
 
 
 
+setMethodS3("getChromosomeRanges", "PairedPSCBS", function(fit, ...) {
+  # To please R CMD check, cf. subset()
+  chromosome <- NULL; rm(chromosome);
+
+  segs <- getSegments(fit, splitter=FALSE);
+  chromosomes <- sort(unique(segs$chromosome));
+
+  # Allocate
+  naValue <- as.double(NA);
+  res <- matrix(naValue, nrow=length(chromosomes), ncol=3);
+  rownames(res) <- chromosomes;
+  colnames(res) <- c("start", "end", "length");
+
+  # Get start and end of each chromosome.
+  for (ii in seq(length=nrow(res))) {
+    chr <- chromosomes[ii];
+    segsII <- subset(segs, chromosome == chr);
+    res[ii,"start"] <- min(segsII$tcnStart, na.rm=TRUE);
+    res[ii,"end"] <- max(segsII$tcnEnd, na.rm=TRUE);
+  } # for (ii ...)
+
+  res[,"length"] <- res[,"end"] - res[,"start"] + 1L;
+
+  # Sanity check
+  stopifnot(nrow(res) == length(chromosomes));
+
+  res <- as.data.frame(res);
+  res <- cbind(chromosome=chromosomes, res);
+
+  res;
+}, protected=TRUE) # getChromosomeRanges() 
+
+
+setMethodS3("getChromosomeOffsets", "PairedPSCBS", function(fit, resolution=1e6, ...) {
+  # Argument 'resolution':
+  if (!is.null(resolution)) {
+    resolution <- Arguments$getDouble(resolution, range=c(1,Inf));
+  }
+
+  data <- getChromosomeRanges(fit, ...);
+  splits <- data[,"start"] + data[,"length"];
+
+  if (!is.null(resolution)) {
+    splits <- ceiling(splits / resolution);
+    splits <- resolution * splits;
+  }
+
+  offsets <- c(0L, cumsum(splits));
+  names(offsets) <- c(rownames(data), NA);
+
+  offsets;
+}, protected=TRUE) # getChromosomeOffsets() 
+
+
+
 ############################################################################
 # HISTORY:
+# 2012-09-23
+# o Now plotTracks() [and plotTracksManyChromosomes()] draws segment levels
+#   in TCN-C2-C1 order, and then goes back and draws C2 and TCN with dashed
+#   lines, just in case C1 is overlapping C2 and C2 is overlapping TCN.
+# 2012-09-21
+# o ROBUSTNESS: Now drawChangePointsC1C2() and arrowsC1C2() for PairedPSCBS
+#   makes sure to retrieve segments with NA splitters between chromosomes 
+#   and gaps. 
 # 2012-02-29
 # o BUG FIX: plotTracks(..., add=TRUE) for PairedPSCBS would add TCNs
 #   when BAFs and DHs where intended.

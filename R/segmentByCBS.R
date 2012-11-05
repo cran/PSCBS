@@ -27,9 +27,12 @@
 #   \item{index}{An optional @integer @vector of length J specifying
 #     the genomewide indices of the loci.}
 #   \item{w}{Optional @numeric @vector in [0,1] of J weights.}
-#   \item{undo}{A non-negative @numeric.  If less than +@Inf, then
+#   \item{undo}{A non-negative @numeric.  If greater than zero, then
 #       arguments \code{undo.splits="sdundo"} and \code{undo.SD=undo}
-#       are passed to \code{DNAcopy::segment()}.}
+#       are passed to \code{DNAcopy::segment()}.
+#       In the special case when \code{undo} is @+Inf, the segmentation
+#       result will not contain any changepoints (in addition to what
+#       is specified by argument \code{knownSegments}).}
 #   \item{...}{Additional arguments passed to the \code{DNAcopy::segment()}
 #       segmentation function.}
 #   \item{joinSegments}{If @TRUE, there are no gaps between neighboring
@@ -102,7 +105,7 @@
 # }
 # @keyword IO
 #*/########################################################################### 
-setMethodS3("segmentByCBS", "default", function(y, chromosome=0L, x=NULL, index=seq(along=y), w=NULL, undo=Inf, ..., joinSegments=TRUE, knownSegments=NULL, seed=NULL, verbose=FALSE) {
+setMethodS3("segmentByCBS", "default", function(y, chromosome=0L, x=NULL, index=seq(along=y), w=NULL, undo=0, ..., joinSegments=TRUE, knownSegments=NULL, seed=NULL, verbose=FALSE) {
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Local functions
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -188,7 +191,7 @@ setMethodS3("segmentByCBS", "default", function(y, chromosome=0L, x=NULL, index=
 
   # Argument 'knownSegments':
   if (is.null(knownSegments)) {
-    knownSegments <- data.frame(chromosome=integer(0), start=integer(0), end=integer(0));
+    knownSegments <- data.frame(chromosome=NA, start=+Inf, end=-Inf);
   } else {
 #    if (!joinSegments) {
 #      throw("Argument 'knownSegments' should only be specified if argument 'joinSegments' is TRUE.");
@@ -333,6 +336,9 @@ setMethodS3("segmentByCBS", "default", function(y, chromosome=0L, x=NULL, index=
       knownSegmentsKK <- NULL;
       if (!is.null(knownSegments)) {
         knownSegmentsKK <- subset(knownSegments, chromosome == chromosomeKK);
+        if (nrow(knownSegmentsKK) == 0L) {
+          knownSegmentsKK <- data.frame(chromosome=chromosomeKK, start=-Inf, end=+Inf);
+        }
         verbose && cat(verbose, "Known segments:");
         verbose && print(verbose, knownSegmentsKK);
       }
@@ -405,6 +411,9 @@ setMethodS3("segmentByCBS", "default", function(y, chromosome=0L, x=NULL, index=
   verbose && cat(verbose, "Chromosome: ", currChromosome);
 
   knownSegments <- subset(knownSegments, chromosome == currChromosome);
+  if (nrow(knownSegments) == 0L) {
+    knownSegments <- data.frame(chromosome=currChromosome, start=-Inf, end=+Inf);
+  }
   nbrOfSegments <- nrow(knownSegments);
 
   verbose && cat(verbose, "Known segments for this chromosome:");
@@ -507,6 +516,7 @@ setMethodS3("segmentByCBS", "default", function(y, chromosome=0L, x=NULL, index=
     } # for (jj ...)
 
     verbose && enter(verbose, "Merging (independently) segmented known segments");
+    verbose && cat(verbose, "Number of segments: ", length(fitList));
     appendT <- function(...) append(..., addSplit=FALSE);
     fit <- Reduce(appendT, fitList);
     # Not needed anymore
@@ -665,7 +675,7 @@ setMethodS3("segmentByCBS", "default", function(y, chromosome=0L, x=NULL, index=
     params$weights <- data$w;
   }
 
-  if (undo < Inf) {
+  if (undo > 0) {
     params$undo.splits <- "sdundo";
     params$undo.SD <- undo;
   }
@@ -699,10 +709,16 @@ setMethodS3("segmentByCBS", "default", function(y, chromosome=0L, x=NULL, index=
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   verbose && enter(verbose, sprintf("Calling %s() of %s", methodName, pkgName));
 
-  # WORKAROUND for the case when there are no data points.
+  # There are a few cases where we can/need to do a dummy segmentation
+  # based on a single data points:
+  # (a) WORKAROUND for the case when there are no data points.
+  # (b) SPEEDUP: When undo=+Inf we don't really have to segment.
   nbrOfNonMissingLoci <- sum(!is.na(cnData$y));
   if (nbrOfNonMissingLoci == 0) {
     args[[1]] <- DNAcopy::CNA(genomdat=0, chrom=0, maploc=0);
+  } else if (undo == +Inf) {
+    args[[1]] <- DNAcopy::CNA(genomdat=0, chrom=0, maploc=0);
+    verbose && cat(verbose, "Skipping identification of new change points (undo=+Inf)");
   }
 
   # In case the method writes to stdout, we capture it
@@ -749,13 +765,45 @@ setMethodS3("segmentByCBS", "default", function(y, chromosome=0L, x=NULL, index=
       output$num.mark <- 0L;
       output$seg.mean <- as.double(NA);
       segRows[1,] <- as.integer(NA);
-    } else {  
+    } else {
       output <- output[-1,,drop=FALSE];
       segRows <- segRows[-1,,drop=FALSE];
     }
     fit$output <- output;
     fit$segRows <- segRows;
-  } # if (nbrOfNonMissingLoci == 0)
+  } else if (undo == +Inf) {
+    # Drop dummy data point...
+    fit$data <- cnData; ## fit$data[-1,,drop=FALSE];
+    # ...dummy region found
+    output <- fit$output;
+    segRows <- fit$segRows;
+
+    # Sanity check
+    stopifnot(nrow(output) == 1);
+
+    # Was a region specified?
+    if (nbrOfSegments == 1) {
+      seg <- knownSegments[1,];
+      output$ID <- sampleName;
+      output$chrom <- seg$chromosome;
+      if (is.finite(seg$start)) {
+        output$loc.start <- seg$start;
+      } else {
+        output$loc.start <- min(cnData$maploc, na.rm=TRUE);
+      }
+      if (is.finite(seg$end)) {
+        output$loc.end <- seg$end;
+      } else {
+        output$loc.end <- max(cnData$maploc, na.rm=TRUE);
+      }
+    }
+    output$num.mark <- nrow(fit$data);
+    output$seg.mean <- mean(fit$data$y, na.rm=TRUE);
+    segRows$endRow <- nrow(fit$data);
+
+    fit$output <- output;
+    fit$segRows <- segRows;
+  } # if (undo == +Inf)
 
   verbose && cat(verbose, "Captured output that was sent to stdout:");
   stdout <- paste(stdout, collapse="\n");
@@ -897,6 +945,19 @@ setMethodS3("segmentByCBS", "CBS", function(...) {
 
 ############################################################################
 # HISTORY:
+# 2012-09-20
+# o BUG FIX: segmentByCBS(... knownSegments) could return segments for 
+#   chromosome 0 even though it did not exist in the input data.
+# 2012-09-13
+# o SPEEDUP: Now segmentByCBS(..., undo=+Inf) returns much faster, which
+#   is possible because there is no need to identify new change points.
+# o CONSISTENCY FIX: Changed the behavior of extreme values of argument
+#   'undo' to segmentByCBS() such that 'undo=0' (was 'undo=+Inf') now
+#   means that it will not ask DNAcopy::segment() to undo the segmentation,
+#   and such that 'undo=+Inf' means that no changepoints will be identified.
+#   The latter case allows you to effectively skip the segmentation but
+#   still calculate all the CBS statistics across a set of  known segments
+#   via segmentByCBS(..., undo=+Inf, knownSegments=knownSegments).
 # 2012-06-05
 # o Now segmentByCBS() for data frame:s does a better job identifying
 #   the CN signals.

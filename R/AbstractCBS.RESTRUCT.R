@@ -111,19 +111,22 @@ setMethodS3("renameChromosomes", "AbstractCBS", function(fit, from, to, ...) {
 
   data <- getLocusData(fit);
   segs <- getSegments(fit, splitters=TRUE, simplify=FALSE);
+  knownSegments <- fit$params$knownSegments;
   
   for (cc in seq(length=n)) {
     chr <- from[cc];
     chrN <- to[cc];
     data$chromosome[data$chromosome == chr] <- chrN;
     segs$chromosome[segs$chromosome == chr] <- chrN;
+    knownSegments$chromosome[knownSegments$chromosome == chr] <- chrN;
   } # for (cc ...)
   
   fit$data <- data;
   fit$output <- segs;
+  fit$params$knownSegments <- knownSegments;
 
   fit;
-}, protected=TRUE)
+}, protected=TRUE) # renameChromosomes()
 
 
 setMethodS3("extractChromosomes", "AbstractCBS", abstract=TRUE, protected=TRUE);
@@ -252,7 +255,7 @@ setMethodS3("mergeTwoSegments", "AbstractCBS", abstract=TRUE, protected=TRUE);
 
 setMethodS3("dropChangePoint", "AbstractCBS", function(fit, idx, ...) {
   # Argument 'idx':
-  max <- nbrOfChangePoints(fit, splitters=TRUE);
+  max <- nbrOfChangePoints(fit, splitters=TRUE, ...);
   idx <- Arguments$getIndex(idx, max=max);
 
   mergeTwoSegments(fit, left=idx, ...);
@@ -296,7 +299,7 @@ setMethodS3("dropChangePoint", "AbstractCBS", function(fit, idx, ...) {
 #*/###########################################################################  
 setMethodS3("dropChangePoints", "AbstractCBS", function(fit, idxs, update=TRUE, ...) {
   # Argument 'idxs':
-  max <- nbrOfChangePoints(fit, splitters=TRUE);
+  max <- nbrOfChangePoints(fit, splitters=TRUE, ...);
   idxs <- Arguments$getIndices(idxs, max=max);
 
   # Assert that there is only one chromosome
@@ -505,6 +508,8 @@ setMethodS3("dropRegion", "AbstractCBS", function(fit, region, ...) {
 }, protected=TRUE)
 
 
+setMethodS3("shiftTCN", "AbstractCBS", abstract=TRUE, protected=TRUE);
+
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -541,6 +546,9 @@ setMethodS3("extractByRegion", "AbstractCBS", function(fit, ...) {
 
 ############################################################################
 # HISTORY:
+# 2012-09-13
+# o Now renameChromosomes() also adjusts 'knownSegments'.
+# o Added shiftTCN().
 # 2012-02-27
 # o Added renameChromosomes() to AbstractCBS.
 # 2012-02-25

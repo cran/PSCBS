@@ -53,8 +53,45 @@ setMethodS3("all.equal", "AbstractCBS", function(target, current, check.attribut
     return(res);
   }
 
-  # Don't compare other attributes
-  NextMethod("all.equal", target, current, check.attributes=check.attributes, ...);
+  # Compare locus-level data
+  dataT <- getLocusData(target);
+  dataC <- getLocusData(current);
+  res <- all.equal(dataT, dataC, check.attributes=check.attributes, ...);
+  if (!isTRUE(res)) {
+    attr(res, "what") <- "getLocusData()";
+    return(res);
+  }
+
+  # Compare segments
+  dataT <- getSegments(target);
+  dataC <- getSegments(current);
+  res <- all.equal(dataT, dataC, check.attributes=check.attributes, ...);
+  if (!isTRUE(res)) {
+    attr(res, "what") <- "getSegments()";
+    return(res);
+  }
+
+  # Compare field names
+  fieldsT <- names(target);
+  fieldsC <- names(current);
+  res <- all.equal(fieldsT, fieldsC, check.attributes=check.attributes, ...);
+  if (!isTRUE(res)) {
+      attr(res, "what") <- "names";
+    return(res);
+  }
+
+  # Compare other fields
+  for (key in fieldsT) {
+    dataT <- target[[key]];
+    dataC <- current[[key]];
+    res <- all.equal(dataT, dataC, check.attributes=check.attributes, ...);
+    if (!isTRUE(res)) {
+      attr(res, "what") <- sprintf("[[\"%s\"]]", key);
+      return(res);
+    }
+  } # for (key ...)
+
+  return(TRUE);
 }, protected=TRUE)
 
 
@@ -264,6 +301,10 @@ setMethodS3("getLocusData", "AbstractCBS", abstract=TRUE);
 
 setMethodS3("setLocusData", "AbstractCBS", abstract=TRUE, protected=TRUE);
 
+setMethodS3("getLocusSignalNames", "AbstractCBS", abstract=TRUE, protected=TRUE);
+
+setMethodS3("getSegmentTrackPrefixes", "AbstractCBS", abstract=TRUE, protected=TRUE);
+
 
 ###########################################################################/**
 # @RdocMethod nbrOfLoci
@@ -378,7 +419,7 @@ setMethodS3("nbrOfSegments", "AbstractCBS", function(this, splitters=FALSE, ...)
 # @synopsis
 #
 # \arguments{
-#  \item{splitters, ...}{Arguments passed to @seemethod "getSegments".}
+#  \item{...}{Not used.}
 # }
 #
 # \value{
@@ -393,8 +434,18 @@ setMethodS3("nbrOfSegments", "AbstractCBS", function(this, splitters=FALSE, ...)
 #   @seeclass
 # }
 #*/###########################################################################  
-setMethodS3("nbrOfChangePoints", "AbstractCBS", function(fit, ...) {
-  nbrOfSegments(fit, splitters=FALSE) - nbrOfChromosomes(fit);
+setMethodS3("nbrOfChangePoints", "AbstractCBS", function(fit, ignoreGaps=FALSE, dropEmptySegments=TRUE, ...) {
+  segs <- getSegments(fit, splitters=TRUE, addGaps=!ignoreGaps);
+  if (dropEmptySegments) {
+    prefix <- getSegmentTrackPrefixes(fit);
+    keys <- sapply(prefix, FUN=function(x) {
+      toCamelCase(paste(c(x, "nbr of loci"), collapse=" "));
+    });
+    counts <- as.matrix(segs[,keys]);
+    counts <- rowSums(counts, na.rm=TRUE);
+    segs$chromosome[counts == 0L] <- NA;
+  }
+  sum(!is.na(diff(segs$chromosome)));
 })
 
 
@@ -503,7 +554,25 @@ setMethodS3("nbrOfChromosomes", "AbstractCBS", function(this, ...) {
 })
 
 
-setMethodS3("getSegmentSizes", "AbstractCBS", abstract=TRUE);
+setMethodS3("getSegmentSizes", "AbstractCBS", function(fit, by=c("length", "count"), ...) {
+  by <- match.arg(by);
+
+  if (by == "length") {
+    prefix <- getSegmentTrackPrefixes(fit)[1];
+    keys <- toCamelCase(paste(prefix, " ", c("start", "end")));
+  } else if (by == "count") {
+    keys <- "nbrOfLoci";
+  }
+  data <- getSegments(fit, ...)[,keys];
+  
+  if (by == "length") {
+    res <- data[[2L]]-data[[1L]]+1L;
+  } else if (by == "count") {
+    res <- data[[1L]];
+  }
+  res;
+})
+
 
 setMethodS3("extractCNs", "AbstractCBS", abstract=TRUE);
 
@@ -554,8 +623,40 @@ setMethodS3("updateMeans", "AbstractCBS", abstract=TRUE, protected=TRUE);
 setMethodS3("resegment", "AbstractCBS", abstract=TRUE, protected=TRUE);
 
 
+setMethodS3("getChromosomeRanges", "AbstractCBS", abstract=TRUE, protected=TRUE);
+
+setMethodS3("getChromosomeOffsets", "AbstractCBS", function(fit, resolution=1e6, ...) {
+  # Argument 'resolution':
+  if (!is.null(resolution)) {
+    resolution <- Arguments$getDouble(resolution, range=c(1,Inf));
+  }
+
+  data <- getChromosomeRanges(fit, ...);
+  splits <- data[,"start"] + data[,"length"];
+
+  if (!is.null(resolution)) {
+    splits <- ceiling(splits / resolution);
+    splits <- resolution * splits;
+  }
+
+  offsets <- c(0L, cumsum(splits));
+  names(offsets) <- c(rownames(data), NA);
+
+  offsets;
+}, protected=TRUE) # getChromosomeOffsets()
+
+
 ############################################################################
 # HISTORY:
+# 2012-09-21
+# o Now nbrOfChangePoints() for AbstractCBS calculates only change points
+#   of connected neighboring segments.
+# 2012-09-14
+# o GENERALIZATION: Added getSegmentSizes() for AbstractCBS.
+# o GENERALIZATION: Added getChromosomeOffsets() for AbstractCBS.
+# 2012-09-13
+# o Updated all.equal() for AbstractCBS to compare locus-level data,
+#   segments, and other fields.
 # 2012-06-03
 # o DOCUMENTATION: Added Rd help for updateMeans().
 # 2011-12-03

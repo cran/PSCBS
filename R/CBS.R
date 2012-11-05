@@ -62,7 +62,7 @@ setMethodS3("all.equal", "CBS", function(target, current, check.attributes=FALSE
     current$output <- segs;
   }
 
-  NextMethod("all.equal", target, current, check.attributes=check.attributes, ...);
+  NextMethod("all.equal", target=target, current=current, check.attributes=check.attributes);
 }, protected=TRUE)
 
 
@@ -178,6 +178,23 @@ setMethodS3("signalType<-", "CBS", function(x, value) {
 
 
 
+setMethodS3("getLocusSignalNames", "CBS", function(fit, ...) {
+  data <- fit$data;
+  names <- colnames(data);
+  if (is.element("y", names)) {
+    return("y");
+  } else if (is.element("CT", names)) {
+    return("CT");
+  }
+
+  throw("INTERNAL ERROR: Unknown locus signal names: ", paste(names, collapse=", "));
+}, protected=TRUE)
+
+setMethodS3("getSegmentTrackPrefixes", "CBS", function(fit, ...) {
+  c("");
+}, protected=TRUE)
+
+
 setMethodS3("getLocusData", "CBS", function(fit, indices=NULL, addCalls=NULL, ...) {
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Validate arguments
@@ -239,7 +256,7 @@ setMethodS3("isSegmentSplitter", "CBS", function(fit, ...) {
 }, protected=TRUE)
 
 
-setMethodS3("getSegments", "CBS", function(fit, simplify=FALSE, splitters=TRUE, ...) {
+setMethodS3("getSegments", "CBS", function(fit, simplify=FALSE, splitters=TRUE, addGaps=FALSE, ...) {
   # Argument 'splitters':
   splitters <- Arguments$getLogical(splitters);
 
@@ -263,21 +280,41 @@ setMethodS3("getSegments", "CBS", function(fit, simplify=FALSE, splitters=TRUE, 
     segs <- segs[!isSplitter,];
   }
 
+  # Add splitters for "gaps"...
+  if (splitters && addGaps) {
+    # Chromosome gaps
+    n <- nrow(segs);
+    chrs <- segs$chromosome;
+    gapsAfter <- which(diff(chrs) != 0L);
+    gapsAfter <- gapsAfter[!is.na(chrs[gapsAfter])];
+    nGaps <- length(gapsAfter);
+    if (nGaps > 0L) {
+      idxs <- seq(length=n);
+      values <- rep(as.integer(NA), times=nGaps);
+      idxs <- insert(idxs, at=gapsAfter+1L, values=values);
+      segs <- segs[idxs,];
+    }
+
+    # Other gaps
+    n <- nrow(segs);
+    chrs <- segs$chromosome;
+    starts <- segs$tcnStart[-1L];
+    ends <- segs$tcnEnd[-n];
+    gapsAfter <- which(starts != ends);
+    onSameChr <- (chrs[gapsAfter+1L] == chrs[gapsAfter] );
+    gapsAfter <- gapsAfter[onSameChr];
+    nGaps <- length(gapsAfter);
+    if (nGaps > 0L) {
+      idxs <- seq(length=n);
+      values <- rep(as.integer(NA), times=nGaps);
+      idxs <- insert(idxs, at=gapsAfter+1L, values=values);
+      segs <- segs[idxs,];
+    }
+  }
+
   segs;
 }, private=TRUE)
 
-
-setMethodS3("getSegmentSizes", "CBS", function(fit, by=c("length", "count"), ...) {
-  by <- match.arg(by);
-
-  data <- getSegments(fit, ...);
-  if (by == "length") {
-    res <- data[["end"]]-data[["start"]]+1L;
-  } else if (by == "count") {
-    res <- data[["nbrOfLoci"]];
-  }
-  res;
-})
 
 
 setMethodS3("updateBoundaries", "CBS", function(fit, ..., verbose=FALSE) {
@@ -560,6 +597,10 @@ setMethodS3("resegment", "CBS", function(fit, ..., verbose=FALSE) {
 
 ############################################################################
 # HISTORY:
+# 2012-09-21
+# o Now getSegments(..., splitters=TRUE) for CBS and PSCBS inserts NA
+#   rows whereever there is a "gap" between segments.  A "gap" is when
+#   two segments are not connected (zero distance).
 # 2012-06-03
 # o BUG FIX: all.equal(target, current) for CBS objects would give an
 #   error if either 'target' or 'current' had zero segments.
