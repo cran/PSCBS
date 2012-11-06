@@ -1,3 +1,18 @@
+setMethodS3("shiftTCN", "PairedPSCBS", function(fit, shift, update=TRUE, ...) {
+  # Argument 'shift':
+  shift <- Arguments$getDouble(shift, disallow=c("NA", "NaN", "Inf"));
+
+  data <- getLocusData(fit);
+  data$CT <- data$CT + shift;
+  fit$data <- data;
+  rm(data);
+
+  if (update) {
+    fit <- updateMeans(fit, ...);  
+  }
+
+  fit;
+}, protected=TRUE)
 
 
 setMethodS3("bootstrapCIs", "PairedPSCBS", function(fit, ...) {
@@ -98,7 +113,7 @@ setMethodS3("extractCNs", "PairedPSCBS", function(fit, splitters=TRUE, ...) {
 
 
 setMethodS3("extractDeltaC1C2", "PairedPSCBS", function(...) {
-  xy <- extractC1C2(...);
+  xy <- extractC1C2(..., splitters=TRUE, addGaps=TRUE);
   X <- xy[,1:2,drop=FALSE];
   dX <- matrixStats::colDiffs(X);
   dX;
@@ -407,6 +422,11 @@ print(tcnSegRowsII);
 
 ############################################################################
 # HISTORY:
+# 2012-09-21
+# o ROBUSTNESS: Now extractDeltaC1C2() for PairedPSCBS makes sure to
+#   retrieve segments with NA splitters between chromosomes and gaps.
+# 2012-09-13
+# o Added shiftTCN() for PairedPSCBS.
 # 2012-01-21
 # o CLEANUP: Removed left-over debug output in postsegmentTCN().
 # 2012-01-09

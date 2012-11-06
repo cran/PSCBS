@@ -118,7 +118,6 @@
 \alias{getCallStatisticsByArms}
 \alias{getCallStatisticsByArms.CBS}
 \alias{getChromosomeOffsets}
-\alias{getChromosomeOffsets.CBS}
 \alias{getChromosomeRanges}
 \alias{getChromosomeRanges.CBS}
 \alias{getChromosomes}
@@ -274,6 +273,28 @@
 \alias{writeSegments.DNAcopy}
 \alias{estimateDeltaCN}
 \alias{estimateDeltaCN.PairedPSCBS}
+\alias{shiftTCN}
+\alias{shiftTCN.AbstractCBS}
+\alias{shiftTCN.CBS}
+\alias{shiftTCN.PairedPSCBS}
+\alias{getChromosomeOffsets.AbstractCBS}
+\alias{getChromosomeRanges.PairedPSCBS}
+\alias{getChromosomeRanges.AbstractCBS}
+\alias{seqOfSegmentsByDP}
+\alias{seqOfSegmentsByDP.AbstractCBS}
+\alias{seqOfSegmentsByDP.CBS}
+\alias{seqOfSegmentsByDP.PairedPSCBS}
+\alias{seqOfSegmentsByDP.matrix}
+\alias{getChromosomeOffsets.PairedPSCBS}
+\alias{getLocusSignalNames}
+\alias{getLocusSignalNames.AbstractCBS}
+\alias{getLocusSignalNames.CBS}
+\alias{getLocusSignalNames.PSCBS}
+\alias{getSegmentTrackPrefixes}
+\alias{getSegmentTrackPrefixes.AbstractCBS}
+\alias{getSegmentTrackPrefixes.CBS}
+\alias{getSegmentTrackPrefixes.PSCBS}
+\alias{pruneByDP}
 
 \description{
   This page contains aliases for all "non-documented" objects that

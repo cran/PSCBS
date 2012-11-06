@@ -2,6 +2,122 @@
 Package: PSCBS
 ==============
 
+Version: 0.30.0 [2012-11-05]
+o GENERALIZATION: Now bootstrapTCNandDHByRegion() works for more 
+  "flavors", e.g the default ('tcn') used by segmentByNonPairedPSCBS().
+
+
+Version: 0.29.9 [2012-11-05]
+o DOCUMENTATION FIX: example(segmentByNonPairedPSCBS) was for
+  the paired case.
+o CRAN POLICY: Further speed up of examples such that they run faster
+  with R CMD check.
+
+
+Version: 0.29.8 [2012-11-04]
+o CLEANUP: Replaced all whichVector() with which(), because the
+  latter is now the fastest again.
+
+
+Version: 0.29.7 [2012-11-03]
+o Updated deprecated ggplot2 functions in the RSP reports.
+
+
+Version: 0.29.6 [2012-11-01]
+o Bumped the package dependencies.
+o CRAN POLICY: Made the examples run faster for R CMD check.
+
+
+Version: 0.29.5 [2012-10-16]
+o ROBUSTNESS/BUG FIX: No longer passing '...' to NextMethod(), cf.
+  R-devel thread 'Do *not* pass '...' to NextMethod() - it'll do it 
+  for you; missing documentation, a bug or just me?' on Oct 16, 2012.   
+
+
+Version: 0.29.4 [2012-09-23]
+o Now plotTracks() [and plotTracksManyChromosomes()] draws segment levels
+  such that it is easier to see them even when they are overlapping.
+
+ 
+Version: 0.29.3 [2012-09-21]
+o SPEEDUP: By default bootstrapTCNandDHByRegion() for PairedPSCBS no
+  longer do sanity checks within the bootstrap loop.  This significantly
+  speed up the method.  To run checks, use argument .debug=TRUE.
+  In addition, the callNnn() methods that need to call this method,
+  does it by decreasing the amount of verbose output substantially,
+  which in turn speeds up the process a fair bit.
+o Now getSegments(..., splitters=TRUE) for CBS and PSCBS inserts NA
+  rows whereever there is a "gap" between segments.  A "gap" is when
+  two segments are not connected (zero distance).
+o ROBUSTNESS: Now append() for CBS and PSCBS drops column 'length'
+  from 'knownSegments', iff it exists.
+o Now nbrOfChangePoints() for AbstractCBS calculates only change points
+  of connected neighboring segments.
+o BUG FIX: seqOfSegmentsByDP() for AbstractCBS would not handle empty
+  segments, which could occur if 'knownSegments' for instance included
+  centromere gaps.
+o BUG FIX: segmentByCBS(... knownSegments) could return segments for 
+  chromosome 0 even though it did not exist in the input data.
+
+
+Version: 0.29.2 [2012-09-18]
+o REPORT: Now report() for AbstractCBS looks for the RSP template in 
+  templates/, and as a backup in templates,PSCBS/.  If the latter does 
+  not exist, it is automatically created as a soft link to templates/ 
+  of the PSCBS package.  This allows anyone to create their own 
+  customized copy (in templates/) of the default PSCBS RSP report.
+o REPORT: Now report(fit, ..., rspTags) for AbstractCBS looks for the 
+  RSP template named <className>(,<rspTags>),report.tex.rsp, where
+  className is class(fit)[1] and  argument 'rspTags' is an optional
+  comma-separated character string/vector.  This makes it possible
+  to have different types of report for the same class of objects.
+o REPORT: Added argument 'force' to report() for AbstractCBS.  This 
+  will copy the RSP template files again, although they are already 
+  in reports/ output directory.
+
+
+Version: 0.29.1 [2012-09-15]
+o Added argument 'dropMissingCT' to segmentByPairedPSCBS().
+
+
+Version: 0.29.0 [2012-09-14]
+o Added trial version of pruneByDP() for AbstractCBS.
+
+
+Version: 0.28.6 [2012-09-13]
+o Now tileChromosomes() also adjusts 'knownSegments'.
+o Added argument 'dropGaps' to gapsToSegments().
+o Updated all.equal() for AbstractCBS to compare locus-level data,
+  segments, and other fields.
+
+
+Version: 0.28.5 [2012-09-13]
+o SPEEDUP: Now segmentByCBS(..., undo=+Inf) returns much faster, which
+  is possible because there is no need to identify new change points.
+
+
+Version: 0.28.4 [2012-09-13]
+o CONSISTENCY FIX: Changed the behavior of extreme values of argument
+  'undo' to segmentByCBS() such that 'undo=0' (was 'undo=+Inf') now
+  means that it will not ask DNAcopy::segment() to undo the segmentation,
+  and such that 'undo=+Inf' means that no changepoints will be identified.
+  The latter case allows you to effectively skip the segmentation but
+  still calculate all the CBS statistics across a set of known segments
+  via segmentByCBS(..., undo=+Inf, knownSegments=knownSegments).
+  Arguments 'undoTCN' and 'undoDH' to segmentByPairedPSCBS() are
+  adjusted analogously.  Corresponding system tests were added.
+
+
+Version: 0.28.3 [2012-08-30]
+o Updated code and Rd cross reference to use the 'matrixStats'
+  package for weightedMedian(), which used to be in 'aroma.light'.
+
+
+Version: 0.28.2 [2012-08-20]
+o BUG FIX: segmentByNonPairedPSCBS() forgot to specify namespace
+  aroma.light when trying to call findPeaksAndValleys().
+
+
 Version: 0.28.1 [2012-08-15]
 o Minor grammatical corrections of the Paired PSCBS vignette.
 

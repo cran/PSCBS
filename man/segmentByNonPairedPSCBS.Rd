@@ -84,6 +84,9 @@
  }
 
  \examples{
+# Just to pass CRAN's timing constraints for 'R CMD check'
+PSCBS:::.prememoize()
+verbose <- Arguments$getVerbose(-10*interactive(), timestamp=TRUE)
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Load SNP microarray data
@@ -102,20 +105,17 @@ str(data)
 dataS <- dropSegmentationOutliers(data)
 
 # Speed up example by segmenting fewer loci
-dataS <- dataS[seq(from=1, to=nrow(data), by=5),]
+dataS <- dataS[seq(from=1, to=nrow(data), by=20),]
 
 str(dataS)
 
 R.oo::attachLocally(dataS)
 
-# Paired PSCBS segmentation
-fit <- segmentByPairedPSCBS(CT, betaT=betaT, betaN=betaN,
+# Non-Paired PSCBS segmentation
+fit <- segmentByNonPairedPSCBS(CT, betaT=betaT,
                             chromosome=chromosome, x=x,
-                            seed=0xBEEF, verbose=-10)
+                            seed=0xBEEF, verbose=verbose)
 print(fit)
-
-# Plot results
-plotTracks(fit)
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -123,9 +123,8 @@ plotTracks(fit)
 # (used by the AB caller, which, if skipped here,
 #  will do it automatically)
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-fit <- bootstrapTCNandDHByRegion(fit, verbose=-10)
+fit <- bootstrapTCNandDHByRegion(fit, B=100, verbose=verbose)
 print(fit)
-plotTracks(fit)
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -134,13 +133,12 @@ plotTracks(fit)
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Explicitly estimate the threshold in DH for calling AB
 # (which be done by default by the caller, if skipped here)
-deltaAB <- estimateDeltaAB(fit, flavor="qq(DH)", verbose=-10)
+deltaAB <- estimateDeltaAB(fit, flavor="qq(DH)", verbose=verbose)
 print(deltaAB)
-## [1] 0.1657131
 
-fit <- callAB(fit, delta=deltaAB, verbose=-10)
+fit <- callAB(fit, delta=deltaAB, verbose=verbose)
 print(fit)
-plotTracks(fit)
+
 
 # Even if not explicitly specified, the estimated
 # threshold parameter is returned by the caller
@@ -153,11 +151,10 @@ stopifnot(fit$params$deltaAB == deltaAB)
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Explicitly estimate the threshold in C1 for calling LOH
 # (which be done by default by the caller, if skipped here)
-deltaLOH <- estimateDeltaLOH(fit, flavor="minC1|nonAB", verbose=-10)
+deltaLOH <- estimateDeltaLOH(fit, flavor="minC1|nonAB", verbose=verbose)
 print(deltaLOH)
-## [1] 0.625175
 
-fit <- callLOH(fit, delta=deltaLOH, verbose=-10)
+fit <- callLOH(fit, delta=deltaLOH, verbose=verbose)
 print(fit)
 plotTracks(fit)
 
