@@ -1,7 +1,17 @@
+<%-------------------------------------------------------------------
+  DIRECTIVES FOR R:
+
+  %\VignetteIndexEntry{Paired PSCBS}
+  %\VignetteKeyword{copy numbers, allele specific, parent specific, genomic aberrations}
+  %\VignetteAuthor{Henrik Bengtsson}
+  %\VignetteEngine{R.rsp::rsp}
+  -------------------------------------------------------------------%>
+
 <% t0 <- Sys.time() %>
 
 <%
 library("PSCBS");
+library("R.devices");
 fixLocations <- function(fit, ...) {
   for (key in grep("(End|Start)$", colnames(fit$output))) {
     fit$output[[key]] <- as.integer(fit$output[[key]]);
@@ -59,15 +69,15 @@ options(str=strOptions(strict.width="cut"));
 
 \title{Paired PSCBS}
 <% pkg <- Package("PSCBS"); %>
-\author{<%=getAuthor(pkg)%>}
+\author{Vignette by Henrik Bengtsson}
 %% \date{<%=format(as.Date(getDate(pkg)), format="%B %d, %Y")%>}
-\date{July 10, 2012}
+\date{April 8, 2013}
 
 \begin{document}
 
 \maketitle
 \begin{abstract}
-The Paired Parent-Specific Circular Binary Segmentation (Paired PSCBS) method partitions a tumor genome into segments of constant parent-specific copy numbers (PSCNs) based on SNP DNA microarray data from a matched tumor-normal pair.  The method also calls segments with run of homozygosity (ROH), segments in allelic balance (AB), segments with loss of heterozygosity (LOH) and segments with neutral total copy number (NTCN).
+The Paired Parent-Specific Circular Binary Segmentation (Paired PSCBS) method partitions a tumor genome into segments of constant parent-specific copy numbers (PSCNs) based on SNP DNA microarray data from a matched tumor-normal pair.  The method also calls segments with run of homozygosity (ROH), segments in allelic balance (AB) and segments with loss of heterozygosity (LOH).
 Paired PSCBS was designed to work with data from any SNP microarray technology and generation, including Affymetrix and Illumina.
 
 This document shows how to use the \pkg{PSCBS} package to run Paired PSCBS on a tumor-normal pair.
@@ -84,6 +94,7 @@ The authors very much appreciate feedback on this document.}
 \tableofcontents
 
 \clearpage
+
 
 <%-------------------------------------------------------------------
   BACKGROUND
@@ -109,8 +120,7 @@ fullname <- "PairedPSCBS,exData,chr01";
 %>
 \begin{verbatim}
 <%=evalCapture({
-pathname <- system.file("data-ex/PairedPSCBS,exData,chr01.Rbin", package="PSCBS")
-data <- R.utils::loadObject(pathname)
+data <- PSCBS::exampleData("paired.chr01")
 str(data)
 })%>
 \end{verbatim}
@@ -193,9 +203,9 @@ plotTracks(fit, tracks="tcn,c1,c2", xlim=c(120,244)*1e6)
   })%>}}
  \end{center}
  \caption{PSCN segments identified by Paired PSCBS.
-  \textbf{Top}: The TCN signals (black dots) with the TCN mean levels (purple).
-  \textbf{Middle}: The DH signals (black dots) with the DH mean levels (orange).
-  \textbf{Bottom}: The TCN signals (black dots) with the minor CN ($C_1$; blue), the major CN ($C_2$; red) and the TCN ($C=C_1+C_2$; purple) mean levels.
+  \textbf{Top}: The TCN signals with the TCN mean levels (purple).
+  \textbf{Middle}: The DH signals with the DH mean levels (orange).
+  \textbf{Bottom}: The TCN signals with the minor CN ($C_1$; blue), the major CN ($C_2$; red) and the TCN ($C=C_1+C_2$; purple) mean levels.
  }
  \label{figTracks}
 \end{figure}
@@ -208,10 +218,13 @@ plotTracks(fit, tracks="tcn,c1,c2", xlim=c(120,244)*1e6)
 \section{Calling segments}
 The calling algorithms for allelic balance (AB) and loss of heterozygosity (LOH) are based on quantile estimates of the different mean levels.  These estimates are obtained using non-parametric bootstrap techniques.  For more details, see~\citet{OlshenA_etal_2011}.
 After the Paired PSCBS method was published, we have added methods for calling run of homozygosity (ROH) and neutral total copy number (NTCN).
+\emph{The ROH and NTCN calling methods should be considered under development until further notice, meaning they and their results may change without notice.}
 
 
 
-\subsection{Calling segments with run of homozygosity (ROH)}
+\subsection{Calling segments with run of homozygosity (ROH)*}
+\emph{Please note that this method is under development. This means that it may change without further notice.}
+
 A region has a run of homozygotes (ROH) if all of its SNPs are homozygous (in the normal).  Since such a region has no heterozyous SNPs, its decrease in heterozygosity (DH) is undefined.  Likewise, the minor and major copy numbers are unknown.
  However, if there are genotyping errors within an ROH region, we will obtain a non-missing DH mean level and hence also finite minor and major CNs.  In order to adjust for these faulty estimates, we test if the identified segments are ROHs or not by:
 \begin{verbatim}
@@ -279,7 +292,9 @@ threshold will be obtained resulting in a more conservative LOH caller.
 
 
 
-\subsection{Calling segments with neutral total copy number (NTCN)}
+\subsection{Calling segments with neutral total copy number (NTCN)*}
+\emph{Please note that this method is under development. This means that it may change without further notice.}
+
 The neutral total copy number (NTCN) caller tests whether the total CN level of a segment is neutral (e.g. diploid) or not.
 To call the NTCN state of all segments, do:
 \begin{verbatim}
@@ -290,13 +305,15 @@ fit <- callNTCN(fit, verbose=-10)
 
 
 \subsubsection{Tuning parameters}
-The NTCN caller identifies segments which TCN mean levels (or more precisely, which $95\%$ confidence intervals) are within a given "acceptance" region.  This acceptance region is determined by the $95\%$ confidence interval of an initial set of AB segments identified to be copy neutral and then expanded by half a TCN unit length.  The true length of half a total copy number unit is a function of the normal contamination and specified by the argument \code{delta} to \code{callNTCN()}.  The greater the normal contamination, the smaller the \code{delta} should be, such that the width of the acceptance region becomes smaller.  The argument \code{delta} can be estimated explicitly as:
+The NTCN caller identifies segments which TCN mean levels (or more precisely, which $95\%$ confidence intervals) are within a given "acceptance" region.  This acceptance region is determined by the $95\%$ confidence interval of an initial set of AB segments identified to be copy neutral and then expanded by half a TCN unit length.  
+The true length of half a total copy number unit is specified by the argument \code{delta} to \code{callNTCN()}.  Its length should be a function of the overall background signals (which includes normal contamination and more), such that the width of the acceptance region becomes smaller when the background increases.
+The background signal (\code{kappa}) and \code{delta} can be estimated explicitly as:
 \begin{verbatim}
-deltaCN <- estimateDeltaCN(fit, scale=1)
+kappa <- estimateKappa(fit)
+deltaCN <- estimateDeltaCN(fit, scale=1, kappa=kappa)
 fit <- callNTCN(fit, delta=deltaCN, verbose=-10)
 \end{verbatim}
-By decreasing the argument \code{scale} (a positive scalar), a smaller acceptance region will
-be obtained, which results in a more conservative CN caller.
+By decreasing the tuning parameter \code{scale} (a positive scalar), a smaller acceptance region will be obtained, which results in a more conservative CN caller.
 
 
 
@@ -317,18 +334,16 @@ To write the PSCN segmentation results to file, do:
 \begin{verbatim}
 pathname <- writeSegments(fit, name="MySample", simplify=TRUE)
 \end{verbatim}
+With \code{simplify=FALSE} (default) quantile estimates of the different mean levels will also be written, which roughly doubles the file size.
 
 
 
 \section{Experimental}
 In this section we illustrate some of the ongoing and future work that will be contained in the PSCBS package.  Please be aware that these methods are very much under construction, possibly incomplete and in the worst case, even incorrect.
 
-\subsection{Report generation}
-A multipage PDF report that contains both whole-genome and per-chromosome summaries and figures can be generated by:
-\begin{verbatim}
-> report(fit, sampleName="PairedPSCBS", studyName="PSCBS-Ex", verbose=-10)
-\end{verbatim}
-By default, the reports are written to directory \code{reports/<studyName>/} under the current working directory.  In addition to the PDF, that directory also contains subdirectory \code{figures/} holding all generated figure files (e.g. PNGs and PDFs) for easy inclusion elsewhere.
+
+\subsection{Less biased Decrease of Heterozygosity (DH) estimates}
+The DH mean levels of the segments are estimated as the sample mean of the DH signals within each segment.  Since DH signals are by definition truncated at zero, the mean level estimates will always be greater than zero even if the true underlying DH is exactly zero.  An additional bias is introduced because the distribution of the DH signals is skewed for small DHs, causing the sample mean estimate to be biased.  A less biased estimate can be obtained by using the median estimator.  To use the median estimator for DH mean levels, specify argument \code{avgDH="median"} to the \code{segmentByPairedPSCBS()} call.  Because the DH mean levels will be less bias, the $(C_1,C_2)$ mean level estimates will also be less biased, e.g. they will be closer to each other for segments that are in allelic balance.
 
 
 \subsection{Pruning segmentation profile}
@@ -348,6 +363,16 @@ The result of this is shown in Figure~\ref{figTracksPruned}.
  \caption{Pruned PSCN segments plotted as in Figure~\ref{figTracks}.}
  \label{figTracksPruned}
 \end{figure}
+In the current implementation, any segment calls and quantile mean levels estimates previously are dropped when pruning.
+
+
+\subsection{Report generation}
+A multipage PDF report that contains both whole-genome and per-chromosome summaries and figures can be generated by:
+\begin{verbatim}
+> report(fit, sampleName="PairedPSCBS", studyName="PSCBS-Ex", verbose=-10)
+\end{verbatim}
+By default, the reports are written to directory \code{reports/<studyName>/} under the current working directory.  In addition to the PDF, that directory also contains subdirectory \code{figures/} holding all generated figure files (e.g. PNGs and PDFs) for easy inclusion elsewhere.
+
 
 
 

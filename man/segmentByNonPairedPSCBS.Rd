@@ -22,7 +22,9 @@
   It is intended to be applied to one tumor sample at the time.
  }
 
- \usage{\method{segmentByNonPairedPSCBS}{default}(CT, betaT, ..., flavor=c("tcn", "tcn&dh", "tcn,dh", "sqrt(tcn),dh", "sqrt(tcn)&dh"), tauA=NA, tauB=1 - tauA, verbose=FALSE)}
+ \usage{
+\method{segmentByNonPairedPSCBS}{default}(CT, betaT, ..., flavor=c("tcn", "tcn&dh", "tcn,dh", "sqrt(tcn),dh", "sqrt(tcn)&dh"), tauA=NA, tauB=1 - tauA, verbose=FALSE)
+}
 
  \arguments{
    \item{CT}{A \code{\link[base]{numeric}} \code{\link[base]{vector}} of J tumor total copy number (TCN)
@@ -35,7 +37,10 @@
    \item{...}{Additional arguments passed to \code{\link{segmentByPairedPSCBS}}().}
    \item{flavor}{A \code{\link[base]{character}} specifying what type of segmentation and
      calling algorithm to be used.}
-   \item{tauA, tauB}{...}
+   \item{tauA, tauB}{Lower and upper thresholds for calling SNPs
+     heterozygous based on the tumor allele B fractions (\code{betaT}).
+     If \code{\link[base]{NA}}, then they are estimates from data.
+   }
    \item{verbose}{See \code{\link[R.utils]{Verbose}}.}
  }
 
@@ -90,11 +95,8 @@ verbose <- Arguments$getVerbose(-10*interactive(), timestamp=TRUE)
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Load SNP microarray data
-# (note to package developers: this example data set may
-#  be replaced in a future release of the package)
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-pathname <- system.file("data-ex/PairedPSCBS,exData,chr01.Rbin", package="PSCBS")
-data <- R.utils::loadObject(pathname)
+data <- PSCBS::exampleData("paired.chr01")
 str(data)
 
 
@@ -163,7 +165,7 @@ plotTracks(fit)
 stopifnot(fit$params$deltaLOH == deltaLOH)
 }
 
- \author{Henrik Bengtsson (\url{http://www.braju.com/R/})}
+ \author{Henrik Bengtsson}
 
  \references{
   [1] A.B. Olshen, H. Bengtsson, P. Neuvial, P.T. Spellman, R.A. Olshen, V.E. Seshan, \emph{Parent-specific copy number in paired tumor-normal studies using circular binary segmentation}, Bioinformatics, 2011

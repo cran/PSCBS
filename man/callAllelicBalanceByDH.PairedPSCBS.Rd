@@ -10,9 +10,7 @@
 \name{callAllelicBalanceByDH.PairedPSCBS}
 \alias{callAllelicBalanceByDH.PairedPSCBS}
 \alias{PairedPSCBS.callAllelicBalanceByDH}
-\alias{callAllelicBalanceByDH.PairedPSCBS}
 \alias{callAllelicBalanceByDH,PairedPSCBS-method}
-
 
 \title{Calls segments that are in allelic balance}
 
@@ -22,7 +20,9 @@
  bootstrap estimator.
 }
 
-\usage{\method{callAllelicBalanceByDH}{PairedPSCBS}(fit, delta=estimateDeltaAB(fit, flavor = "qq(DH)"), alpha=0.05, ..., verbose=FALSE)}
+\usage{
+\method{callAllelicBalanceByDH}{PairedPSCBS}(fit, delta=estimateDeltaAB(fit, flavor = "qq(DH)"), alpha=0.05, ..., verbose=FALSE)
+}
 
 \arguments{
   \item{flavor}{A \code{\link[base]{character}} string specifying which type of
@@ -30,14 +30,15 @@
   \item{delta}{(Tuning parameter) A non-negative \code{\link[base]{numeric}} threshold.}
   \item{alpha}{A \code{\link[base]{numeric}} in [0,1] specifying the upper and lower
     quantiles calculated by the bootstrap estimator.}
-  \item{...}{Additional arguments passed to the caller.}
+  \item{...}{Additional arguments passed to the bootstrap estimator
+    \code{\link[PSCBS:bootstrapTCNandDHByRegion.PairedPSCBS]{*bootstrapTCNandDHByRegion}()}.}
 }
 
 \value{
   Returns a \code{\link{PairedPSCBS}} object with allelic-balance calls.
 }
 
-\author{Henrik Bengtsson (\url{http://www.braju.com/R/})}
+\author{Henrik Bengtsson}
 
 \section{Algorithm}{
  \itemize{

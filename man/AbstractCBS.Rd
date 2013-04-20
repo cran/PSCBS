@@ -22,7 +22,7 @@
 \code{~~+--}\emph{\code{AbstractCBS}}\cr
 
 \bold{Directly known subclasses:}\cr
-\emph{\link[PSCBS]{CBS}}, \emph{\link[PSCBS]{NonPairedPSCBS}}, \emph{\link[PSCBS]{PairedPSCBS}}, \emph{\link[PSCBS]{PSCBS}}\cr
+\emph{\link[PSCBS]{CBS}}, \emph{\link[PSCBS]{NonPairedPSCBS}}, \emph{\link[PSCBS]{PSCBS}}, \emph{\link[PSCBS]{PairedPSCBS}}\cr
 
 public abstract static class \bold{AbstractCBS}\cr
 extends list\cr
@@ -33,7 +33,9 @@ extends list\cr
   \code{\link{CBS}} and \code{\link{PairedPSCBS}}.
  }
 
- \usage{AbstractCBS(fit=list(), sampleName=fit$sampleName, ...)}
+ \usage{
+AbstractCBS(fit=list(), sampleName=fit$sampleName, ...)
+}
 
  \arguments{
    \item{fit}{A \code{\link[base]{list}} structure containing the segmentation results.}
@@ -48,8 +50,8 @@ extends list\cr
  \tab \code{extractCNs} \tab  -\cr
  \tab \code{\link[PSCBS:getChromosomes.AbstractCBS]{getChromosomes}} \tab Gets the set of chromosomes.\cr
  \tab \code{\link[PSCBS:getLocusData.AbstractCBS]{getLocusData}} \tab Gets the locus-level data.\cr
- \tab \code{\link[PSCBS:getSegments.AbstractCBS]{getSegments}} \tab Gets the segments.\cr
  \tab \code{getSegmentSizes} \tab  -\cr
+ \tab \code{\link[PSCBS:getSegments.AbstractCBS]{getSegments}} \tab Gets the segments.\cr
  \tab \code{\link[PSCBS:load.AbstractCBS]{load}} \tab Loads an AbstractCBS object from file.\cr
  \tab \code{\link[PSCBS:mergeThreeSegments.AbstractCBS]{mergeThreeSegments}} \tab Merge a segment and its two flanking segments.\cr
  \tab \code{\link[PSCBS:nbrOfChangePoints.AbstractCBS]{nbrOfChangePoints}} \tab Gets the number of change points.\cr
@@ -68,5 +70,5 @@ all.equal, as.data.frame, attachLocally, callHooks, relist, within
 
  }
 
- \author{Henrik Bengtsson (\url{http://www.braju.com/R/})}
+ \author{Henrik Bengtsson}
 \keyword{classes}

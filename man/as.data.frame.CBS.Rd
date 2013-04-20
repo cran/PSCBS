@@ -9,9 +9,7 @@
  \name{as.data.frame.CBS}
 \alias{as.data.frame.CBS}
 \alias{CBS.as.data.frame}
-\alias{as.data.frame.CBS}
 \alias{as.data.frame,CBS-method}
-
 
  \title{Gets the table of segments}
 
@@ -19,7 +17,9 @@
   Gets the table of segments.
  }
 
- \usage{\method{as.data.frame}{CBS}(x, ...)}
+ \usage{
+\method{as.data.frame}{CBS}(x, ...)
+}
 
  \arguments{
    \item{...}{Not used.}
@@ -30,7 +30,7 @@
    a unique segment.
  }
 
- \author{Henrik Bengtsson (\url{http://www.braju.com/R/})}
+ \author{Henrik Bengtsson}
 
  \seealso{
    Utilizes \code{\link[PSCBS:getSegments.CBS]{*getSegments}()}.

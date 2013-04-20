@@ -3,16 +3,13 @@
 # 'colorspace', 'dichromat', 'munsell', 'reshape2' and 'scales'.
 
 # Only run this test in full testing mode
-if (Sys.getenv("_R_CHECK_FULL_") != "") {
+if (Sys.getenv("_R_CHECK_FULL_") != "" && packageVersion("R.rsp") >= "0.9.1") {
 library("PSCBS")
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Load SNP microarray data
-# (note to package developers: this example data set may
-#  be replaced in a future release of the package)
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-pathname <- system.file("data-ex/PairedPSCBS,exData,chr01.Rbin", package="PSCBS")
-data <- R.utils::loadObject(pathname)
+data <- PSCBS::exampleData("paired.chr01")
 str(data)
 
 data <- data.frame(chromosome=data$chromosome, x=data$x, y=data$CT)

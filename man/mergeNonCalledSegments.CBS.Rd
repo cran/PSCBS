@@ -9,9 +9,7 @@
  \name{mergeNonCalledSegments.CBS}
 \alias{mergeNonCalledSegments.CBS}
 \alias{CBS.mergeNonCalledSegments}
-\alias{mergeNonCalledSegments.CBS}
 \alias{mergeNonCalledSegments,CBS-method}
-
 
  \title{Merge neighboring segments that are not called}
 
@@ -19,7 +17,9 @@
    Merge neighboring segments that are not called
  }
 
- \usage{\method{mergeNonCalledSegments}{CBS}(fit, ..., verbose=FALSE)}
+ \usage{
+\method{mergeNonCalledSegments}{CBS}(fit, ..., verbose=FALSE)
+}
 
  \arguments{
   \item{...}{Not used.}
@@ -31,7 +31,7 @@
    with the same of fewer number of segments.
  }
 
- \author{Henrik Bengtsson (\url{http://www.braju.com/R/})}
+ \author{Henrik Bengtsson}
 
  \seealso{
    For more information see \code{\link{CBS}}.

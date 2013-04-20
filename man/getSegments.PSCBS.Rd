@@ -9,9 +9,7 @@
  \name{getSegments.PSCBS}
 \alias{getSegments.PSCBS}
 \alias{PSCBS.getSegments}
-\alias{getSegments.PSCBS}
 \alias{getSegments,PSCBS-method}
-
 
  \title{Gets the segments}
 
@@ -19,7 +17,9 @@
    Gets the segments.
  }
 
- \usage{\method{getSegments}{PSCBS}(fit, simplify=FALSE, splitters=TRUE, addGaps=FALSE, ...)}
+ \usage{
+\method{getSegments}{PSCBS}(fit, simplify=FALSE, splitters=TRUE, addGaps=FALSE, ...)
+}
 
  \arguments{
   \item{simplify}{If \code{\link[base:logical]{TRUE}}, redundant and intermediate information is dropped.}#  \item{splitters}{If \code{\link[base:logical]{TRUE}}, "splitters" between chromosomes are
@@ -32,7 +32,7 @@
    and K is the number of segment-specific fields.
  }
 
- \author{Henrik Bengtsson (\url{http://www.braju.com/R/})}
+ \author{Henrik Bengtsson}
 
  \seealso{
    For more information see \code{\link{PSCBS}}.

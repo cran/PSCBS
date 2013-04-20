@@ -10,9 +10,7 @@
 \name{callCopyNeutral.PairedPSCBS}
 \alias{callCopyNeutral.PairedPSCBS}
 \alias{PairedPSCBS.callCopyNeutral}
-\alias{callCopyNeutral.PairedPSCBS}
 \alias{callCopyNeutral,PairedPSCBS-method}
-
 \alias{PairedPSCBS.callNTCN}
 \alias{callNTCN.PairedPSCBS}
 \alias{callNTCN,PairedPSCBS-method}
@@ -25,7 +23,9 @@
  i.e. that have a TCN that corresponds to the ploidy of the genome.
 }
 
-\usage{\method{callCopyNeutral}{PairedPSCBS}(fit, flavor=c("TCN|AB"), ..., minSize=1, force=FALSE)}
+\usage{
+\method{callCopyNeutral}{PairedPSCBS}(fit, flavor=c("TCN|AB"), ..., minSize=1, force=FALSE)
+}
 
 \arguments{
   \item{flavor}{A \code{\link[base]{character}} string specifying which type of
@@ -42,7 +42,7 @@
   Returns a \code{\link{PairedPSCBS}} object with copy-neutral calls.
 }
 
-\author{Henrik Bengtsson (\url{http://www.braju.com/R/})}
+\author{Henrik Bengtsson}
 
 \seealso{
   Internally, one of the following methods are used:

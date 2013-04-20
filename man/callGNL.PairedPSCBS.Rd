@@ -10,12 +10,20 @@
 \name{callGNL.PairedPSCBS}
 \alias{callGNL.PairedPSCBS}
 \alias{PairedPSCBS.callGNL}
-\alias{callGNL.PairedPSCBS}
 \alias{callGNL,PairedPSCBS-method}
-
 \alias{PairedPSCBS.callGainNeutralLoss}
 \alias{callGainNeutralLoss.PairedPSCBS}
 \alias{callGainNeutralLoss,PairedPSCBS-method}
+
+\alias{callGNLByTCNofAB}
+\alias{PairedPSCBS.callGNLByTCNofAB}
+\alias{callGNLByTCNofAB.PairedPSCBS}
+\alias{callGNLByTCNofAB,PairedPSCBS-method}
+
+\alias{callGNLByTCNofABv1}
+\alias{PairedPSCBS.callGNLByTCNofABv1}
+\alias{callGNLByTCNofABv1.PairedPSCBS}
+\alias{callGNLByTCNofABv1,PairedPSCBS-method}
 
 
 \title{Calls segments that are gained, copy neutral, or lost}
@@ -25,7 +33,9 @@
  that corresponds to the ploidy of the genome.
 }
 
-\usage{\method{callGNL}{PairedPSCBS}(fit, flavor=c("TCN|AB"), ..., minSize=1, force=FALSE)}
+\usage{
+\method{callGNL}{PairedPSCBS}(fit, flavor=c("TCN|AB"), ..., minSize=1, force=FALSE)
+}
 
 \arguments{
   \item{flavor}{A \code{\link[base]{character}} string specifying which type of
@@ -42,7 +52,7 @@
   Returns a \code{\link{PairedPSCBS}} object with added calls.
 }
 
-\author{Henrik Bengtsson (\url{http://www.braju.com/R/})}
+\author{Henrik Bengtsson}
 
 \seealso{
   Internally, one of the following methods are used:

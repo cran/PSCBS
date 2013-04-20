@@ -2,11 +2,8 @@ library("PSCBS")
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Load SNP microarray data
-# (note to package developers: this example data set may
-#  be replaced in a future release of the package)
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-pathname <- system.file("data-ex/PairedPSCBS,exData,chr01.Rbin", package="PSCBS")
-data <- R.utils::loadObject(pathname)
+data <- PSCBS::exampleData("paired.chr01")
 str(data)
 
 
@@ -16,27 +13,29 @@ str(data)
 # Drop single-locus outliers
 dataS <- dropSegmentationOutliers(data)
 
+# Find centromere
+gaps <- findLargeGaps(dataS, minLength=2e6)
+knownSegments <- gapsToSegments(gaps)
+
+
 # Run light-weight tests by default
 if (Sys.getenv("_R_CHECK_FULL_") == "") {
   # Use only every 5th data point
   dataS <- dataS[seq(from=1, to=nrow(data), by=5),]
   # Number of segments (for assertion)
-  nSegs <- 3L
+  nSegs <- 4L
   # Number of bootstrap samples (see below)
   B <- 100L
 } else {
   # Full tests
-  nSegs <- 12L
+  nSegs <- 13L
   B <- 1000L
 }
 
 str(dataS)
 
-R.oo::attachLocally(dataS)
-
 # Paired PSCBS segmentation
-fit <- segmentByPairedPSCBS(CT, betaT=betaT, betaN=betaN,
-                            chromosome=chromosome, x=x, 
+fit <- segmentByPairedPSCBS(dataS, knownSegments=knownSegments,
                             seed=0xBEEF, verbose=-10)
 print(fit)
 
@@ -57,6 +56,23 @@ print(fit)
 plotTracks(fit)
 
 
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# Calling segments with run of homozygosity (ROH)
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+fit <- callROH(fit, verbose=-10)
+print(fit)
+plotTracks(fit)
+
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# Estimate background
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+kappa <- estimateKappa(fit, verbose=-10)
+print(kappa)
+## [1] 0.226011
+
+
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Calling segments in allelic balance (AB)
 # NOTE: Ideally, this should be done on whole-genome data
@@ -64,6 +80,11 @@ plotTracks(fit)
 # Explicitly estimate the threshold in DH for calling AB
 # (which be done by default by the caller, if skipped here)
 deltaAB <- estimateDeltaAB(fit, flavor="qq(DH)", verbose=-10)
+if (Sys.getenv("_R_CHECK_FULL_") == "") {
+  # Ad hoc workaround for not utilizing all of the data
+  # in the test, which results in a poor estimate
+  deltaAB <- 0.165
+}
 print(deltaAB)
 ## [1] 0.1657131
 
@@ -71,7 +92,7 @@ fit <- callAB(fit, delta=deltaAB, verbose=-10)
 print(fit)
 plotTracks(fit)
 
-# Even if not explicitly specified, the estimated 
+# Even if not explicitly specified, the estimated
 # threshold parameter is returned by the caller
 stopifnot(fit$params$deltaAB == deltaAB)
 
@@ -90,17 +111,9 @@ fit <- callLOH(fit, delta=deltaLOH, verbose=-10)
 print(fit)
 plotTracks(fit)
 
-# Even if not explicitly specified, the estimated 
+# Even if not explicitly specified, the estimated
 # threshold parameter is returned by the caller
 stopifnot(fit$params$deltaLOH == deltaLOH)
-
-
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-# Calling segments with run of homozygosity (ROH)
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-fit <- callROH(fit, verbose=-10)
-print(fit)
-plotTracks(fit)
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -109,5 +122,3 @@ plotTracks(fit)
 fit <- callGNL(fit, verbose=-10)
 print(fit)
 plotTracks(fit)
-
-

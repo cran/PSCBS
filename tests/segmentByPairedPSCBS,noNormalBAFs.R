@@ -2,11 +2,8 @@ library("PSCBS")
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Load SNP microarray data
-# (note to package developers: this example data set may
-#  be replaced in a future release of the package)
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-pathname <- system.file("data-ex/PairedPSCBS,exData,chr01.Rbin", package="PSCBS")
-data <- R.utils::loadObject(pathname)
+data <- PSCBS::exampleData("paired.chr01")
 str(data)
 
 # Drop single-locus outliers
@@ -41,7 +38,7 @@ muN <- aroma.light::callNaiveGenotypes(betaN, censorAt=c(0,1))
 # Paired PSCBS segmentation
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 fit <- segmentByPairedPSCBS(CT, betaT=betaT, muN=muN, tbn=FALSE,
-                            chromosome=chromosome, x=x, 
+                            chromosome=chromosome, x=x,
                             seed=0xBEEF, verbose=-10)
 print(fit)
 

@@ -12,7 +12,9 @@
 
 \title{Install the DNAcopy package}
 
-\usage{\method{installDNAcopy}{default}(..., force=FALSE)}
+\usage{
+\method{installDNAcopy}{default}(..., force=FALSE)
+}
 
 \description{
   Install the DNAcopy package, if missing.
@@ -36,7 +38,7 @@
   that it is reported by \code{\link[utils]{sessionInfo}}.
 }
 
-\author{Henrik Bengtsson (\url{http://www.braju.com/R/})}
+\author{Henrik Bengtsson}
 
 
 \keyword{internal}

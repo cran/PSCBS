@@ -10,9 +10,8 @@
 \name{callROH.PairedPSCBS}
 \alias{callROH.PairedPSCBS}
 \alias{PairedPSCBS.callROH}
-\alias{callROH.PairedPSCBS}
 \alias{callROH,PairedPSCBS-method}
-
+\alias{callROH.NonPairedPSCBS}
 
 \title{Calls segments that are in ROH}
 
@@ -21,7 +20,9 @@
  Run of homozygosity (ROH) is a property of the normal (germline) sample.
 }
 
-\usage{\method{callROH}{PairedPSCBS}(fit, ..., updateMeans=TRUE, force=FALSE, verbose=FALSE)}
+\usage{
+\method{callROH}{PairedPSCBS}(fit, ..., updateMeans=TRUE, force=FALSE, verbose=FALSE)
+}
 
 \arguments{
   \item{...}{Additional arguments passed to \code{\link{testROH}}().}
@@ -36,7 +37,7 @@
   Returns a \code{\link{PairedPSCBS}} object with ROH calls.
 }
 
-\author{Henrik Bengtsson (\url{http://www.braju.com/R/})}
+\author{Pierre Neuvial, Henrik Bengtsson}
 
 \seealso{
   Internally, \code{\link{testROH}}() is used.
