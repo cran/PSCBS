@@ -9,9 +9,7 @@
 \name{getFractionOfGenomeLost.CBS}
 \alias{getFractionOfGenomeLost.CBS}
 \alias{CBS.getFractionOfGenomeLost}
-\alias{getFractionOfGenomeLost.CBS}
 \alias{getFractionOfGenomeLost,CBS-method}
-
 \alias{CBS.getFractionOfGenomeGained}
 \alias{getFractionOfGenomeGained.CBS}
 \alias{getFractionOfGenomeGained,CBS-method}
@@ -40,7 +38,9 @@
  using definitions closely related to those presented in [1].
 }
 
-\usage{\method{getFractionOfGenomeLost}{CBS}(fit, ...)}
+\usage{
+\method{getFractionOfGenomeLost}{CBS}(fit, ...)
+}
 
 \arguments{
  \item{...}{Not used.}
@@ -50,7 +50,7 @@
  Returns a \code{\link[base]{double}} in [0,1].
 }
 
-\author{Henrik Bengtsson (\url{http://www.braju.com/R/})}
+\author{Henrik Bengtsson}
 
 \references{
   [1] Fridlyand et al. \emph{Breast tumor copy number aberration

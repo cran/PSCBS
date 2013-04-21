@@ -10,9 +10,7 @@
  \name{callGainsAndLosses.CBS}
 \alias{callGainsAndLosses.CBS}
 \alias{CBS.callGainsAndLosses}
-\alias{callGainsAndLosses.CBS}
 \alias{callGainsAndLosses,CBS-method}
-
 
  \title{Calls gains and losses}
 
@@ -20,7 +18,9 @@
   Calls gains and losses.
  }
 
- \usage{\method{callGainsAndLosses}{CBS}(fit, adjust=1, method=c("ucsf-mad", "ucsf-dmad"), ..., verbose=FALSE)}
+ \usage{
+\method{callGainsAndLosses}{CBS}(fit, adjust=1, method=c("ucsf-mad", "ucsf-dmad"), ..., verbose=FALSE)
+}
 
  \arguments{
   \item{adjust}{A positive scale factor adjusting the sensitivity of the
@@ -41,6 +41,9 @@
    a segment is called gained or lost if its segment level is
    at least two standard deviations away from the median segment level
    on Chr1-22, where standard deviation is estimated using MAD.
+   Then same is done for \code{method == "ucsf-dmad"} with the difference
+   that the standard deviation is estimated using a robust first order
+   variance estimator.
  }
 
  \examples{
@@ -87,7 +90,7 @@ fitC <- callOutliers(fitC)
 
  }
 
- \author{Henrik Bengtsson (\url{http://www.braju.com/R/})}
+ \author{Henrik Bengtsson}
 
  \references{
    [1] Fridlyand et al. \emph{Breast tumor copy number aberration

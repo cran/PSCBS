@@ -27,7 +27,7 @@
 #   Returns a @see "PairedPSCBS" object with copy-neutral calls.
 # }
 #
-# @author
+# @author "HB"
 #
 # \seealso{
 #   Internally, one of the following methods are used:
@@ -49,7 +49,7 @@ setMethodS3("callCopyNeutral", "PairedPSCBS", function(fit, flavor=c("TCN|AB"), 
   if (!force && !is.null(calls)) {
     return(invisible(fit));
   }
-  
+
   if (flavor == "TCN|AB") {
     fit <- callCopyNeutralByTCNofAB(fit, ..., force=force);
   } else {
@@ -80,7 +80,7 @@ setMethodS3("callNTCN", "PairedPSCBS", function(...) {
 setMethodS3("calcStatsForCopyNeutralABs", "PairedPSCBS", function(fit, ..., force=FALSE, verbose=FALSE) {
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Validate arguments
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Argument 'force':
   force <- Arguments$getLogical(force);
 
@@ -111,7 +111,7 @@ setMethodS3("calcStatsForCopyNeutralABs", "PairedPSCBS", function(fit, ..., forc
 
   nABs <- sum(isAB, na.rm=TRUE);
   verbose && cat(verbose, "Number of AB segments: ", nABs);
-  if (nABs == 0) {
+  if (nABs == 0L) {
     throw("Cannot call copy-neutral states, because none of the segments are in allelic balance.");
   }
 
@@ -124,10 +124,10 @@ setMethodS3("calcStatsForCopyNeutralABs", "PairedPSCBS", function(fit, ..., forc
 
   # Identify copy neutral AB segments
   isNeutralAB <- findNeutralCopyNumberState(C=C, isAI=!isAB, weights=weights,
-                                                       ..., verbose=verbose);
+                                     ..., flavor="maxPeak", verbose=verbose);
   nAB <- sum(isNeutralAB, na.rm=TRUE);
   verbose && cat(verbose, "Number of copy-neutral AB segments: ", nAB);
-  if (nAB == 0) {
+  if (nAB == 0L) {
     throw("Cannot call copy-neutral states, because none of the segments in allelic-balance are copy neutral.");
   }
 
@@ -147,25 +147,26 @@ setMethodS3("calcStatsForCopyNeutralABs", "PairedPSCBS", function(fit, ..., forc
 
 
   # (c) Turn into one big segment by dropping all change points
-  nCPs <- nbrOfChangePoints(fitNTCN, ignoreGaps=TRUE);
-  if (nCPs > 1) {
+##  nCPs <- nbrOfChangePoints(fitNTCN, ignoreGaps=TRUE);
+  nCPs <- nbrOfSegments(fitNTCN, splitters=TRUE) - 1L;
+  if (nCPs >= 1L) {
     verbose && enter(verbose, "Dropping all change points");
     fitNTCN <- dropChangePoints(fitNTCN, idxs=nCPs:1, ignoreGaps=TRUE, update=TRUE, verbose=less(verbose, 5));
     verbose && exit(verbose);
   }
   # Sanity check
-  stopifnot(nbrOfSegments(fitNTCN) == 1);
+  stopifnot(nbrOfSegments(fitNTCN) == 1L);
   verbose && exit(verbose);
 
   verbose && enter(verbose, "Bootstrap the identified copy-neutral states");
-  fitNTCN <- bootstrapTCNandDHByRegion(fitNTCN, force=TRUE, ..., 
+  fitNTCN <- bootstrapTCNandDHByRegion(fitNTCN, force=TRUE, ...,
                                      verbose=less(verbose, 50));
   segsNTCN <- getSegments(fitNTCN, simplified=FALSE);
   names <- colnames(segsNTCN);
   excl <- grep("(^chromosome|Id|Start|End|Call)$", names);
   segsNTCN <- segsNTCN[,-excl,drop=FALSE];
   # Sanity check
-  stopifnot(ncol(segsNTCN) > 0);
+  stopifnot(ncol(segsNTCN) > 0L);
   verbose && exit(verbose);
 
   verbose && print(verbose, segsNTCN);
@@ -211,23 +212,23 @@ setMethodS3("estimateDeltaCN", "PairedPSCBS", function(fit, scale=1, kappa=estim
 # @synopsis
 #
 # \arguments{
-#   \item{fit}{A PairedPSCBS fit object as returned by 
+#   \item{fit}{A PairedPSCBS fit object as returned by
 #     @see "PSCBS::segmentByPairedPSCBS".}
-#   \item{delta}{A non-negative @double specifying the width of the 
+#   \item{delta}{A non-negative @double specifying the width of the
 #     "acceptance" region.
 #     Defaults to half of the distance between two integer TCN states,
 #     i.e. 1/2.  This argument should be shrunken as a function of
 #     the amount of the normal contaminator.}
 #   \item{alpha}{A @double in [0,0.5] specifying the significance level
 #     of the confidence intervals used.}
-#   \item{...}{Additional arguments passed to 
+#   \item{...}{Additional arguments passed to
 #              @seemethod "calcStatsForCopyNeutralABs".}
 #   \item{force}{If @TRUE, an already called object is skipped, otherwise not.}
 #   \item{verbose}{See @see "R.utils::Verbose".}
 # }
 #
 # \value{
-#   Returns a @see "PairedPSCBS" fit object where a column 
+#   Returns a @see "PairedPSCBS" fit object where a column
 #   with the copy-neutral call.
 # }
 #
@@ -237,14 +238,14 @@ setMethodS3("estimateDeltaCN", "PairedPSCBS", function(fit, scale=1, kappa=estim
 #
 # %% examples "../incl/callCopyNeutralByTCNofAB.PairedPSCBS.Rex"
 #
-# @author
+# @author "HB"
 #
 # @keyword internal
-#*/########################################################################### 
+#*/###########################################################################
 setMethodS3("callCopyNeutralByTCNofAB", "PairedPSCBS", function(fit, delta=estimateDeltaCN(fit), alpha=0.05, ..., force=FALSE, verbose=FALSE) {
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Validate arguments
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Argument 'delta':
   disallow <- c("NA", "NaN", "Inf");
   delta <- Arguments$getDouble(delta, range=c(0,Inf), disallow=disallow);
@@ -291,7 +292,7 @@ setMethodS3("callCopyNeutralByTCNofAB", "PairedPSCBS", function(fit, delta=estim
   missing <- keys[!is.element(keys, colnames(segs))];
   if (length(missing) > 0) {
     statsFcn <- function(x) quantile(x, probs=probs, na.rm=TRUE);
-    fit <- bootstrapTCNandDHByRegion(fit, statsFcn=statsFcn, ..., verbose=less(verbose, 50)); 
+    fit <- bootstrapTCNandDHByRegion(fit, statsFcn=statsFcn, ..., verbose=less(verbose, 50));
     segs <- getSegments(fit, splitters=TRUE, simplify=FALSE);
 
     # Assert that they exists
@@ -339,9 +340,17 @@ setMethodS3("callCopyNeutralByTCNofAB", "PairedPSCBS", function(fit, delta=estim
   ci <- segs[,keys];
   ci <- as.matrix(ci);
 
-  # If a confidence interval is completely within the
-  # calling region, call it
-  isNTCN <- (range[1] <= ci[,1] & ci[,2] <= range[2]);
+  ## WAS: If a confidence interval is completely within the
+  ##      calling region, call it
+  ## isNTCN <- (range[1] <= ci[,1] & ci[,2] <= range[2]);
+
+  # If a segments confidence interval is completely outside the
+  # copy-neutral region ("H_0"), that is, it is completely within
+  # the rejection region ("H_1"), then the H_0 hypothesis that the
+  # segment is copy-neutral in TCN is rejected.
+  isLoss <- (ci[,2] < range[1]); # (a) completely below, or
+  isGain <- (ci[,1] > range[2]); # (b) completely above.
+  isNTCN <- (!isLoss & !isGain); #  => completely inside => not rejected.
 
   nbrOfSegs <- nrow(segs);
   nbrOfABs <- sum(segs$abCall, na.rm=TRUE);
@@ -357,18 +366,23 @@ setMethodS3("callCopyNeutralByTCNofAB", "PairedPSCBS", function(fit, delta=estim
 
   verbose && exit(verbose);
 
-  
+
   # Sanity check
 #  # All previously called AB regions should remain called here as well
 #  stopifnot(all(isNTCN[isNeutralAB], na.rm=TRUE));
 
   segs$ntcnCall <- isNTCN;
 
+  params <- fit$params;
+  params$deltaCN <- delta;
+  params$ntcnRange <- range;
+
   fitC <- fit;
   fitC$output <- segs;
+  fitC$params <- params;
 
   verbose && exit(verbose);
-  
+
   fitC;
 }, protected=TRUE) # callCopyNeutralByTCNofAB()
 
@@ -376,6 +390,20 @@ setMethodS3("callCopyNeutralByTCNofAB", "PairedPSCBS", function(fit, delta=estim
 
 ##############################################################################
 # HISTORY
+# 2013-04-17 [HB]
+# o BUG FIX: Internal calcStatsForCopyNeutralABs() would give an error
+#   if there was exactly two AH segments.
+# 2013-03-19 [HB]
+# o CALLING: Defined a formal hypthesis test for how segments are called
+#   copy-neutral in TCN (NTCN), with the null hypothesis being that a
+#   segment is NTCN.  In order for a segment to not be NTCN, its confidence
+#   interval has to be completely outside the null region.  This changed
+#   how callCopyNeutralByTCNofAB() for PairedPSCBS calls segments; it is
+#   now a bit more conservative in rejecting NTCN.
+# o ROBUSTNESS: Now calcStatsForCopyNeutralABs() for PairedPSCBS does
+#   a better job in identifying the TCN mode of the AB segments.
+# o Now callCopyNeutralByTCNofAB() records parameters 'deltaCN' and
+#   'ntcnRange'.
 # 2012-09-21 [HB]
 # o BUG FIX: Recent updates in how nbrOfChangePoints() is calculated,
 #   caused callGNL() to throw an exception.  Added argument 'ignoreGaps'
@@ -397,12 +425,12 @@ setMethodS3("callCopyNeutralByTCNofAB", "PairedPSCBS", function(fit, delta=estim
 # o Now callCopyNeutralByTCNofAB() calls all segements, not just those in AB.
 # o Now the copy-neutral calls are named 'cnCall' (not 'neutralCall').
 # o Added callCN()/callCopyNeutral().
-# o Added callCopyNeutralByTCNofAB() for PairedPSCBS.  The method was 
-#   adopted from callCopyNeutralRegions() in aroma.cn, whose history has 
+# o Added callCopyNeutralByTCNofAB() for PairedPSCBS.  The method was
+#   adopted from callCopyNeutralRegions() in aroma.cn, whose history has
 #   been incorporated below.
 # o Created.
 # 2010-09-15* [HB]
-# o Added Rdocs for callCopyNeutralRegions(). 
+# o Added Rdocs for callCopyNeutralRegions().
 # 2010-09-09* [HB]
 # o Added callCopyNeutralRegions() for PairedPSCBS.
 ##############################################################################

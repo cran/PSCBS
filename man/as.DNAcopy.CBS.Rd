@@ -10,9 +10,7 @@
 \name{as.DNAcopy.CBS}
 \alias{as.DNAcopy.CBS}
 \alias{CBS.as.DNAcopy}
-\alias{as.DNAcopy.CBS}
 \alias{as.DNAcopy,CBS-method}
-
 
 \title{Coerces a CBS object to a DNAcopy object}
 
@@ -20,7 +18,9 @@
  Coerces a CBS object to a DNAcopy object.
 }
 
-\usage{\method{as.DNAcopy}{CBS}(fit, ...)}
+\usage{
+\method{as.DNAcopy}{CBS}(fit, ...)
+}
 
 \arguments{
   \item{fit}{A \code{\link{CBS}} object."}
@@ -76,7 +76,7 @@ stopifnot(all.equal(fitC2, fitC))
 
 }
 
-\author{Henrik Bengtsson (\url{http://www.braju.com/R/})}
+\author{Henrik Bengtsson}
 
 \seealso{
   \code{\link[PSCBS:as.CBS.DNAcopy]{as.CBS()}}.

@@ -10,9 +10,7 @@
 \name{estimateDeltaAB.PairedPSCBS}
 \alias{estimateDeltaAB.PairedPSCBS}
 \alias{PairedPSCBS.estimateDeltaAB}
-\alias{estimateDeltaAB.PairedPSCBS}
 \alias{estimateDeltaAB,PairedPSCBS-method}
-
 
 \title{Estimate a threshold for calling allelic balance from DH}
 
@@ -20,7 +18,9 @@
  Estimate a threshold for calling allelic balance from DH to be used by the \code{\link[PSCBS:callAB.PairedPSCBS]{*callAB}()} method.
 }
 
-\usage{\method{estimateDeltaAB}{PairedPSCBS}(this, scale=NULL, flavor=c("qq(DH)", "q(DH)", "mad(hBAF)", "median(DH)"), ..., max=Inf, verbose=FALSE)}
+\usage{
+\method{estimateDeltaAB}{PairedPSCBS}(this, scale=NULL, flavor=c("qq(DH)", "q(DH)", "mad(hBAF)", "median(DH)"), ..., max=Inf, verbose=FALSE)
+}
 
 \arguments{
   \item{scale}{An optional \code{\link[base]{numeric}} scale factor.}
@@ -36,7 +36,7 @@
   Returns the threshold estimate as a \code{\link[base]{numeric}} scalar.
 }
 
-\author{Henrik Bengtsson (\url{http://www.braju.com/R/})}
+\author{Henrik Bengtsson}
 
 \seealso{
   Internally, one of the following methods are used:

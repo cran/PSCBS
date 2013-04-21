@@ -10,9 +10,7 @@
  \name{extractMinorMajorCNs.PairedPSCBS}
 \alias{extractMinorMajorCNs.PairedPSCBS}
 \alias{PairedPSCBS.extractMinorMajorCNs}
-\alias{extractMinorMajorCNs.PairedPSCBS}
 \alias{extractMinorMajorCNs,PairedPSCBS-method}
-
  \alias{PairedPSCBS.extractC1C2}
 \alias{extractC1C2.PairedPSCBS}
 \alias{extractC1C2,PairedPSCBS-method}
@@ -24,7 +22,9 @@
    Extract minor and major copy-number mean levels per segment.
  }
 
- \usage{\method{extractMinorMajorCNs}{PairedPSCBS}(fit, ...)}
+ \usage{
+\method{extractMinorMajorCNs}{PairedPSCBS}(fit, ...)
+}
 
  \arguments{
   \item{...}{Not used.}
@@ -34,7 +34,7 @@
    Returns a \code{\link[base]{data.frame}}.
  }
 
- \author{Henrik Bengtsson (\url{http://www.braju.com/R/})}
+ \author{Henrik Bengtsson}
 
  \seealso{
    \code{\link[PSCBS:extractTCNAndDHs.PairedPSCBS]{*extractTCNAndDHs}()}

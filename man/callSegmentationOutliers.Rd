@@ -17,7 +17,9 @@
   neighboring loci.
  }
 
- \usage{\method{callSegmentationOutliers}{default}(y, chromosome=0, x=NULL, method="DNAcopy::smooth.CNA", ..., verbose=FALSE)}
+ \usage{
+\method{callSegmentationOutliers}{default}(y, chromosome=0, x=NULL, method="DNAcopy::smooth.CNA", ..., verbose=FALSE)
+}
 
  \arguments{
    \item{y}{A \code{\link[base]{numeric}} \code{\link[base]{vector}} of J genomic signals to be segmented.}
@@ -43,7 +45,7 @@
    be outliers.
  }
 
- \author{Henrik Bengtsson (\url{http://www.braju.com/R/})}
+ \author{Henrik Bengtsson}
 
  \seealso{
    Internally \code{\link[DNAcopy]{smooth.CNA}} is utilized to identify

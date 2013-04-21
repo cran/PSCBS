@@ -22,7 +22,7 @@
 #  @allmethods "public"
 # }
 # 
-# @author
+# @author "HB"
 #*/###########################################################################
 setConstructorS3("AbstractCBS", function(fit=list(), sampleName=fit$sampleName, ...) {
   # Argument 'sampleName':
@@ -372,6 +372,60 @@ setMethodS3("getSegments", "AbstractCBS", abstract=TRUE);
 setMethodS3("setSegments", "AbstractCBS", abstract=TRUE, protected=TRUE);
 
 
+###########################################################################/**
+# @RdocMethod resetSegments
+#
+# @title "Reset the segments"
+#
+# \description{
+#   @get "title".  More precisely, it removes columns in the segmentation
+#   result table that have been added by methods after the actual
+#   segmentation method, e.g. bootstrap estimated mean level quantiles
+#   and various calls. 
+#   It leave the basic segmentation results untouched,
+#   i.e. the partitioning and the segment means.
+# }
+# 
+# @synopsis
+#
+# \arguments{
+#  \item{...}{Not used.}
+# }
+#
+# \value{
+#   Returns an object if the same class as the input result.
+# }
+#
+# @author
+#
+# \seealso{
+#   @seeclass
+# }
+#*/###########################################################################  
+setMethodS3("resetSegments", "AbstractCBS", function(fit, ...) {
+  segs <- fit$output;
+  names <- colnames(segs);
+
+  excl <- NULL;
+
+  # Drop all quantile mean level estimates (from bootstrapping)
+  idxs <- grep("_[0-9.]*[%]$", names);
+  excl <- c(excl, idxs);
+
+  # Drop all calls
+  idxs <- grep("Call$", names);
+  excl <- c(excl, idxs);
+
+  excl <- unique(excl);
+  if (length(excl) > 0L) {
+    segs <- segs[,-excl];
+  }
+
+  fit$output <- segs;
+  invisible(fit);
+}, protected=TRUE)
+
+
 
 ###########################################################################/**
 # @RdocMethod nbrOfSegments
@@ -620,6 +674,65 @@ setMethodS3("sampleCNs", "AbstractCBS", function(fit, size=NULL, ...) {
 setMethodS3("updateMeans", "AbstractCBS", abstract=TRUE, protected=TRUE);
 
 
+setMethodS3("getMeanEstimators", "AbstractCBS", function(fit, which=NULL, default=mean, ...) {
+  estList <- fit$params$meanEstimators;
+  if (is.null(estList)) {
+    estList <- list();
+  }
+
+  if (is.null(which)) which <- names(estList);
+
+  for (key in which) {
+    fcn <- estList[[key]];
+    if (is.null(fcn)) {
+      fcn <- default;
+    } else if (is.character(fcn)) {
+      fcn <- get(fcn, mode="function");
+    }
+    estList[[key]] <- fcn;
+  }
+
+  estList;
+}, protected=TRUE)
+
+
+setMethodS3("setMeanEstimators", "AbstractCBS", function(fit, ...) {
+  estList <- fit$params$meanEstimators;
+  if (is.null(estList)) {
+    estList <- list();
+  }
+
+  args <- list(...);
+
+  # Nothing todo?
+  if (length(args) == 0L) {
+    return(invisible(fit));
+  }
+
+  keys <- names(args);
+  if (is.null(keys)) {
+    throw("Estimators arguments must be named.");
+  }
+
+  for (key in keys) {
+    fcn <- args[[key]];
+    if (is.function(fcn)) {
+    } else if (is.character(fcn)) {
+      if (!exists(fcn, mode="function")) {
+        throw(sprintf("No such '%s' estimator function: %s", key, fcn));
+      }
+    } else {
+      throw(sprintf("Estimator argument '%s' must be a function or character string: %s", key, mode(fcn)));
+    }
+    estList[[key]] <- fcn;
+  }
+
+  fit$params$meanEstimators <- estList;
+
+  invisible(fit);
+}, protected=TRUE)
+
+
 setMethodS3("resegment", "AbstractCBS", abstract=TRUE, protected=TRUE);
 
 
@@ -648,6 +761,12 @@ setMethodS3("getChromosomeOffsets", "AbstractCBS", function(fit, resolution=1e6,
 
 ############################################################################
 # HISTORY:
+# 2013-02-01
+# o Added resetSegments() for AbstractCBS, which drops extra segments
+#   columns (e.g. bootstrap statisistics and calls) except those
+#   obtained from the segment algorithm.
+# 2013-01-15
+# o Added get-/setMeanEstimators() for AbstractCBS.
 # 2012-09-21
 # o Now nbrOfChangePoints() for AbstractCBS calculates only change points
 #   of connected neighboring segments.

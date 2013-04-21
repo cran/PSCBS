@@ -1,7 +1,9 @@
 ###########################################################################/**
 # @set "class=PairedPSCBS"
 # @RdocMethod plotTracks
-# @alias plotTracks
+# @aliasmethod plotTracks1
+# @aliasmethod plotTracks2
+# @aliasmethod plotTracksManyChromosomes
 # @alias plot
 #
 # @title "Plots parental specific copy numbers along the genome"
@@ -30,7 +32,7 @@
 #      of the confidence bands to be drawn, if any.}
 #   \item{xlim}{(Optional) The genomic range to plot.}
 #   \item{Clim}{The range of copy numbers.}
-#   \item{Blim}{The range of allele B fractions (BAFs) and 
+#   \item{Blim}{The range of allele B fractions (BAFs) and
 #     decrease of heterozygosity (DHs).}
 #   \item{xScale}{The scale factor used for genomic positions.}
 #   \item{...}{Not used.}
@@ -43,23 +45,23 @@
 # \value{
 #   Returns nothing.
 # }
-# 
-# @author
+#
+# @author "HB"
 #
 # @keyword IO
 # @keyword internal
-#*/########################################################################### 
-setMethodS3("plotTracks", "PairedPSCBS", function(x, tracks=c("tcn", "dh", "tcn,c1,c2", "tcn,c1", "tcn,c2", "c1,c2", "betaN", "betaT", "betaTN")[1:3], scatter="*", calls=".*", pch=".", col=NULL, cex=1, changepoints=FALSE, grid=FALSE, quantiles=c(0.05,0.95), xlim=NULL, Clim=c(0,6), Blim=c(0,1), xScale=1e-6, ..., add=FALSE, subplots=!add && (length(tracks) > 1), verbose=FALSE) {
+#*/###########################################################################
+setMethodS3("plotTracks1", "PairedPSCBS", function(x, tracks=c("tcn", "dh", "tcn,c1,c2", "tcn,c1", "tcn,c2", "c1,c2", "betaN", "betaT", "betaTN")[1:3], scatter="*", calls=".*", pch=".", col=NULL, cex=1, changepoints=FALSE, grid=FALSE, quantiles=c(0.05,0.95), xlim=NULL, Clim=c(0,6), Blim=c(0,1), xScale=1e-6, ..., add=FALSE, subplots=!add && (length(tracks) > 1), verbose=FALSE) {
 
   # To please R CMD check
   fit <- x;
- 
+
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Validate arguments
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Argument 'fit':
-  if (nbrOfChromosomes(fit) > 1) {
-    return(plotTracksManyChromosomes(fit, tracks=tracks, scatter=scatter, calls=calls, pch=pch, Clim=Clim, Blim=Blim, xScale=xScale, ..., add=add, verbose=verbose));
+  if (nbrOfChromosomes(fit) >= 1) {
+    return(plotTracksManyChromosomes(fit, tracks=tracks, scatter=scatter, calls=calls, pch=pch, quantiles=quantiles, Clim=Clim, Blim=Blim, xScale=xScale, ..., add=add, subplots=subplots, verbose=verbose));
   }
 
   # Argument 'tracks':
@@ -182,7 +184,7 @@ setMethodS3("plotTracks", "PairedPSCBS", function(x, tracks=c("tcn", "dh", "tcn,
 
   for (tt in seq(along=tracks)) {
     track <- tracks[tt];
-    verbose && enter(verbose, sprintf("Track #%d ('%s') of %d", 
+    verbose && enter(verbose, sprintf("Track #%d ('%s') of %d",
                                              tt, track, length(tracks)));
 
     if (!is.null(scatter)) {
@@ -208,7 +210,7 @@ setMethodS3("plotTracks", "PairedPSCBS", function(x, tracks=c("tcn", "dh", "tcn,
         drawLevels(fit, what="tcn", col="purple", xScale=xScale);
       }
     }
-  
+
     if (is.element(track, c("tcn,c1,c2", "tcn,c1", "tcn,c2", "c1,c2"))) {
       colT <- ifelse(is.null(colT), "black", colT);
       subtracks <- strsplit(track, split=",", fixed=TRUE)[[1]];
@@ -253,7 +255,7 @@ setMethodS3("plotTracks", "PairedPSCBS", function(x, tracks=c("tcn", "dh", "tcn,
         }
       }
     }
-  
+
     if (track == "betaN") {
       colT <- ifelse(is.null(colT), colMu, colT);
       if (add) {
@@ -263,7 +265,7 @@ setMethodS3("plotTracks", "PairedPSCBS", function(x, tracks=c("tcn", "dh", "tcn,
         stext(side=3, pos=1, chrTag);
       }
     }
-  
+
     if (track == "betaT") {
       colT <- ifelse(is.null(colT), colMu, colT);
       if (add) {
@@ -273,7 +275,7 @@ setMethodS3("plotTracks", "PairedPSCBS", function(x, tracks=c("tcn", "dh", "tcn,
         stext(side=3, pos=1, chrTag);
       }
     }
-  
+
     if (track == "betaTN") {
       colT <- ifelse(is.null(colT), colMu, colT);
       if (add) {
@@ -283,7 +285,7 @@ setMethodS3("plotTracks", "PairedPSCBS", function(x, tracks=c("tcn", "dh", "tcn,
         stext(side=3, pos=1, chrTag);
       }
     }
-  
+
     if (track == "dh") {
       isSnp <- (!is.na(betaTN) & !is.na(muN));
       isHet <- isSnp & (muN == 1/2);
@@ -316,7 +318,7 @@ setMethodS3("plotTracks", "PairedPSCBS", function(x, tracks=c("tcn", "dh", "tcn,
       for (cc in seq(along=callColumns)) {
         callColumn <- callColumns[cc];
         callLabel <- callLabels[cc];
-        verbose && enter(verbose, sprintf("Call #%d ('%s') of %d", 
+        verbose && enter(verbose, sprintf("Call #%d ('%s') of %d",
                                       cc, callLabel, length(callColumns)));
 
         verbose && cat(verbose, "Column: ", callColumn);
@@ -341,6 +343,41 @@ setMethodS3("plotTracks", "PairedPSCBS", function(x, tracks=c("tcn", "dh", "tcn,
         } # for (ss in ...)
         verbose && exit(verbose);
       } # for (cc in ...)
+
+      # Add call parameter estimates, e.g. deltaAB
+      for (cc in seq(along=callColumns)) {
+        callColumn <- callColumns[cc];
+        callLabel <- callLabels[cc];
+        h <- NULL;
+        if (callLabel == "AB") {
+          if (track == "dh") {
+            h <- fit$params$deltaAB;
+            label <- expression(Delta[AB]);
+            colT <- "orange";
+          }
+        } else if (callLabel == "LOH") {
+          if (regexpr("c1", track) != -1L) {
+            h <- fit$params$deltaLowC1;
+            label <- expression(Delta[LOH]);
+            colT <- "blue";
+          }
+        } else if (callLabel == "NTCN") {
+          if (track == "tcn") {
+            h <- fit$params$ntcnRange;
+            label <- c(expression(Delta[-NTCN]), expression(Delta[+NTCN]));
+            colT <- "purple";
+          }
+        }
+
+        if (!is.null(h)) {
+          abline(h=h, lty=4, lwd=2, col=colT);
+          for (ss in 1:2) {
+            side <- c(2,4)[ss];
+            adj <- c(1.2,-0.2)[ss];
+            mtext(side=side, at=h, label, adj=adj, las=2, xpd=TRUE);
+          }
+        }
+      } # for (cc in ...)
     } # if (length(callColumns) > 0)
 
     verbose && exit(verbose);
@@ -348,9 +385,13 @@ setMethodS3("plotTracks", "PairedPSCBS", function(x, tracks=c("tcn", "dh", "tcn,
 
   verbose && exit(verbose);
 
-  invisible();  
-}) # plotTracks()
+  invisible();
+}, private=TRUE) # plotTracks1()
 
+
+setMethodS3("plotTracks", "PairedPSCBS", function(fit, ...) {
+  plotTracksManyChromosomes(fit, ...);
+})
 
 setMethodS3("plot", "PairedPSCBS", function(x, ...) {
   plotTracks(x, ...);
@@ -365,7 +406,7 @@ setMethodS3("drawLevels", "PairedPSCBS", function(fit, what=c("tcn", "betaTN", "
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Validate arguments
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Argument 'what':
   what <- match.arg(what);
 
@@ -373,8 +414,13 @@ setMethodS3("drawLevels", "PairedPSCBS", function(fit, what=c("tcn", "betaTN", "
   xScale <- Arguments$getNumeric(xScale, range=c(0,Inf));
 
 
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  # Tile chromosomes
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  fitT <- tileChromosomes(fit);
+
   # Get segmentation results
-  segs <- as.data.frame(fit);
+  segs <- as.data.frame(fitT);
 
   if (what == "betaTN") {
     whatT <- "dh";
@@ -416,7 +462,7 @@ setMethodS3("drawConfidenceBands", "PairedPSCBS", function(fit, what=c("tcn", "d
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Validate arguments
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Argument 'what':
   what <- match.arg(what);
 
@@ -435,8 +481,13 @@ setMethodS3("drawConfidenceBands", "PairedPSCBS", function(fit, what=c("tcn", "d
   }
 
 
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  # Tile chromosomes
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  fitT <- tileChromosomes(fit);
+
   # Get segmentation results
-  segs <- as.data.frame(fit);
+  segs <- as.data.frame(fitT);
 
   # Extract subset of segments
   fields <- c("start", "end");
@@ -566,7 +617,7 @@ setMethodS3("arrowsDeltaC1C2", "PairedPSCBS", function(fit, length=0.05, ...) {
 setMethodS3("tileChromosomes", "PairedPSCBS", function(fit, chrStarts=NULL, ..., verbose=FALSE) {
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Validate arguments
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Argument 'chrStarts':
   if (!is.null(chrStarts)) {
     chrStarts <- Arguments$getDoubles(chrStarts);
@@ -591,7 +642,7 @@ setMethodS3("tileChromosomes", "PairedPSCBS", function(fit, chrStarts=NULL, ...,
 
   # Identify all chromosome
   chromosomes <- getChromosomes(fit);
-  
+
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Additional chromosome annotations
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -632,7 +683,7 @@ setMethodS3("tileChromosomes", "PairedPSCBS", function(fit, chrStarts=NULL, ...,
   for (kk in seq(along=chromosomes)) {
     chromosome <- chromosomes[kk];
     chrTag <- sprintf("Chr%02d", chromosome);
-    verbose && enter(verbose, sprintf("Chromosome #%d ('%s') of %d", 
+    verbose && enter(verbose, sprintf("Chromosome #%d ('%s') of %d",
                                          kk, chrTag, length(chromosomes)));
 
     # Get offset for this chromosome
@@ -671,308 +722,15 @@ setMethodS3("tileChromosomes", "PairedPSCBS", function(fit, chrStarts=NULL, ...,
 }, private=TRUE) # tileChromosomes()
 
 
-#   \item{chromosomes}{An optional @numeric @vector specifying which 
-#     chromosomes to plot.}
-#
-#   \item{seed}{An (optional) @integer specifying the random seed to be 
-#     set before subsampling.  The random seed is
-#     set to its original state when exiting.  If @NULL, it is not set.}
-#
-#   \item{verbose}{See @see "R.utils::Verbose".}
-#
-setMethodS3("plotTracksManyChromosomes", "PairedPSCBS", function(x, chromosomes=getChromosomes(fit), tracks=c("tcn", "dh", "tcn,c1,c2", "betaN", "betaT", "betaTN")[1:3], scatter="*", calls=".*", quantiles=c(0.05,0.95), seed=0xBEEF, pch=".", Clim=c(0,6), Blim=c(0,1), xScale=1e-6, ..., subset=0.1, add=FALSE, oma=c(0,0,2,0), mar=c(2,5,1,3)+0.1, onBegin=NULL, onEnd=NULL, verbose=FALSE) {
-  # To please R CMD check
-  fit <- x;
- 
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  # Validate arguments
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-  # Argument 'fit':
 
-  # Argument 'chromosomes':
-  if (!is.null(chromosomes)) {
-    disallow <- c("NaN", "Inf");
-    chromosomes <- Arguments$getIntegers(chromosomes, range=c(0,Inf), disallow=disallow);
-    stopifnot(is.element(chromosomes, getChromosomes(fit)));
-  }
-
-  # Argument 'tracks':
-  tracks <- match.arg(tracks, several.ok=TRUE);
-  tracks <- unique(tracks);
-
-  # Argument 'scatter':
-  if (!is.null(scatter)) {
-    scatter <- Arguments$getCharacter(scatter);
-    if (scatter == "*") {
-      scatter <- tracks;
-    } else {
-      scatterT <- strsplit(scatter, split=",", fixed=TRUE);
-      tracksT <- strsplit(tracks, split=",", fixed=TRUE);
-      stopifnot(all(is.element(scatterT, tracksT)));
-      rm(scatterT, tracksT);
-    }
-  }
-
-  # Argument 'calls':
-  if (!is.null(calls)) {
-    calls <- sapply(calls, FUN=Arguments$getRegularExpression);
-  }
-
-  # Argument 'xScale':
-  xScale <- Arguments$getNumeric(xScale, range=c(0,Inf));
-
-  # Argument 'subset':
-  if (!is.null(subset)) {
-    subset <- Arguments$getDouble(subset);
-  }
-
-  # Argument 'verbose':
-  verbose <- Arguments$getVerbose(verbose);
-  if (verbose) {
-    pushState(verbose);
-    on.exit(popState(verbose));
-  }
-
-
-  verbose && enter(verbose, "Plotting PSCN tracks");
-
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  # Subset by chromosomes
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  if (!is.null(chromosomes)) {
-    verbose && enter(verbose, "Plotting a subset of the chromosomes");
-    fit <- extractChromosomes(fit, chromosomes=chromosomes, verbose=verbose);
-    verbose && exit(verbose);
-  }
-
+setMethodS3("drawChangePoints", "PSCBS", function(fit, labels=FALSE, col="#666666", cex=0.5, xScale=1e-6, side=3, line=-1, xpd=TRUE, ..., verbose=FALSE) {
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Tile chromosomes
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  fit <- tileChromosomes(fit, verbose=verbose);
-  verbose && str(verbose, fit);
+  fitT <- tileChromosomes(fit);
+  verbose && str(verbose, fitT);
 
-  # Extract the input data
-  data <- getLocusData(fit);
-  if (is.null(data)) {
-    throw("Cannot plot segmentation results. No input data available.");
-  }
-
-  # Extract the segmentation
-  segs <- as.data.frame(fit);
-
-  # Identify available calls
-  if (!is.null(calls)) {
-    verbose && enter(verbose, "Identifying calls");
-
-    pattern <- "Call$";
-    callColumns <- grep(pattern, colnames(segs), value=TRUE);
-    if (length(callColumns) > 0) {
-      keep <- sapply(calls, FUN=function(pattern) {
-        (regexpr(pattern, callColumns) != -1);
-      });
-      if (is.matrix(keep)) {
-        keep <- apply(keep, MARGIN=1, FUN=any);
-      }
-      callColumns <- callColumns[keep];
-      callLabels <- gsub(pattern, "", callColumns);
-      callLabels <- toupper(callLabels);
-    }
-    verbose && cat(verbose, "Call columns:");
-    verbose && print(verbose, callColumns);
-
-    verbose && exit(verbose);
-  } else {
-    callColumns <- NULL;
-  }
-
-
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  # Subset of the loci?
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  if (!is.null(subset)) {
-    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    # Set and unset the random seed
-    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    if (!is.null(seed)) {
-      verbose && enter(verbose, "Setting (temporary) random seed");
-      oldRandomSeed <- NULL;
-      if (exists(".Random.seed", mode="integer")) {
-        oldRandomSeed <- get(".Random.seed", mode="integer");
-      }
-      on.exit({
-        if (!is.null(oldRandomSeed)) {
-          .Random.seed <<- oldRandomSeed;
-        }
-      }, add=TRUE);
-      verbose && cat(verbose, "The random seed will be reset to its original state afterward.");
-      verbose && cat(verbose, "Seed: ", seed);
-      set.seed(seed);
-      verbose && exit(verbose);
-    }
-
-    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    # Subset
-    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    n <- nrow(data);
-    keep <- sample(n, size=subset*n);
-    data <- data[keep,];
-  }
-
-  # To please R CMD check
-  CT <- muN <- betaT <- betaN <- betaTN <- NULL;
-  rm(CT, muN, betaT, betaN, betaTN);
-  attachLocally(data);
-  x <- xScale * x;
-  vs <- xScale * fit$chromosomeStats[,1:2,drop=FALSE];
-  mids <- (vs[,1]+vs[,2])/2;
-
-  nbrOfLoci <- length(x);
-  chrTags <- sprintf("Chr%02d", chromosomes);
-
-  if (!add) {
-    subplots(length(tracks), ncol=1);    
-    par(oma=oma, mar=mar);
-  }
-
-  gh <- fit;
-  gh$xScale <- xScale;
-
-  pchT <- if (!is.null(scatter)) { pch } else { NA };
-  xlim <- range(x, na.rm=TRUE);
-  xlab <- "Genomic position";
-
-  for (tt in seq(along=tracks)) {
-    track <- tracks[tt];
-    verbose && enter(verbose, sprintf("Track #%d ('%s') of %d", 
-                                             tt, track, length(tracks)));
-
-    if (track == "tcn") {
-      plot(NA, xlim=xlim, ylim=Clim, xlab=xlab, ylab="TCN", axes=FALSE);
-      if (!is.null(onBegin)) onBegin(gh=gh);
-      points(x, CT, pch=pchT, col="black");
-      mtext(text=chrTags, side=rep(c(1,3), length.out=length(chrTags)), at=mids, line=0.1, cex=0.7);
-      abline(v=vs, lty=1, lwd=2);
-      axis(side=2); box();
-      drawConfidenceBands(fit, what="tcn", quantiles=quantiles, col="purple", xScale=xScale);
-      drawLevels(fit, what="tcn", col="purple", xScale=xScale);
-      if (!is.null(onEnd)) onEnd(gh=gh);
-    }
-  
-    if (track == "tcn,c1,c2") {
-      plot(NA, xlim=xlim, ylim=Clim, xlab=xlab, ylab="C1, C2, TCN", axes=FALSE);
-      if (!is.null(onBegin)) onBegin(gh=gh);
-      points(x, CT, pch=pchT, col="black");
-      mtext(text=chrTags, side=rep(c(1,3), length.out=length(chrTags)), at=mids, line=0.1, cex=0.7);
-      abline(v=vs, lty=1, lwd=2);
-      axis(side=2); box();
-      drawConfidenceBands(fit, what="tcn", quantiles=quantiles, col="purple", xScale=xScale);
-      drawConfidenceBands(fit, what="c2", quantiles=quantiles, col="red", xScale=xScale);
-      drawConfidenceBands(fit, what="c1", quantiles=quantiles, col="blue", xScale=xScale);
-      drawLevels(fit, what="tcn", col="purple", xScale=xScale);
-      drawLevels(fit, what="c2", col="red", xScale=xScale);
-      # In case C2 overlaps with TCN
-      drawLevels(fit, what="tcn", col="purple", lty="22", xScale=xScale);
-      # In case C1 overlaps with C1
-      drawLevels(fit, what="c1", col="blue", xScale=xScale); 
-      drawLevels(fit, what="c2", col="red", lty="22", xScale=xScale);
-      drawLevels(fit, what="tcn", col="purple", lty="22", xScale=xScale);
-      if (!is.null(onEnd)) onEnd(gh=gh);
-    }
-  
-    col <- c("gray", "black")[(muN == 1/2) + 1];
-    if (track == "betaN") {
-      plot(NA, xlim=xlim, ylim=Blim, xlab=xlab, ylab="BAF_N", axes=FALSE);
-      if (!is.null(onBegin)) onBegin(gh=gh);
-      points(x, betaN, pch=pchT, col=col);
-      mtext(text=chrTags, side=rep(c(1,3), length.out=length(chrTags)), at=mids, line=0.1, cex=0.7);
-      abline(v=vs, lty=1, lwd=2);
-      axis(side=2); box();
-      if (!is.null(onEnd)) onEnd(gh=gh);
-    }
-  
-    if (track == "betaT") {
-      plot(NA, xlim=xlim, ylim=Blim, xlab=xlab, ylab="BAF_T", axes=FALSE);
-      if (!is.null(onBegin)) onBegin(gh=gh);
-      points(x, betaT, pch=pchT, col=col);
-      mtext(text=chrTags, side=rep(c(1,3), length.out=length(chrTags)), at=mids, line=0.1, cex=0.7);
-      abline(v=vs, lty=1, lwd=2);
-      axis(side=2); box();
-      if (!is.null(onEnd)) onEnd(gh=gh);
-    }
-  
-    if (track == "betaTN") {
-      plot(NA, xlim=xlim, ylim=Blim, xlab=xlab, ylab="BAF_TN", axes=FALSE);
-      if (!is.null(onBegin)) onBegin(gh=gh);
-      points(x, betaTN, pch=pchT, col=col);
-      mtext(text=chrTags, side=rep(c(1,3), length.out=length(chrTags)), at=mids, line=0.1, cex=0.7);
-      abline(v=vs, lty=1, lwd=2);
-      axis(side=2); box();
-      if (!is.null(onEnd)) onEnd(gh=gh);
-    }
-  
-    if (track == "dh") {
-      isSnp <- (!is.na(betaTN) & !is.na(muN));
-      isHet <- isSnp & (muN == 1/2);
-      naValue <- as.double(NA);
-      rho <- rep(naValue, length=nbrOfLoci);
-      rho[isHet] <- 2*abs(betaTN[isHet]-1/2);
-      plot(NA, xlim=xlim, ylim=Blim, xlab=xlab, ylab="DH", axes=FALSE);
-      if (!is.null(onBegin)) onBegin(gh=gh);
-      points(x, rho, pch=pchT, col="black");
-      mtext(text=chrTags, side=rep(c(1,3), length.out=length(chrTags)), at=mids, line=0.1, cex=0.7);
-      abline(v=vs, lty=1, lwd=2);
-      axis(side=2); box();
-      drawConfidenceBands(fit, what="dh", quantiles=quantiles, col="orange", xScale=xScale);
-      drawLevels(fit, what="dh", col="orange", xScale=xScale);
-      if (!is.null(onEnd)) onEnd(gh=gh);
-    }
-
-    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    # For each panel of tracks, annotate will calls?
-    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    if (length(callColumns) > 0) {
-      for (cc in seq(along=callColumns)) {
-        callColumn <- callColumns[cc];
-        callLabel <- callLabels[cc];
-        verbose && enter(verbose, sprintf("Call #%d ('%s') of %d", 
-                                      cc, callLabel, length(callColumns)));
-
-        verbose && cat(verbose, "Column: ", callColumn);
-
-        segsT <- segs[,c("dhStart", "dhEnd", callColumn)];
-        isCalled <- which(segsT[[callColumn]]);
-        segsT <- segsT[isCalled,1:2,drop=FALSE];
-        verbose && printf(verbose, "Number of segments called %s: %d\n",
-                                                  callLabel, nrow(segsT));
-        segsT <- xScale * segsT;
-
-        verbose && str(verbose, segsT);
-
-        side <- 2*((cc+1) %% 2) + 1;
-        # For each segment called...
-        for (ss in seq(length=nrow(segsT))) {
-          x0 <- segsT[ss,1,drop=TRUE];
-          x1 <- segsT[ss,2,drop=TRUE];
-          abline(v=c(x0,x1), lty=3, col="gray");
-          xMid <- (x0+x1)/2;
-          mtext(side=side, at=xMid, line=-1, cex=0.7, col="#666666", callLabel);
-        } # for (ss in ...)
-        verbose && exit(verbose);
-      } # for (cc in ...)
-    } # if (length(callColumns) > 0)
-
-    verbose && exit(verbose);
-  } # for (tt ...)
-
-  verbose && exit(verbose);
-
-  invisible(gh);
-}, private=TRUE) # plotTracksManyChromosomes()
-
-
-
-setMethodS3("drawChangePoints", "PSCBS", function(fit, labels=FALSE, col="#666666", cex=0.5, xScale=1e-6, side=3, line=-1, xpd=TRUE, ..., verbose=FALSE) {
-  segs <- getSegments(fit, splitters=FALSE);
+  segs <- getSegments(fitT, splitters=FALSE);
   xStarts <- segs[,"tcnStart"];
   xEnds <- segs[,"tcnEnd"];
 
@@ -985,7 +743,6 @@ setMethodS3("drawChangePoints", "PSCBS", function(fit, labels=FALSE, col="#66666
     mtext(side=side, at=xMids, labels, line=line, cex=cex, col=col, xpd=xpd, ...);
   }
 }, protected=TRUE)
-
 
 
 
@@ -1019,7 +776,7 @@ setMethodS3("getChromosomeRanges", "PairedPSCBS", function(fit, ...) {
   res <- cbind(chromosome=chromosomes, res);
 
   res;
-}, protected=TRUE) # getChromosomeRanges() 
+}, protected=TRUE) # getChromosomeRanges()
 
 
 setMethodS3("getChromosomeOffsets", "PairedPSCBS", function(fit, resolution=1e6, ...) {
@@ -1040,20 +797,25 @@ setMethodS3("getChromosomeOffsets", "PairedPSCBS", function(fit, resolution=1e6,
   names(offsets) <- c(rownames(data), NA);
 
   offsets;
-}, protected=TRUE) # getChromosomeOffsets() 
+}, protected=TRUE) # getChromosomeOffsets()
 
 
 
 ############################################################################
 # HISTORY:
+# 2013-04-18
+# o Now drawLevels() and drawConfidenceBands() also works for
+#   multiple chromosomes.
+# 2013-03-18
+# o Now plotTracksManyChromosomes() draws AB and LOH call thresholds.
 # 2012-09-23
 # o Now plotTracks() [and plotTracksManyChromosomes()] draws segment levels
 #   in TCN-C2-C1 order, and then goes back and draws C2 and TCN with dashed
 #   lines, just in case C1 is overlapping C2 and C2 is overlapping TCN.
 # 2012-09-21
 # o ROBUSTNESS: Now drawChangePointsC1C2() and arrowsC1C2() for PairedPSCBS
-#   makes sure to retrieve segments with NA splitters between chromosomes 
-#   and gaps. 
+#   makes sure to retrieve segments with NA splitters between chromosomes
+#   and gaps.
 # 2012-02-29
 # o BUG FIX: plotTracks(..., add=TRUE) for PairedPSCBS would add TCNs
 #   when BAFs and DHs where intended.
@@ -1154,4 +916,4 @@ setMethodS3("getChromosomeOffsets", "PairedPSCBS", function(fit, resolution=1e6,
 # 2010-09-03
 # o Added plot() for PairedPSCBS.
 # o Created.
-############################################################################ 
+############################################################################

@@ -17,7 +17,9 @@
   Identifies gaps of a genome where there exist no observations.
  }
 
- \usage{\method{findLargeGaps}{default}(chromosome=NULL, x, minLength, resolution=1, ...)}
+ \usage{
+\method{findLargeGaps}{default}(chromosome=NULL, x, minLength, resolution=1, ...)
+}
 
  \arguments{
    \item{chromosome}{(Optional) An \code{\link[base]{integer}} \code{\link[base]{vector}} of length J of
@@ -35,7 +37,7 @@
    \code{start}, \code{stop} and \code{length}.
  }
 
- \author{Henrik Bengtsson (\url{http://www.braju.com/R/})}
+ \author{Henrik Bengtsson}
 
  \seealso{
    Use \code{\link{gapsToSegments}}() to turn the set of identified gaps into

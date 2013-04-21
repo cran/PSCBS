@@ -9,9 +9,7 @@
 \name{callAmplifications.CBS}
 \alias{callAmplifications.CBS}
 \alias{CBS.callAmplifications}
-\alias{callAmplifications.CBS}
 \alias{callAmplifications,CBS-method}
-
 
 \title{Calls (focal) amplifications}
 
@@ -19,7 +17,9 @@
  Calls (focal) amplifications.
 }
 
-\usage{\method{callAmplifications}{CBS}(fit, adjust=1, maxLength=2e+07, method=c("ucsf-exp"), ..., verbose=FALSE)}
+\usage{
+\method{callAmplifications}{CBS}(fit, adjust=1, maxLength=2e+07, method=c("ucsf-exp"), ..., verbose=FALSE)
+}
 
 \arguments{
  \item{adjust}{A positive scale factor adjusting the sensitivity of the
@@ -43,7 +43,7 @@
   a segment is called an amplification if ...
 }
 
-\author{Henrik Bengtsson (\url{http://www.braju.com/R/})}
+\author{Henrik Bengtsson}
 
 \references{
   [1] Fridlyand et al. \emph{Breast tumor copy number aberration

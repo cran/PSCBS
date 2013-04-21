@@ -31,7 +31,6 @@
 \alias{bootstrapDHByRegion}
 \alias{bootstrapDHByRegion.PairedPSCBS}
 \alias{bootstrapTCNandDHByRegion}
-\alias{bootstrapTCNandDHByRegion.PairedPSCBS}
 \alias{callAB}
 \alias{callABandHighAI}
 \alias{callABandHighAI.PairedPSCBS}
@@ -60,10 +59,6 @@
 \alias{drawLevels.CBS}
 \alias{drawLevels.DNAcopy}
 \alias{drawLevels.PairedPSCBS}
-\alias{dropByRegion}
-\alias{dropByRegion.AbstractCBS}
-\alias{dropByRegions}
-\alias{dropByRegions.AbstractCBS}
 \alias{dropChangePoint}
 \alias{dropRegion}
 \alias{dropRegions}
@@ -83,16 +78,9 @@
 \alias{estimateStandardDeviation.DNAcopy}
 \alias{estimateStdDevForHeterozygousBAF}
 \alias{estimateStdDevForHeterozygousBAF.PairedPSCBS}
-\alias{extractByChromosome}
-\alias{extractByChromosome.AbstractCBS}
-\alias{extractByChromosomes}
-\alias{extractByChromosomes.AbstractCBS}
-\alias{extractByRegion}
-\alias{extractByRegion.AbstractCBS}
-\alias{extractByRegions}
-\alias{extractByRegions.AbstractCBS}
 \alias{extractC1C2}
 \alias{extractCallsByLocus}
+\alias{extractCallsByLocus.PairedPSCBS}
 \alias{extractCallsByLocus.CBS}
 \alias{extractChromosome}
 \alias{extractChromosome.AbstractCBS}
@@ -177,11 +165,7 @@
 \alias{plotC1C2.PairedPSCBS}
 \alias{plotDeltaC1C2}
 \alias{plotDeltaC1C2.PairedPSCBS}
-\alias{plotTracks2}
-\alias{plotTracks2.PairedPSCBS}
-\alias{plotTracksManyChromosomes}
 \alias{plotTracksManyChromosomes.CBS}
-\alias{plotTracksManyChromosomes.PairedPSCBS}
 \alias{pointsC1C2}
 \alias{pointsC1C2.PairedPSCBS}
 \alias{pointsDeltaC1C2}
@@ -234,7 +218,6 @@
 \alias{callROHOneSegment}
 \alias{callROHOneSegment.PairedPSCBS}
 \alias{testROH}
-\alias{testROH.numeric}
 \alias{pruneBySdUndo}
 \alias{updateBoundaries}
 \alias{updateBoundaries.CBS}
@@ -250,6 +233,8 @@
 \alias{updateMeans}
 \alias{drawChangePoints}
 \alias{drawChangePoints.AbstractCBS}
+\alias{drawKnownSegments}
+\alias{drawKnownSegments.AbstractCBS}
 \alias{drawChangePoints.CBS}
 \alias{drawChangePoints.PSCBS}
 \alias{drawChangePointsC1C2}
@@ -262,11 +247,8 @@
 \alias{dropChangePoints}
 \alias{calcStatsForCopyNeutralABs}
 \alias{calcStatsForCopyNeutralABs.PairedPSCBS}
-\alias{callGNLcallGNLByTCNofAB}
-\alias{callGNLByTCNofAB.PairedPSCBS}
 \alias{callGainNeutralLoss}
 \alias{callGNL}
-\alias{callGNLByTCNofAB}
 \alias{renameChromosomes}
 \alias{renameChromosomes.AbstractCBS}
 \alias{report}
@@ -295,6 +277,19 @@
 \alias{getSegmentTrackPrefixes.CBS}
 \alias{getSegmentTrackPrefixes.PSCBS}
 \alias{pruneByDP}
+\alias{getMeanEstimators}
+\alias{getMeanEstimators.AbstractCBS}
+\alias{resegment.NonPairedPSCBS}
+\alias{setMeanEstimators}
+\alias{setMeanEstimators.AbstractCBS}
+\alias{resetSegments}
+\alias{getLocusData.NonPairedPSCBS}
+\alias{getLocusData.PairedPSCBS}
+\alias{plotTracks}
+\alias{plotTracks1}
+\alias{plotTracks2}
+\alias{plotTracksManyChromosomes}
+\alias{getSmoothLocusData}
 
 \description{
   This page contains aliases for all "non-documented" objects that
@@ -308,7 +303,7 @@
   The rest are deprecated methods.
 }
 
-\author{Henrik Bengtsson (\url{http://www.braju.com/R/})}
+\author{Henrik Bengtsson}
 
 
 \keyword{documentation}

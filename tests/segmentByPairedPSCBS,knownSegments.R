@@ -2,11 +2,9 @@ library("PSCBS")
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Load SNP microarray data
-# (note to package developers: this example data set may
-#  be replaced in a future release of the package)
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-pathname <- system.file("data-ex/PairedPSCBS,exData,chr01.Rbin", package="PSCBS")
-data <- R.utils::loadObject(pathname)
+data <- PSCBS::exampleData("paired.chr01")
+
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Paired PSCBS segmentation
@@ -41,7 +39,7 @@ knownSegments <- data.frame(
 
 
 # Paired PSCBS segmentation
-fit <- segmentByPairedPSCBS(dataS, knownSegments=knownSegments, 
+fit <- segmentByPairedPSCBS(dataS, knownSegments=knownSegments,
                             seed=0xBEEF, verbose=-10)
 print(fit)
 
@@ -67,7 +65,7 @@ knownSegments <- data.frame(
 
 
 # Paired PSCBS segmentation
-fit <- segmentByPairedPSCBS(dataS, knownSegments=knownSegments, 
+fit <- segmentByPairedPSCBS(dataS, knownSegments=knownSegments,
                             seed=0xBEEF, verbose=-10)
 print(fit)
 
@@ -92,7 +90,7 @@ knownSegments <- data.frame(
 )
 
 # Paired PSCBS segmentation
-fit <- segmentByPairedPSCBS(dataS, knownSegments=knownSegments, 
+fit <- segmentByPairedPSCBS(dataS, knownSegments=knownSegments,
                             seed=0xBEEF, verbose=-10)
 print(fit)
 
@@ -117,7 +115,7 @@ knownSegments <- data.frame(
 )
 
 # Paired PSCBS segmentation
-fit <- segmentByPairedPSCBS(dataS, knownSegments=knownSegments, 
+fit <- segmentByPairedPSCBS(dataS, knownSegments=knownSegments,
                             undoTCN=Inf, undoDH=Inf,
                             seed=0xBEEF, verbose=-10)
 print(fit)

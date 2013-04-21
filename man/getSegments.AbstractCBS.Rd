@@ -9,9 +9,7 @@
  \name{getSegments.AbstractCBS}
 \alias{getSegments.AbstractCBS}
 \alias{AbstractCBS.getSegments}
-\alias{getSegments.AbstractCBS}
 \alias{getSegments,AbstractCBS-method}
-
 
  \title{Gets the segments}
 
@@ -19,7 +17,9 @@
    Gets the segments.
  }
 
- \usage{\method{getSegments}{AbstractCBS}(...)}
+ \usage{
+\method{getSegments}{AbstractCBS}(...)
+}
 
  \arguments{
   \item{simplify}{If \code{\link[base:logical]{TRUE}}, redundant and intermediate information is dropped.}
@@ -33,7 +33,7 @@
    and K is the number of segment-specific fields.
  }
 
- \author{Henrik Bengtsson (\url{http://www.braju.com/R/})}
+ \author{Henrik Bengtsson}
 
  \seealso{
    For more information see \code{\link{AbstractCBS}}.

@@ -1,4 +1,4 @@
-setMethodS3("updateMeansTogether", "PairedPSCBS", function(fit, idxList, ..., verbose=FALSE) {
+setMethodS3("updateMeansTogether", "PairedPSCBS", function(fit, idxList, ..., avgTCN=c("mean", "median"), avgDH=c("mean", "median"), verbose=FALSE) {
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Validate arguments
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
@@ -13,6 +13,10 @@ setMethodS3("updateMeansTogether", "PairedPSCBS", function(fit, idxList, ..., ve
     sort(unique(idxs));
   });
 
+  # Argument 'avgTCN' & 'avgDH':
+  avgTCN <- match.arg(avgTCN);
+  avgDH <- match.arg(avgDH);
+
   # Argument 'verbose':
   verbose <- Arguments$getVerbose(verbose);
   if (verbose) {
@@ -24,6 +28,15 @@ setMethodS3("updateMeansTogether", "PairedPSCBS", function(fit, idxList, ..., ve
 
   verbose && cat(verbose, "Segments:");
   verbose && str(verbose, idxList);
+
+
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+  # Setting up averaging functions
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+  avgList <- list(
+    tcn = get(avgTCN, mode="function"),
+    dh = get(avgDH, mode="function")
+  );
 
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
@@ -55,6 +68,8 @@ setMethodS3("updateMeansTogether", "PairedPSCBS", function(fit, idxList, ..., ve
     naValue <- as.double(NA);
     mus <- c(tcn=naValue, dh=naValue, c1=naValue, c2=naValue);
     for (key in c("tcn", "dh")) {
+      avgFUN <- avgList[[key]];
+
       # (c) Adjust for missing values
       if (key == "tcn") {
         value <- CT;
@@ -64,7 +79,7 @@ setMethodS3("updateMeansTogether", "PairedPSCBS", function(fit, idxList, ..., ve
       keep <- which(!is.na(value));
   
       # (d) Update mean
-      gamma <- mean(value[keep]);
+      gamma <- avgFUN(value[keep]);
   
       # Sanity check
       stopifnot(length(gamma) == 0 || !is.na(gamma));
@@ -86,6 +101,7 @@ setMethodS3("updateMeansTogether", "PairedPSCBS", function(fit, idxList, ..., ve
   # Return results
   res <- fit;
   res$output <- segs;
+  res <- setMeanEstimators(res, tcn=avgTCN, dh=avgDH);
 
   verbose && exit(verbose);
 

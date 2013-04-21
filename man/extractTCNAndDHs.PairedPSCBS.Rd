@@ -10,9 +10,7 @@
  \name{extractTCNAndDHs.PairedPSCBS}
 \alias{extractTCNAndDHs.PairedPSCBS}
 \alias{PairedPSCBS.extractTCNAndDHs}
-\alias{extractTCNAndDHs.PairedPSCBS}
 \alias{extractTCNAndDHs,PairedPSCBS-method}
-
 
  \title{Extract TCN and DH mean levels per segment}
 
@@ -20,7 +18,9 @@
    Extract TCN and DH mean levels per segment.
  }
 
- \usage{\method{extractTCNAndDHs}{PairedPSCBS}(fit, ...)}
+ \usage{
+\method{extractTCNAndDHs}{PairedPSCBS}(fit, ...)
+}
 
  \arguments{
   \item{...}{Arguments passed to \code{getSegments()}.}
@@ -30,7 +30,7 @@
    Returns a \code{\link[base]{data.frame}}.
  }
 
- \author{Henrik Bengtsson (\url{http://www.braju.com/R/})}
+ \author{Henrik Bengtsson}
 
  \seealso{
    \code{\link[PSCBS:extractMinorMajorCNs.PairedPSCBS]{*extractMinorMajorCNs}()}.

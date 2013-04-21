@@ -31,7 +31,7 @@
 #  The @see "segmentByCBS" method returns an object of this class.
 # }
 #
-# \author{Henrik Bengtsson}
+# @author "HB"
 #*/###########################################################################  
 setConstructorS3("CBS", function(...) {
   extend(AbstractCBS(list(data=NULL, output=NULL), ...), "CBS");
@@ -421,10 +421,13 @@ setMethodS3("updateBoundaries", "CBS", function(fit, ..., verbose=FALSE) {
 
 
 
-setMethodS3("updateMeans", "CBS", function(fit, ..., verbose=FALSE) {
+setMethodS3("updateMeans", "CBS", function(fit, ..., avg=c("mean", "median"), verbose=FALSE) {
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Validate arguments
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+  # Argument 'avg':
+  avg <- match.arg(avg);
+
   # Argument 'verbose':
   verbose <- Arguments$getVerbose(verbose);
   if (verbose) {
@@ -449,6 +452,24 @@ setMethodS3("updateMeans", "CBS", function(fit, ..., verbose=FALSE) {
   y <- data$y;
   w <- data$w;
   hasWeights <- !is.null(w);
+
+
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+  # Setting up averaging functions
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+  if (hasWeights) {
+    if(avg == "mean") {
+      avgFUN <- weighted.mean;
+    } else if(avg == "median") {
+      require("matrixStats") || throw("Package not loaded: matrixStats");
+      avgFUN <- weightedMedian;
+    } else {
+      throw("Value of argument 'avg' is not supported with weights: ", avg);
+    }
+  } else {
+    avgFUN <- get(avg, mode="function");
+  }
+
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
   # Update segments
@@ -488,9 +509,9 @@ setMethodS3("updateMeans", "CBS", function(fit, ..., verbose=FALSE) {
     # (d) Update mean
     if (hasWeights) {
       wSS <- wSS / sum(wSS);
-      gamma <- sum(wSS*ySS);
+      gamma <- avgFUN(ySS, w=wSS);
     } else {
-      gamma <- mean(ySS);
+      gamma <- avgFUN(ySS);
     }
 
     # Sanity check
@@ -508,6 +529,7 @@ setMethodS3("updateMeans", "CBS", function(fit, ..., verbose=FALSE) {
   # Return results
   res <- fit;
   res$output <- segs;
+  res <- setMeanEstimators(res, y=avg);
 
   verbose && exit(verbose);
 

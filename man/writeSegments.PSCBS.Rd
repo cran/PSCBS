@@ -10,9 +10,7 @@
  \name{writeSegments.PSCBS}
 \alias{writeSegments.PSCBS}
 \alias{PSCBS.writeSegments}
-\alias{writeSegments.PSCBS}
 \alias{writeSegments,PSCBS-method}
-
 
  \title{Writes the table of segments to file}
 
@@ -20,7 +18,9 @@
   Writes the table of segments to file.
  }
 
- \usage{\method{writeSegments}{PSCBS}(fit, name=getSampleName(fit), tags=NULL, ext="tsv", path=NULL, addHeader=TRUE, createdBy=NULL, sep="	", nbrOfDecimals=4, splitters=FALSE, overwrite=FALSE, skip=FALSE, ...)}
+ \usage{
+\method{writeSegments}{PSCBS}(fit, name=getSampleName(fit), tags=NULL, ext="tsv", path=NULL, addHeader=TRUE, createdBy=NULL, sep="	", nbrOfDecimals=4, splitters=FALSE, overwrite=FALSE, skip=FALSE, ...)
+}
 
  \arguments{
    \item{name, tags}{Name and optional tags part of the filename}.
@@ -38,7 +38,7 @@
    Returns the pathname of the the file written.
  }
 
- \author{Henrik Bengtsson (\url{http://www.braju.com/R/})}
+ \author{Henrik Bengtsson}
 
  \seealso{
    Utilizes \code{\link[PSCBS:getSegments.PSCBS]{*getSegments}()}.

@@ -9,9 +9,7 @@
  \name{getChromosomes.AbstractCBS}
 \alias{getChromosomes.AbstractCBS}
 \alias{AbstractCBS.getChromosomes}
-\alias{getChromosomes.AbstractCBS}
 \alias{getChromosomes,AbstractCBS-method}
-
 
  \title{Gets the set of chromosomes}
 
@@ -19,7 +17,9 @@
    Gets the set of chromosomes in the segmentation result.
  }
 
- \usage{\method{getChromosomes}{AbstractCBS}(this, ...)}
+ \usage{
+\method{getChromosomes}{AbstractCBS}(this, ...)
+}
 
  \arguments{
   \item{...}{Arguments passed to \code{\link[PSCBS:getSegments.AbstractCBS]{*getSegments}()}.}
@@ -29,7 +29,7 @@
    Returns a unique and sorted \code{\link[base]{vector}} of chromosomes segmented.
  }
 
- \author{Henrik Bengtsson (\url{http://www.braju.com/R/})}
+ \author{Henrik Bengtsson}
 
  \seealso{
    \code{\link[PSCBS:nbrOfChromosomes.AbstractCBS]{*nbrOfChromosomes}()}.

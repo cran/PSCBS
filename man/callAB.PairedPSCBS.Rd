@@ -10,9 +10,7 @@
 \name{callAB.PairedPSCBS}
 \alias{callAB.PairedPSCBS}
 \alias{PairedPSCBS.callAB}
-\alias{callAB.PairedPSCBS}
 \alias{callAB,PairedPSCBS-method}
-
 \alias{PairedPSCBS.callAllelicBalance}
 \alias{callAllelicBalance.PairedPSCBS}
 \alias{callAllelicBalance,PairedPSCBS-method}
@@ -24,7 +22,9 @@
  Calls segments that are in allelic balance, i.e. that have equal minor and major copy numbers.
 }
 
-\usage{\method{callAB}{PairedPSCBS}(fit, flavor=c("DeltaAB*"), ..., minSize=1, xorCalls=TRUE, force=FALSE)}
+\usage{
+\method{callAB}{PairedPSCBS}(fit, flavor=c("DeltaAB*"), ..., minSize=1, xorCalls=TRUE, force=FALSE)
+}
 
 \arguments{
   \item{flavor}{A \code{\link[base]{character}} string specifying which type of
@@ -59,7 +59,7 @@
   or when the AB caller could not call it.
 }
 
-\author{Henrik Bengtsson (\url{http://www.braju.com/R/})}
+\author{Henrik Bengtsson}
 
 \seealso{
   Internally, one of the following methods are used:

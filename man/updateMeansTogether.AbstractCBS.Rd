@@ -10,9 +10,7 @@
 \name{updateMeansTogether.AbstractCBS}
 \alias{updateMeansTogether.AbstractCBS}
 \alias{AbstractCBS.updateMeansTogether}
-\alias{updateMeansTogether.AbstractCBS}
 \alias{updateMeansTogether,AbstractCBS-method}
-
 \alias{updateMeansTogether.CBS}
 \alias{updateMeansTogether.PairedPSCBS}
 
@@ -23,7 +21,9 @@
  The locus-level data is not updated/modified.
 }
 
-\usage{\method{updateMeansTogether}{AbstractCBS}(...)}
+\usage{
+\method{updateMeansTogether}{AbstractCBS}(...)
+}
 
 \arguments{
  \item{idxList}{A \code{\link[base]{list}}, where each element is an \code{\link[base]{integer}} \code{\link[base]{vector}}
@@ -37,7 +37,7 @@
   Returns an object of the same class.
 }
 
-\author{Henrik Bengtsson (\url{http://www.braju.com/R/})}
+\author{Henrik Bengtsson}
 
 \seealso{
   This method is utilized by \code{\link[PSCBS:pruneByHClust.AbstractCBS]{*pruneByHClust}()}.
