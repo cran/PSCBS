@@ -24,11 +24,11 @@
 #        in [0,1] (due to noise, values may be slightly outside as well)
 #        or @NA for non-polymorphic loci.}
 #   \item{...}{Additional arguments passed to @see "segmentByPairedPSCBS".}
-#   \item{flavor}{A @character specifying what type of segmentation and 
+#   \item{flavor}{A @character specifying what type of segmentation and
 #     calling algorithm to be used.}
-#   \item{tauA, tauB}{Lower and upper thresholds for calling SNPs 
-#     heterozygous based on the tumor allele B fractions (\code{betaT}).
-#     If @NA, then they are estimates from data.
+#   \item{tauA, tauB}{Lower and upper thresholds (\code{tauA < tauB} for
+#     calling SNPs  heterozygous based on the tumor allele B fractions
+#     (\code{betaT}).  If @NA, then they are estimates from data.
 #   }
 #   \item{verbose}{See @see "R.utils::Verbose".}
 # }
@@ -36,7 +36,7 @@
 # \value{
 #   Returns the segmentation results as a @see "NonPairedPSCBS" object.
 # }
-# 
+#
 # \details{
 #   Internally @see "segmentByPairedPSCBS" is used for segmentation.
 #   This segmentation method does \emph{not} support weights.
@@ -45,7 +45,7 @@
 # \section{Reproducibility}{
 #   The "DNAcopy::segment" implementation of CBS uses approximation
 #   through random sampling for some estimates.  Because of this,
-#   repeated calls using the same signals may result in slightly 
+#   repeated calls using the same signals may result in slightly
 #   different results, unless the random seed is set/fixed.
 # }
 #
@@ -95,7 +95,7 @@
 # }
 #
 # @keyword IO
-#*/########################################################################### 
+#*/###########################################################################
 setMethodS3("segmentByNonPairedPSCBS", "default", function(CT, betaT, ..., flavor=c("tcn", "tcn&dh", "tcn,dh", "sqrt(tcn),dh", "sqrt(tcn)&dh"), tauA=NA, tauB=1-tauA, verbose=FALSE) {
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Validate arguments
@@ -118,11 +118,13 @@ setMethodS3("segmentByNonPairedPSCBS", "default", function(CT, betaT, ..., flavo
 
   # Argument 'tauA' & 'tauB':
   if (!is.na(tauA) && !is.na(tauB)) {
-    tauA <- Arguments$getDouble(tauA, range=c(-0.5, +0.5));
-    tauB <- Arguments$getDouble(tauB, range=c(+0.5, +1.5));
+    tauA <- Arguments$getDouble(tauA);
+    tauB <- Arguments$getDouble(tauB);
     if (tauB < tauA) {
       throw("Argument 'tauA' must be smaller than 'tauB': ", tauA, " > ", tauB);
     }
+    tauA <- Arguments$getDouble(tauA, range=c(-0.5, +0.5));
+    tauB <- Arguments$getDouble(tauB, range=c(+0.5, +1.5));
   }
 
   # Argument 'verbose':
@@ -144,7 +146,7 @@ setMethodS3("segmentByNonPairedPSCBS", "default", function(CT, betaT, ..., flavo
   isSnp <- !is.na(betaT);
   nbrOfSnps <- sum(isSnp);
   verbose && cat(verbose, "Number of SNPs: ", nbrOfSnps);
- 
+
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Call tumor "genotypes"
@@ -156,24 +158,32 @@ setMethodS3("segmentByNonPairedPSCBS", "default", function(CT, betaT, ..., flavo
     require("aroma.light") || throw("Package not loaded: aroma.light");
     mBAF <- abs(betaT - 1/2);
     fitT <- findPeaksAndValleys(mBAF);
-    type <- NULL; rm(type); # To please 'R CMD check'.
+    type <- NULL; rm(list="type"); # To please 'R CMD check'.
     fitT <- subset(fitT, type == "peak");
     o <- order(fitT$density, decreasing=TRUE);
     fitT <- fitT[o,];
     fitT <- fitT[1,];
     z <- mBAF[mBAF >= fitT$x] - fitT$x;
-    q <- quantile(z, probs=0.95, na.rm=TRUE, names=FALSE); 
+    q <- quantile(z, probs=0.95, na.rm=TRUE, names=FALSE);
     qU <- fitT$x+q;
     verbose && cat(verbose, "Upper quantile: ", qU);
     qL <- fitT$x - q;
     verbose && cat(verbose, "Symmetric lower quantile: ", qL);
     tauA <- 1/2-qL;
     tauB <- 1/2+qL;
+    verbose && cat(verbose, "(tauA, tauB) estimates: (%g,%g)", tauA, tauB);
+
+    # Sanity check on (tauA, tauB) estimates
+    if (tauB < tauA) {
+      throw("Failed to estimate (tauA, tauB). The estimate 'tauA' is greater than 'tauB', which it should not: ", tauA, " > ", tauB);
+    }
+    tauA <- Arguments$getDouble(tauA, range=c(-0.5, +0.5));
+    tauB <- Arguments$getDouble(tauB, range=c(+0.5, +1.5));
   }
 
   verbose && cat(verbose, "Homozygous treshholds:");
   verbose && print(verbose, c(tauA, tauB));
- 
+
   isHomA <- isSnp & (betaT <= tauA);
   isHomB <- isSnp & (betaT >= tauB);
   isHom <- (isHomA | isHomB);
@@ -185,7 +195,8 @@ setMethodS3("segmentByNonPairedPSCBS", "default", function(CT, betaT, ..., flavo
   muNx[isHomA] <-   0;
   muNx[isHet]  <- 1/2;
   muNx[isHomB] <-   1;
-  rm(isHomA, isHomB, isHom, isHet); # Not needed anymore
+  # Not needed anymore
+  isHomA <- isHomB <- isHom <- isHet <- NULL;
 
   verbose && cat(verbose, "Inferred germline genotypes (via tumor):");
   verbose && str(verbose, muNx);
@@ -212,19 +223,22 @@ setMethodS3("segmentByNonPairedPSCBS", "default", function(CT, betaT, ..., flavo
   class(data) <- gsub("PairedPSCNData", "NonPairedPSCNData", class(data), fixed=TRUE);
 #  class(data) <- c("NonPairedPSCNData", class(data));
   fit$data <- data;
-  rm(data);
+  # Not needed anymore
+  data <- NULL;
 
   segs <- fit$output;
   class(segs) <- gsub("PairedPSCNSegments", "NonPairedPSCNSegments", class(segs), fixed=TRUE);
 #  class(segs) <- c("NonPairedPSCNSegments", class(segs));
   fit$output <- segs;
-  rm(segs);
+  # Not needed anymore
+  segs <- NULL;
 
   params <- fit$params;
   params$tauA <- tauA;
   params$tauB <- tauB;
   fit$params <- params;
-  rm(params);
+  # Not needed anymore
+  params <- NULL;
 
 #  class(fit) <- gsub("PairedPSCBS", "NonPairedPSCBS", class(fit), fixed=TRUE);
   class(fit) <- c("NonPairedPSCBS", class(fit));
@@ -248,7 +262,7 @@ setMethodS3("segmentByNonPairedPSCBS", "data.frame", function(CT, ...) {
   data <- CT;
 
 
-  segmentByNonPairedPSCBS(CT=data$CT, betaT=data$betaT, 
+  segmentByNonPairedPSCBS(CT=data$CT, betaT=data$betaT,
                           chromosome=data$chromosome, x=data$x, ...);
 })
 
@@ -262,6 +276,9 @@ setMethodS3("segmentByNonPairedPSCBS", "PairedPSCBS", function(...) {
 
 ############################################################################
 # HISTORY:
+# 2013-07-19
+# o ROBUSTNESS: Added a sanity check on the estimates of (tauA, tauB)
+#   when they are estimated from data in segmentByNonPairedPSCBS().
 # 2012-11-05
 # o DOCUMENTATION FIX: example(segmentByNonPairedPSCBS) was for the
 #   paired case.

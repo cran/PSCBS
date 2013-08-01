@@ -1,8 +1,12 @@
 ###########################################################################
 ## This 'tangle' R script was created from an RSP document.
 ## RSP source document: 'PairedPSCBS.tex.rsp'
+## Metadata 'title': 'Paired PSCBS'
+## Metadata 'author': 'Henrik Bengtsson'
+## Metadata 'keywords': 'copy numbers, allele specific, parent specific, genomic aberrations'
 ###########################################################################
 
+## - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 t0 <- Sys.time()
 library("PSCBS");
 library("R.devices");
@@ -17,8 +21,9 @@ devOptions("png", width=840);
 options(width=85);
 options(digits=3);
 options(str=strOptions(strict.width="cut"));
-pkg <- Package("PSCBS");
-format(as.Date(getDate(pkg)), format="%B %d, %Y")
+R.rsp$version
+R.rsp$author
+format(as.Date(getDate(Package("PSCBS"))), format="%B %d, %Y")
 fullname <- "PairedPSCBS,exData,chr01";
 evalCapture({
 data <- PSCBS::exampleData("paired.chr01")

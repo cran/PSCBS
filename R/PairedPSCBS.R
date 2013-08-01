@@ -9,7 +9,7 @@
 #  A PairedPSCBS is an object containing the results from the
 #  Paired PSCBS method.
 # }
-# 
+#
 # \usage{PairedPSCBS(fit=list(), ...)}
 #
 # \arguments{
@@ -20,7 +20,7 @@
 # \section{Fields and Methods}{
 #  @allmethods "public"
 # }
-# 
+#
 # @author "HB"
 #
 # \seealso{
@@ -80,10 +80,10 @@ setMethodS3("getLocusData", "PairedPSCBS", function(fit, ..., fields=c("asis", "
 }, protected=TRUE) # getLocusData()
 
 
-setMethodS3("updateMeans", "PairedPSCBS", function(fit, from=c("loci", "segments"), adjustFor=NULL, ..., avgTCN=c("mean", "median"), avgDH=c("mean", "median"), verbose=FALSE) {
+setMethodS3("updateMeans", "PairedPSCBS", function(fit, from=c("loci", "segments"), adjustFor=NULL, ..., avgTCN=c("asis", "mean", "median"), avgDH=c("asis", "mean", "median"), verbose=FALSE) {
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Validate arguments
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Argument 'from':
   from <- match.arg(from);
 
@@ -105,32 +105,47 @@ setMethodS3("updateMeans", "PairedPSCBS", function(fit, from=c("loci", "segments
     pushState(verbose);
     on.exit(popState(verbose));
   }
- 
+
   verbose && enter(verbose, "Updating mean level estimates");
   verbose && cat(verbose, "Adjusting for:");
   verbose && print(verbose, adjustFor);
 
 
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Setting up averaging functions
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  if (avgTCN == "asis" || avgDH == "asis") {
+    est <- fit$params$meanEstimators;
+    if (avgTCN == "asis") {
+      avgTCN <- est$tcn;
+      if (is.null(avgTCN)) avgTCN <- "mean";
+      avgTCN <- match.arg(avgTCN);
+    }
+    if (avgDH == "asis") {
+      avgDH <- est$dh;
+      if (is.null(avgDH)) avgDH <- "mean";
+      avgDH <- match.arg(avgDH);
+    }
+  }
+
   avgList <- list(
     tcn = get(avgTCN, mode="function"),
     dh = get(avgDH, mode="function")
   );
 
 
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Extract the segmentation results
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   segs <- getSegments(fit, splitters=TRUE);
+  segRows <- list(tcn=fit$tcnSegRows, dh=fit$dhSegRows);
   nbrOfSegments <- nrow(segs);
   verbose && cat(verbose, "Number of segments: ", nbrOfSegments);
 
 
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Assert that adjustments can be made
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   if (is.element("ab", adjustFor)) {
     if (!is.element("abCall", names(segs))) {
       adjustFor <- setdiff(adjustFor, "ab");
@@ -153,9 +168,9 @@ setMethodS3("updateMeans", "PairedPSCBS", function(fit, from=c("loci", "segments
   }
 
 
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Update the (TCN,DH) mean levels from locus-level data?
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   if (from == "loci") {
     data <- getLocusData(fit);
     chromosome <- data$chromosome;
@@ -168,27 +183,21 @@ setMethodS3("updateMeans", "PairedPSCBS", function(fit, from=c("loci", "segments
       verbose && enter(verbose, sprintf("Segment %d of %d", ss, nbrOfSegments));
       seg <- segs[ss,];
       verbose && print(verbose, seg);
-  
+
       chr <- seg[["chromosome"]];
       chrTag <- sprintf("chr%02d", chr);
-  
-      for (what in c("tcn", "dh")) {
-        avgFUN <- avgList[[what]];
 
-        keys <- paste(what, c("Start", "End"), sep="");
-        xStart <- seg[[keys[1]]];
-        xEnd <- seg[[keys[2]]];
-        verbose && printf(verbose, "[xStart,xEnd] = [%.0f,%.0f]\n", xStart, xEnd);
-        # Nothing todo?
-        if (is.na(xStart) && is.na(xEnd)) {
+      for (what in c("tcn", "dh")) {
+        segRow <- segRows[[what]][ss,];
+
+        # (a) A splitter - nothing todo?
+        if (!is.finite(segRow[[1]]) || !is.finite(segRow[[2]])) {
           next;
         }
-  
-        stopifnot(xStart <= xEnd);
-  
-        # (b) Identify units
-        units <- which(chromosome == chr & xStart <= x & x <= xEnd);
-  
+
+        # (b) Identify units (loci)
+        units <- segRow[[1]]:segRow[[2]];
+
         # (c) Adjust for missing values
         if (what == "tcn") {
           value <- CT;
@@ -197,31 +206,32 @@ setMethodS3("updateMeans", "PairedPSCBS", function(fit, from=c("loci", "segments
         }
         keep <- which(!is.na(value[units]));
         units <- units[keep];
-  
+
         # (d) Update mean
+        avgFUN <- avgList[[what]];
         gamma <- avgFUN(value[units]);
-  
+
         # Sanity check
         stopifnot(length(units) == 0 || !is.na(gamma));
-  
+
         # Update the segment boundaries, estimates and counts
         key <- paste(what, "Mean", sep="");
         seg[[key]] <- gamma;
       }
-  
+
       verbose && print(verbose, seg);
-  
+
       segs[ss,] <- seg;
-  
+
       verbose && exit(verbose);
     } # for (ss ...)
   } # if (from ...)
 
 
 
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Adjust segment means from various types of calls
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   if (length(adjustFor) > 0) {
     verbose && enter(verbose, "Adjusting segment means");
     verbose && cat(verbose, "Adjusting for:");
@@ -253,9 +263,9 @@ setMethodS3("updateMeans", "PairedPSCBS", function(fit, from=c("loci", "segments
 
 
 
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Update (C1,C2) mean levels
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   verbose && enter(verbose, "Update (C1,C2) per segment");
   # Append (C1,C2) estimates
   tcn <- segs$tcnMean;
@@ -282,7 +292,7 @@ setMethodS3("updateMeans", "PairedPSCBS", function(fit, from=c("loci", "segments
 setMethodS3("resegment", "PairedPSCBS", function(fit, ..., verbose=FALSE) {
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Validate arguments
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Argument 'verbose':
   verbose <- Arguments$getVerbose(verbose);
   if (verbose) {
@@ -331,7 +341,7 @@ setMethodS3("resegment", "PairedPSCBS", function(fit, ..., verbose=FALSE) {
   userArgs <- list(..., verbose=verbose);
 
   # (d) Merge
-  args <- formals;  
+  args <- formals;
   args2 <- append(params, userArgs);
   for (kk in seq(along=args2)) {
     value <- args2[[kk]];
@@ -359,6 +369,49 @@ setMethodS3("resegment", "PairedPSCBS", function(fit, ..., verbose=FALSE) {
 
   fit;
 }, protected=TRUE) # resegment()
+
+
+setMethodS3("adjustPloidyScale", "PairedPSCBS", function(fit, scale, ...) {
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  # (a) Update locus-level data
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  data <- getLocusData(fit);
+  names <- c("CT");
+  for (ff in names) {
+    data[[ff]] <- scale * data[[ff]];
+  }
+  fit$data <- data;  ##  fit <- setLocusData(fit, data);
+
+
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  # (b) Update segment-level data
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  segs <- getSegments(fit);
+
+  # Adjust segment levels
+  names <- grep("^(tcn|c1|c2)(Mean|_.*%)$", names(segs), value=TRUE);
+  for (ff in names) {
+    segs[[ff]] <- scale * segs[[ff]];
+  }
+
+  # Clear segment calls
+  names <- c("lohCall", "ntcnCall");
+  for (ff in names) {
+    segs[[ff]] <- NULL;
+  }
+  fit$output <- segs; ## fit <- setSegments(fit, sets);
+
+
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  # (c) Update parameter estimates
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  params <- fit$params;
+  fields <- c("copyNeutralStats", "deltaCN", "ntcnRange", "deltaLowC1");
+  params[fields] <- NULL;
+  fit$params <- params;
+
+  fit;
+}, protected=TRUE) # adjustPloidyScale()
 
 
 ##############################################################################

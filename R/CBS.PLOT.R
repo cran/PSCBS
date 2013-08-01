@@ -41,9 +41,10 @@ setMethodS3("plotTracks", "CBS", function(x, scatter=TRUE, pch=20, col="gray", m
   # Argument 'Clim':
   if (identical(Clim, "auto")) {
     signalType <- getSignalType(fit);
+    ploidy <- ploidy(fit);
     Clim <- switch(signalType,
-      "log2ratio" = c(-3,3),
-      "ratio"     = c(0,6),
+      "log2ratio" = c(-2,2) + c(-1,1)*ploidy/2,
+      "ratio"     = c(0,3*ploidy),
       NULL
     );
   }
@@ -182,7 +183,8 @@ setMethodS3("highlightCalls", "CBS", function(fit, pch=20, callCols=c(loss="red"
   y <- dataT[,3];
   nbrOfLoci <- nbrOfLoci(fitT);
   nbrOfSegments <- nbrOfSegments(fitT);
-  rm(dataT);
+  # Not needed anymore
+  dataT <- NULL;
 
   # For each non-neutral segment
   for (ss in seq(length=nbrOfSegments)) {
@@ -255,7 +257,7 @@ setMethodS3("highlightLocusCalls", "CBS", function(fit, callPchs=c(negOutlier=25
     isCalled <- dataT[[field]];
     idxs <- which(isCalled);
 
-    if (length(idxs) == 0) {
+    if (length(idxs) == 0L) {
       next;
     }
 
@@ -356,7 +358,7 @@ setMethodS3("drawCentromeres", "CBS", function(fit, genomeData, what=c("start", 
 
 setMethodS3("highlightArmCalls", "CBS", function(fit, genomeData, minFraction=0.95, callCols=c("loss"="red", "gain"="green"),   xScale=1e-6, ...) {
   # To please/trick R CMD check
-  chromosome <- x <- NULL; rm(chromosome, x);
+  chromosome <- x <- NULL; rm(list=c("chromosome", "x"));
 
   callStats <- callArms(fit, genomeData=genomeData, minFraction=minFraction);
 

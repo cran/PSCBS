@@ -84,7 +84,8 @@ setMethodS3("callAB", "PairedPSCBS", function(fit, flavor=c("DeltaAB*"), ..., mi
     calls[ns < minSize] <- NA;
     segs$abCall <- calls;
     fit$output <- segs;
-    rm(segs, ns, calls); # Not needed anymore
+    # Not needed anymore
+    segs <- calls <- NULL;
   }
 
   # Don't call a segment AB if it already called LOH?
@@ -177,8 +178,7 @@ setMethodS3("callAllelicBalanceByDH", "PairedPSCBS", function(fit, delta=estimat
 
   # Calculate DH confidence intervals, if not already done
   probs <- c(alpha, 1-alpha);
-  statsFcn <- function(x) quantile(x, probs=probs, na.rm=TRUE);
-  fit <- bootstrapTCNandDHByRegion(fit, statsFcn=statsFcn, ..., verbose=less(verbose, 50));
+  fit <- bootstrapTCNandDHByRegion(fit, probs=probs, ..., verbose=less(verbose, 50));
 
   segs <- as.data.frame(fit);
 

@@ -7,7 +7,7 @@
 #
 #   \item{verbose}{See @see "R.utils::Verbose".}
 #
-setMethodS3("plotTracksManyChromosomes", "PairedPSCBS", function(fit, chromosomes=getChromosomes(fit), tracks=c("tcn", "dh", "tcn,c1,c2", "betaN", "betaT", "betaTN")[1:3], scatter="*", calls=if (callLoci || length(chromosomes) == 1L) ".*" else NULL, callLoci=FALSE, callThresholds=TRUE, boundaries=TRUE, knownSegments=FALSE, quantiles=c(0.05,0.95), seed=0xBEEF, pch=".", Clim=c(0,6), Blim=c(0,1), xScale=1e-6, xlabTicks=if (length(chromosomes) == 1L) "[pos]" else "[chr]", ..., subset=if (length(chromosomes) > 1L) 0.1 else NULL, add=FALSE, subplots=!add && (length(tracks) > 1L), oma=c(0,0,2,0), mar=c(2,5,1,3)+0.1, onBegin=NULL, onEnd=NULL, verbose=FALSE) {
+setMethodS3("plotTracksManyChromosomes", "PairedPSCBS", function(fit, chromosomes=getChromosomes(fit), tracks=c("tcn", "dh", "tcn,c1,c2", "betaN", "betaT", "betaTN")[1:3], scatter="*", calls=if (callLoci || length(chromosomes) == 1L) ".*" else NULL, callLoci=FALSE, callThresholds=TRUE, boundaries=TRUE, knownSegments=FALSE, quantiles=c(0.05,0.95), seed=0xBEEF, pch=".", Clim=c(0,3*ploidy(fit)), Blim=c(0,1), xScale=1e-6, xlabTicks=if (length(chromosomes) == 1L) "[pos]" else "[chr]", ..., subset=if (length(chromosomes) > 1L) 0.1 else NULL, add=FALSE, subplots=!add && (length(tracks) > 1L), oma=c(0,0,2,0), mar=c(2,5,1,3)+0.1, onBegin=NULL, onEnd=NULL, verbose=FALSE) {
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Local functions
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -107,7 +107,8 @@ setMethodS3("plotTracksManyChromosomes", "PairedPSCBS", function(fit, chromosome
       scatterT <- strsplit(scatter, split=",", fixed=TRUE);
       tracksT <- strsplit(tracks, split=",", fixed=TRUE);
       stopifnot(all(is.element(scatterT, tracksT)));
-      rm(scatterT, tracksT);
+      # Not needed anymore
+      scatterT <- tracksT <- NULL;
     }
   }
 
@@ -244,7 +245,7 @@ setMethodS3("plotTracksManyChromosomes", "PairedPSCBS", function(fit, chromosome
 
   # To please R CMD check
   CT <- muN <- betaT <- betaN <- betaTN <- NULL;
-  rm(CT, muN, betaT, betaN, betaTN);
+  rm(list=c("CT", "muN", "betaT", "betaN", "betaTN"));
   attachLocally(data);
   x <- xScale * x;
   vs <- xScale * fit$chromosomeStats[,1:2,drop=FALSE];
