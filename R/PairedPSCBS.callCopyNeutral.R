@@ -64,7 +64,8 @@ setMethodS3("callCopyNeutral", "PairedPSCBS", function(fit, flavor=c("TCN|AB"), 
     calls[ns < minSize] <- NA;
     segs$ntcnCall <- calls;
     fit$output <- segs;
-    rm(segs, ns, calls); # Not needed anymore
+    # Not needed anymore
+    segs <- calls <- NULL;
   }
 
   return(invisible(fit));
@@ -218,7 +219,7 @@ setMethodS3("estimateDeltaCN", "PairedPSCBS", function(fit, scale=1, kappa=estim
 #     "acceptance" region.
 #     Defaults to half of the distance between two integer TCN states,
 #     i.e. 1/2.  This argument should be shrunken as a function of
-#     the amount of the normal contaminator.}
+#     the amount of the normal contamination and other background signals.}
 #   \item{alpha}{A @double in [0,0.5] specifying the significance level
 #     of the confidence intervals used.}
 #   \item{...}{Additional arguments passed to
@@ -291,8 +292,7 @@ setMethodS3("callCopyNeutralByTCNofAB", "PairedPSCBS", function(fit, delta=estim
   keys <- sprintf("tcn_%g%%", 100*c(probs[1], probs[2]));
   missing <- keys[!is.element(keys, colnames(segs))];
   if (length(missing) > 0) {
-    statsFcn <- function(x) quantile(x, probs=probs, na.rm=TRUE);
-    fit <- bootstrapTCNandDHByRegion(fit, statsFcn=statsFcn, ..., verbose=less(verbose, 50));
+    fit <- bootstrapTCNandDHByRegion(fit, probs=probs, ..., verbose=less(verbose, 50));
     segs <- getSegments(fit, splitters=TRUE, simplify=FALSE);
 
     # Assert that they exists

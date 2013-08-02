@@ -51,7 +51,7 @@
 # @keyword IO
 # @keyword internal
 #*/###########################################################################
-setMethodS3("plotTracks1", "PairedPSCBS", function(x, tracks=c("tcn", "dh", "tcn,c1,c2", "tcn,c1", "tcn,c2", "c1,c2", "betaN", "betaT", "betaTN")[1:3], scatter="*", calls=".*", pch=".", col=NULL, cex=1, changepoints=FALSE, grid=FALSE, quantiles=c(0.05,0.95), xlim=NULL, Clim=c(0,6), Blim=c(0,1), xScale=1e-6, ..., add=FALSE, subplots=!add && (length(tracks) > 1), verbose=FALSE) {
+setMethodS3("plotTracks1", "PairedPSCBS", function(x, tracks=c("tcn", "dh", "tcn,c1,c2", "tcn,c1", "tcn,c2", "c1,c2", "betaN", "betaT", "betaTN")[1:3], scatter="*", calls=".*", pch=".", col=NULL, cex=1, changepoints=FALSE, grid=FALSE, quantiles=c(0.05,0.95), xlim=NULL, Clim=c(0,3*ploidy(x)), Blim=c(0,1), xScale=1e-6, ..., add=FALSE, subplots=!add && (length(tracks) > 1), verbose=FALSE) {
 
   # To please R CMD check
   fit <- x;
@@ -78,7 +78,8 @@ setMethodS3("plotTracks1", "PairedPSCBS", function(x, tracks=c("tcn", "dh", "tcn
       scatterT <- strsplit(scatter, split=",", fixed=TRUE);
       tracksT <- strsplit(tracks, split=",", fixed=TRUE);
       stopifnot(all(is.element(scatterT, tracksT)));
-      rm(scatterT, tracksT);
+      # Not needed anymore
+      scatterT <- tracksT <- NULL;
     }
   }
 
@@ -520,7 +521,7 @@ setMethodS3("drawConfidenceBands", "PairedPSCBS", function(fit, what=c("tcn", "d
 
 
 
-setMethodS3("plotC1C2", "PairedPSCBS", function(fit, ..., xlab=expression(C[1]), ylab=expression(C[2]), Clim=c(0,4)) {
+setMethodS3("plotC1C2", "PairedPSCBS", function(fit, ..., xlab=expression(C[1]), ylab=expression(C[2]), Clim=c(0,2*ploidy(fit))) {
   plot(NA, xlim=Clim, ylim=Clim, xlab=xlab, ylab=ylab);
   abline(a=0, b=1, lty=3);
   pointsC1C2(fit, ...);
@@ -569,7 +570,7 @@ setMethodS3("drawChangePointsC1C2", "PairedPSCBS", function(fit, col="#00000033"
 
 
 
-setMethodS3("plotDeltaC1C2", "PairedPSCBS", function(fit, ..., xlab=expression(Delta*C[1]), ylab=expression(Delta*C[2]), Clim=c(-2,2)) {
+setMethodS3("plotDeltaC1C2", "PairedPSCBS", function(fit, ..., xlab=expression(Delta*C[1]), ylab=expression(Delta*C[2]), Clim=c(-1,1)*ploidy(fit)) {
   plot(NA, xlim=Clim, ylim=Clim, xlab=xlab, ylab=ylab);
   abline(h=0, lty=3);
   abline(v=0, lty=3);
@@ -631,6 +632,12 @@ setMethodS3("tileChromosomes", "PairedPSCBS", function(fit, chrStarts=NULL, ...,
   }
 
 
+  # Nothing to do, i.e. already tiled?
+  if (isTRUE(attr(fit, "tiledChromosomes"))) {
+    return(fit);
+  }
+
+
   verbose && enter(verbose, "Tile chromosomes");
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -665,7 +672,7 @@ setMethodS3("tileChromosomes", "PairedPSCBS", function(fit, chrStarts=NULL, ...,
     chrEnds <- chrStarts + chrLength;
 
     # Not needed anymore
-    rm(x, idxs);
+    x <- idxs <- NULL;
   } # if (is.null(chrStarts))
 
   verbose && cat(verbose, "Chromosome starts:");
@@ -692,15 +699,21 @@ setMethodS3("tileChromosomes", "PairedPSCBS", function(fit, chrStarts=NULL, ...,
 
     # Offset data
     idxs <- which(data$chromosome == chromosome);
-    data$x[idxs] <- offset + data$x[idxs];
+    if (length(idxs) > 0L) {
+      data$x[idxs] <- offset + data$x[idxs];
+    }
 
     # Offset segmentation
     idxs <- which(segs$chromosome == chromosome);
-    segs[idxs,segFields] <- offset + segs[idxs,segFields];
+    if (length(idxs) > 0L) {
+      segs[idxs,segFields] <- offset + segs[idxs,segFields];
+    }
 
     # Offset known segments
     idxs <- which(knownSegments$chromosome == chromosome);
-    knownSegments[idxs,c("start", "end")] <- offset + knownSegments[idxs,c("start", "end")];
+    if (length(idxs) > 0L) {
+      knownSegments[idxs,c("start", "end")] <- offset + knownSegments[idxs,c("start", "end")];
+    }
 
     verbose && exit(verbose);
   } # for (kk ...)
@@ -715,6 +728,8 @@ setMethodS3("tileChromosomes", "PairedPSCBS", function(fit, chrStarts=NULL, ...,
   fit$params$knownSegments <- knownSegments;
 #  fitT$params$chrOffsets <- chrOffsets;
 
+  # Flag object
+  attr(fit, "tiledChromosomes") <- TRUE;
 
   verbose && exit(verbose);
 
@@ -748,7 +763,7 @@ setMethodS3("drawChangePoints", "PSCBS", function(fit, labels=FALSE, col="#66666
 
 setMethodS3("getChromosomeRanges", "PairedPSCBS", function(fit, ...) {
   # To please R CMD check, cf. subset()
-  chromosome <- NULL; rm(chromosome);
+  chromosome <- NULL; rm(list="chromosome");
 
   segs <- getSegments(fit, splitter=FALSE);
   chromosomes <- sort(unique(segs$chromosome));
@@ -803,6 +818,9 @@ setMethodS3("getChromosomeOffsets", "PairedPSCBS", function(fit, resolution=1e6,
 
 ############################################################################
 # HISTORY:
+# 2013-05-07
+# o Now tileChromosomes() no longer gives warnings on "max(i): no
+#   non-missing arguments to max; returning -Inf".
 # 2013-04-18
 # o Now drawLevels() and drawConfidenceBands() also works for
 #   multiple chromosomes.

@@ -1,7 +1,7 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Do not modify this file since it was automatically generated from:
 % 
-%  findCopyNumberNeutralState.R
+%  findNeutralCopyNumberState.R
 % 
 % by the Rdoc compiler part of the R.oo package.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -17,7 +17,8 @@
 }
 
 \usage{
-\method{findNeutralCopyNumberState}{default}(C, isAI, weights=NULL, ..., minDensity=1e-10, flavor=c("firstPeak", "maxPeak"), verbose=FALSE)
+\method{findNeutralCopyNumberState}{default}(C, isAI, weights=NULL, ..., minDensity=1e-10,
+  flavor=c("firstPeak", "maxPeak"), verbose=FALSE)
 }
 
 \arguments{

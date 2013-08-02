@@ -12,8 +12,10 @@
 #
 # \arguments{
 #   \item{B}{A postive @integer specifying the number of bootstrap samples.}
-#   \item{statsFcn}{A @function that estimates confidence intervals given
-#      locus-level data.}
+#   \item{probs}{The default quantiles to be estimated.}
+#   \item{statsFcn}{A (optional) @function that estimates confidence
+#      intervals given locus-level data.
+#      If @NULL, the @see "stats::quantile" function is used.}
 #   \item{by}{A @character specifying whether DH should be calculated from
 #      normalized ('betaTN') or non-normalized ('betaT') tumor BAFs.}
 #   \item{force}{If @TRUE, already existing estimates are ignored,
@@ -37,7 +39,7 @@
 # }
 #
 #*/###########################################################################
-setMethodS3("bootstrapTCNandDHByRegion", "PairedPSCBS", function(fit, B=1000L, statsFcn=function(x) quantile(x, probs=c(0.025, 0.050, 0.95, 0.975), na.rm=TRUE), by=c("betaTN", "betaT"), force=FALSE, seed=NULL, verbose=FALSE, .debug=FALSE, ...) {
+setMethodS3("bootstrapTCNandDHByRegion", "PairedPSCBS", function(fit, B=1000L, probs=c(0.025, 0.050, 0.95, 0.975), statsFcn=NULL, by=c("betaTN", "betaT"), force=FALSE, seed=NULL, verbose=FALSE, .debug=FALSE, ...) {
   # Settings for sanity checks
   tol <- getOption("PSCBS/sanityChecks/tolerance", 0.0005);
 
@@ -47,6 +49,17 @@ setMethodS3("bootstrapTCNandDHByRegion", "PairedPSCBS", function(fit, B=1000L, s
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Argument 'B':
   B <- Arguments$getInteger(B, range=c(1,Inf));
+
+  # Argument 'probs':
+  probs <- Arguments$getNumerics(probs, range=c(0,1));
+  # Always estimate the default quantiles
+  probs0 <- eval(formals(bootstrapTCNandDHByRegion.PairedPSCBS)$probs);
+  probs <- unique(sort(c(probs, probs0)));
+
+  # Argument 'statsFcn':
+  if (is.null(statsFcn)) {
+    statsFcn <- function(x) quantile(x, probs=probs, na.rm=TRUE);
+  }
 
   # Argument 'by':
   by <- match.arg(by);
@@ -203,7 +216,7 @@ setMethodS3("bootstrapTCNandDHByRegion", "PairedPSCBS", function(fit, B=1000L, s
   stopifnot(length(isHet) == nbrOfLoci);
 
   # Not needed anymore
-  rm(muN);
+  muN <- NULL;
   verbose && exit(verbose);
 
 
@@ -219,8 +232,8 @@ setMethodS3("bootstrapTCNandDHByRegion", "PairedPSCBS", function(fit, B=1000L, s
 
   data$rho <- rho;
 
-  rm(betaT); # Not needed anymore
-
+  # Not needed anymore
+  betaT <- NULL;
 
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -284,8 +297,8 @@ setMethodS3("bootstrapTCNandDHByRegion", "PairedPSCBS", function(fit, B=1000L, s
       stopifnot(!is.na(nbrOfDHs));
     }
 
-    tcnSegRowJJ <- unlist(tcnSegRows[jj,]);
-    dhSegRowJJ <- unlist(dhSegRows[jj,]);
+    tcnSegRowJJ <- unlist(tcnSegRows[jj,], use.names=FALSE);
+    dhSegRowJJ <- unlist(dhSegRows[jj,], use.names=FALSE);
 
     # Indices of all loci
     if (hasTcnLoci[jj]) {
@@ -295,14 +308,14 @@ setMethodS3("bootstrapTCNandDHByRegion", "PairedPSCBS", function(fit, B=1000L, s
     }
 
     verbose && str(verbose, idxsAll);
-    verbose && print(verbose, hpaste(idxsAll));
+    verbose && print(verbose, hpaste(idxsAll), level=-120);
     verbose && str(verbose, idxsCT);
-    verbose && print(verbose, hpaste(idxsCT));
+    verbose && print(verbose, hpaste(idxsCT), level=-120);
 
     # Keep only loci with finite TCNs
     idxsAll <- intersect(idxsAll, idxsCT);
     verbose && str(verbose, idxsAll);
-    verbose && print(verbose, hpaste(idxsAll));
+    verbose && print(verbose, hpaste(idxsAll), level=-120);
 
     # Sanity check
     if (length(idxsAll) != nbrOfTCNs) {
@@ -401,7 +414,7 @@ setMethodS3("bootstrapTCNandDHByRegion", "PairedPSCBS", function(fit, B=1000L, s
       dMu <- (mu - tcnMeans[jj]);
       if (abs(dMu) > tol) {
         str(list(nbrOfTCNs=nbrOfTCNs, tcnNbrOfLoci=segJJ$tcnNbrOfLoci, mu=mu, tcnMean=tcnMeans[jj], dMu=dMu, "abs(dMu)"=abs(dMu), "range(x[units])"=range(x[idxsTCN])));
-        stop("INTERNAL ERROR: Incorrect TCN mean!");
+        throw(sprintf("INTERNAL ERROR: Incorrect recalculated TCN mean for Segment #%d (chr %d, tcnId=%d, dhId=%d): %g != %g", jj, chr, tcnId, dhId, mu, tcnMeans[jj]));
       }
     }
 
@@ -413,7 +426,7 @@ setMethodS3("bootstrapTCNandDHByRegion", "PairedPSCBS", function(fit, B=1000L, s
       dMu <- (mu - dhMeans[jj]);
       if (abs(dMu) > tol) {
         str(list(nbrOfDHs=nbrOfDHs, dhNbrOfLoci=segJJ$dhNbrOfLoci, mu=mu, dhMean=dhMeans[jj], dMu=dMu, "abs(dMu)"=abs(dMu), "range(x[units])"=range(x[idxsDH])));
-        stop("INTERNAL ERROR: Incorrect DH mean!");
+        throw(sprintf("INTERNAL ERROR: Incorrect recalculated DN mean for Segment #%d (chr %d, tcnId=%d, dhId=%d): %g != %g", jj, chr, tcnId, dhId, mu, dhMeans[jj]));
       }
     }
 
@@ -647,6 +660,11 @@ setMethodS3("bootstrapTCNandDHByRegion", "PairedPSCBS", function(fit, B=1000L, s
 
 ##############################################################################
 # HISTORY
+# 2013-04-23
+# o SPEEDUP: Made bootstrapTCNandDHByRegion() much faster by adding
+#   use.names=FALSE to two internal unlist() statements.
+# 2013-04-22
+# o Added argument 'probs' to bootstrapTCNandDHByRegion().
 # 2013-04-09
 # o Added Rdoc comments.
 # 2013-02-09
