@@ -9,15 +9,8 @@
 #   You should expect the API to be changing over time.
 # }
 #
-# \section{Requirements}{
-#   This package requires external packages
-#   @eval "hpaste(unlist(packageDescription('PSCBS')[c('Depends', 'Imports')]))",
-#   and also suggests @eval "packageDescription('PSCBS')$Suggests".
-# }
-#
 # \section{Installation and updates}{
 #   To install this package, use \code{install.packages("PSCBS")}.
-#   Inorder to run examples, also \code{install.packages("PSCBS.data")}.
 # }
 #
 # \section{To get started}{
@@ -26,14 +19,18 @@
 #     \item @see "segmentByCBS" - segments total copy-numbers, or any
 #           other unimodal genomic signals, using the CBS method [3,4].
 #     \item @see "segmentByPairedPSCBS" - segments allele-specific
-#           tumor signal from a tumor with a matched normal
+#           tumor signal from a tumor \emph{with} a matched normal
 #           using the Paired PSCBS method [1,2].
+#     \item @see "segmentByNonPairedPSCBS" - segments allele-specific
+#           tumor signal from a tumor \emph{without} a matched normal
+#           using the Non-Paired PSCBS method adopted from [1,2].
 #   }
 # }
 #
 # \section{How to cite}{
 #   Please use [1] and [2] to cite when using Paired PSCBS,
 #   and [3] and [4] when using CBS.
+#   When using Non-Paired PSCBS, please cite [1] and [2] as well.
 # }
 #
 # @author

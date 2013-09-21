@@ -130,6 +130,9 @@
 #   used for TumorBoost normalization, and @see "segmentByCBS" is used
 #   to segment TCN and DH separately.
 #
+#   To segment tumor total copy numbers and allele B fractions
+#   \emph{without} a matched normal, see @see "segmentByNonPairedPSCBS".
+#
 #   To segment total copy-numbers, or any other unimodal signals,
 #   see @see "segmentByCBS".
 # }
@@ -141,9 +144,6 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN=NULL, m
   # capitalize() that overrides the one we want to use. Until PSCBS
   # gets a namespace, we do the following workaround. /HB 2011-07-14
   capitalize <- R.utils::capitalize;
-
-  require("R.utils") || throw("Package not loaded: R.utils");
-  require("aroma.light") || throw("Package not loaded: aroma.light");
 
   # To please R CMD check
   index <- NULL; rm(list="index");
@@ -297,6 +297,9 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN=NULL, m
   if (is.null(muN)) {
     verbose && enter(verbose, "Calling genotypes from normal allele B fractions");
     verbose && str(verbose, betaN);
+    if (packageVersion("aroma.light") < "1.31.5") {
+      require("aroma.light") || throw("Package not loaded: aroma.light");
+    }
     muN <- aroma.light::callNaiveGenotypes(betaN, censorAt=c(0,1));
     verbose && cat(verbose, "Called genotypes:");
     verbose && str(verbose, muN);
@@ -311,7 +314,13 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN=NULL, m
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   if (tbn) {
     verbose && enter(verbose, "Normalizing betaT using betaN (TumorBoost)");
-    betaTN <- aroma.light::normalizeTumorBoost(betaT=betaT, betaN=betaN, muN=muN, preserveScale=TRUE);
+    # Workaround for older versions of aroma.light::normalizeTumorBoost()
+    # assuming that the R.utils package is attached. /HB 2013-09-20
+    if (packageVersion("aroma.light") < "1.31.5") {
+      pkg <- "R.utils";
+      require(pkg, character.only=TRUE) || throw("Package not loaded: ", pkg);
+    }
+    betaTN <- normalizeTumorBoost(betaT=betaT, betaN=betaN, muN=muN, preserveScale=TRUE);
     verbose && cat(verbose, "Normalized BAFs:");
     verbose && str(verbose, betaTN);
 
