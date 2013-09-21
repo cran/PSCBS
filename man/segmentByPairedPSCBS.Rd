@@ -131,7 +131,7 @@
 }
 
 \examples{
-verbose <- Arguments$getVerbose(-10*interactive(), timestamp=TRUE)
+verbose <- R.utils::Arguments$getVerbose(-10*interactive(), timestamp=TRUE)
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Load SNP microarray data
@@ -225,6 +225,9 @@ stopifnot(fit$params$deltaLOH == deltaLOH)
   call naive genotypes, \code{\link[aroma.light]{normalizeTumorBoost}} is
   used for TumorBoost normalization, and \code{\link{segmentByCBS}}() is used
   to segment TCN and DH separately.
+
+  To segment tumor total copy numbers and allele B fractions
+  \emph{without} a matched normal, see \code{\link{segmentByNonPairedPSCBS}}().
 
   To segment total copy-numbers, or any other unimodal signals,
   see \code{\link{segmentByCBS}}().

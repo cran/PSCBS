@@ -22,18 +22,8 @@
   You should expect the API to be changing over time.
 }
 
-\section{Requirements}{
-  This package requires external packages
-  R.utils (>= 1.26.2), utils, R.methodsS3 (>= 1.4.4), R.oo (>= 1.13.9), R.utils (>=
-1.26.2), DNAcopy (>= 1.27.2), R.rsp (>= 0.9.17),
-  and also suggests DNAcopy (>= 1.27.2), aroma.light (>= 1.28.0), matrixStats (>=
-0.8.5), R.cache (>= 0.7.1), Hmisc (>= 3.12-2), ggplot2 (>=
-0.9.3.1), R.devices (>= 2.5.0), R.rsp (>= 0.9.17).
-}
-
 \section{Installation and updates}{
   To install this package, use \code{install.packages("PSCBS")}.
-  Inorder to run examples, also \code{install.packages("PSCBS.data")}.
 }
 
 \section{To get started}{
@@ -42,14 +32,18 @@
     \item \code{\link{segmentByCBS}}() - segments total copy-numbers, or any
           other unimodal genomic signals, using the CBS method [3,4].
     \item \code{\link{segmentByPairedPSCBS}}() - segments allele-specific
-          tumor signal from a tumor with a matched normal
+          tumor signal from a tumor \emph{with} a matched normal
           using the Paired PSCBS method [1,2].
+    \item \code{\link{segmentByNonPairedPSCBS}}() - segments allele-specific
+          tumor signal from a tumor \emph{without} a matched normal
+          using the Non-Paired PSCBS method adopted from [1,2].
   }
 }
 
 \section{How to cite}{
   Please use [1] and [2] to cite when using Paired PSCBS,
   and [3] and [4] when using CBS.
+  When using Non-Paired PSCBS, please cite [1] and [2] as well.
 }
 
 \author{Henrik Bengtsson}
