@@ -69,15 +69,6 @@ setMethodS3("updateMeansTogether", "AbstractCBS", abstract=TRUE, private=TRUE);
 # @keyword internal
 #*/###########################################################################
 setMethodS3("hclustCNs", "AbstractCBS", function(fit, size=NULL, distMethod="euclidean", hclustMethod="ward", ..., verbose=FALSE) {
-  # WORKAROUND: For R v2.15.3 and before, we need to attach the 'methods'
-  # package, otherwise we get 'Error in rowAlls(ok) : could not find function
-  # "loadMethod"' below.  This seems to be a bug in R.  It's not enough
-  # to import 'methods'.  /HB 2013-09-18
-  if (getRversion() < "3.0.0") {
-    pkg <- "methods";
-    require(pkg, character.only=TRUE) || throw("Package not loaded: ", pkg)
-  }
-
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Validate arguments
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

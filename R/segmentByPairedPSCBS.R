@@ -297,10 +297,8 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN=NULL, m
   if (is.null(muN)) {
     verbose && enter(verbose, "Calling genotypes from normal allele B fractions");
     verbose && str(verbose, betaN);
-    if (packageVersion("aroma.light") < "1.31.5") {
-      require("aroma.light") || throw("Package not loaded: aroma.light");
-    }
-    muN <- aroma.light::callNaiveGenotypes(betaN, censorAt=c(0,1));
+    callNaiveGenotypes <- .useAromaLight("callNaiveGenotypes");
+    muN <- callNaiveGenotypes(betaN, censorAt=c(0,1));
     verbose && cat(verbose, "Called genotypes:");
     verbose && str(verbose, muN);
     verbose && print(verbose, table(muN));
@@ -314,19 +312,14 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN=NULL, m
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   if (tbn) {
     verbose && enter(verbose, "Normalizing betaT using betaN (TumorBoost)");
-    # Workaround for older versions of aroma.light::normalizeTumorBoost()
-    # assuming that the R.utils package is attached. /HB 2013-09-20
-    if (packageVersion("aroma.light") < "1.31.5") {
-      pkg <- "R.utils";
-      require(pkg, character.only=TRUE) || throw("Package not loaded: ", pkg);
-    }
+    normalizeTumorBoost <- .useAromaLight("normalizeTumorBoost");
     betaTN <- normalizeTumorBoost(betaT=betaT, betaN=betaN, muN=muN, preserveScale=TRUE);
     verbose && cat(verbose, "Normalized BAFs:");
     verbose && str(verbose, betaTN);
 
     # Assert that no missing values where introduced
     keep <- (is.finite(betaT) & is.finite(betaN) & is.finite(muN));
-    if (any(is.na(betaTN[keep]))) {
+    if (anyMissing(betaTN[keep])) {
       throw("Internal error: normalizeTumorBoost() introduced missing values.");
     }
     # Not needed anymore
