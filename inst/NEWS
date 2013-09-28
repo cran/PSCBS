@@ -2,6 +2,35 @@
 Package: PSCBS
 ==============
 
+Version: 0.38.0 [2013-09-27]
+o SPEEDUP: 'R CMD check' is now significantly faster due to
+  copying of pre-generated calculatations ("memoization").
+  For instance, the the same segmentation tests are roughly
+  40% faster with this version compared to v0.37.2.
+o Now PSCBS imports 'R.cache' (used to only suggest it).
+
+
+Version: 0.37.2 [2013-09-27]
+o SPEEDUP: Now utilizing 'matrixStats' functions in more places.
+o ROBUSTNESS: Further improved how aroma.light is handled for
+  backward compatibility.
+o Bumped up package dependencies.
+
+
+Version: 0.37.1 [2013-09-26]
+o CLEANUP: Now package avoids attaching suggested packages such as
+  'R.cache', 'aroma.light', and 'Hmisc' by only importing the set of
+  functions needed via '::'.  This way those packages are only loaded.
+  Packages that still need to be attached are done so "quietly".
+o CLEANUP: Minor adjustments to some of the internal workarounds
+  for older versions of 'matrixStats' and 'aroma.light'.
+o BUG FIX: Forgot to import several functions from 'matrixStats'.
+  These went undetected because 'aroma.light' (<= 1.31.5) attaches
+  the 'matrixStats'.
+o BUG FIX: segmentByPairedPSCBS() assumed 'aroma.light' was attached.
+o BUG FIX: One of the system tests assumed 'R.utils' was attached.
+
+
 Version: 0.37.0 [2013-09-21]
 o CLEANUP: Package no longer attaches 'R.utils', only imports it.
 o BUG FIX/WORKAROUND: For now, package attaches the 'utils' package.

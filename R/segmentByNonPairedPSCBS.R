@@ -153,8 +153,8 @@ setMethodS3("segmentByNonPairedPSCBS", "default", function(CT, betaT, ..., flavo
   verbose && str(verbose, betaT);
 
   if (is.na(tauA) && is.na(tauB)) {
-    require("aroma.light") || throw("Package not loaded: aroma.light");
     mBAF <- abs(betaT - 1/2);
+    findPeaksAndValleys <- .useAromaLight("findPeaksAndValleys");
     fitT <- findPeaksAndValleys(mBAF);
     type <- NULL; rm(list="type"); # To please 'R CMD check'.
     fitT <- subset(fitT, type == "peak");

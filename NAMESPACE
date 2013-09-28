@@ -12,10 +12,16 @@ importFrom("R.oo", "save")
 importFrom("R.oo", "attachLocally")
 importFrom("R.oo", "Package")
 importFrom("R.oo", "startupMessage")
-importFrom("R.oo", "getPosition")
 
 import("R.utils")
+# importFrom(R.utils, getAbsolutePath)
+# importFrom(R.utils, copyDirectory)
+# importFrom(R.utils, isPackageInstalled)
 # importFrom(R.utils, cat)
+
+importFrom("R.cache", "getCachePath")
+importFrom("R.cache", "loadCache")
+importFrom("R.cache", "saveCache")
 
 ## import("DNAcopy")
 importFrom("DNAcopy", "smooth.CNA")
@@ -25,10 +31,16 @@ importFrom("DNAcopy", "getbdry")
 
 importFrom("utils", "capture.output")
 
-importFrom("matrixStats", "rowAlls")
-importFrom("matrixStats", "weightedMedian")
-importFrom("matrixStats", "rowMins")
+importFrom("matrixStats", "anyMissing")
+importFrom("matrixStats", "binMeans")
 importFrom("matrixStats", "colDiffs")
+importFrom("matrixStats", "colMins")
+importFrom("matrixStats", "colMaxs")
+importFrom("matrixStats", "rowAlls")
+importFrom("matrixStats", "rowAnys")
+importFrom("matrixStats", "rowMins")
+importFrom("matrixStats", "weightedMedian")
+
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
