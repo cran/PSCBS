@@ -1,10 +1,16 @@
+###########################################################
+# This tests:
+# - segmentByPairedPSCBS(...)
+# - segmentByPairedPSCBS(..., knownSegments)
+# - tileChromosomes()
+# - plotTracks()
+###########################################################
 library("PSCBS")
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Load SNP microarray data
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 data <- PSCBS::exampleData("paired.chr01")
-str(data)
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -13,26 +19,31 @@ str(data)
 # Drop single-locus outliers
 dataS <- dropSegmentationOutliers(data)
 
-# Find centromere
-gaps <- findLargeGaps(dataS, minLength=2e6)
-knownSegments <- gapsToSegments(gaps)
-
-
 # Run light-weight tests by default
 if (Sys.getenv("_R_CHECK_FULL_") == "") {
   # Use only every 5th data point
   dataS <- dataS[seq(from=1, to=nrow(data), by=5),]
   # Number of segments (for assertion)
   nSegs <- 4L
-  # Number of bootstrap samples (see below)
-  B <- 100L
 } else {
   # Full tests
   nSegs <- 13L
-  B <- 1000L
 }
 
 str(dataS)
+
+fig <- 1;
+
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# (a) Don't segment the centromere (and force a separator)
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+knownSegments <- data.frame(
+  chromosome = c(        1,  1,         1),
+  start      = c(     -Inf, NA, 141510003),
+  end        = c(120992603, NA,      +Inf)
+)
+
 
 # Paired PSCBS segmentation
 fit <- segmentByPairedPSCBS(dataS, knownSegments=knownSegments,
@@ -40,85 +51,105 @@ fit <- segmentByPairedPSCBS(dataS, knownSegments=knownSegments,
 print(fit)
 
 # Plot results
+dev.set(2L)
 plotTracks(fit)
+abline(v=c(knownSegments$start, knownSegments$end)/1e6, lty=3)
 
 # Sanity check
 stopifnot(nbrOfSegments(fit) == nSegs)
 
+fit1 <- fit
+
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-# Bootstrap segment level estimates
-# (used by the AB caller, which, if skipped here,
-#  will do it automatically)
+# (b) Segment also the centromere (which will become NAs)
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-fit <- bootstrapTCNandDHByRegion(fit, B=B, verbose=-10)
+knownSegments <- data.frame(
+  chromosome = c(        1,         1,         1),
+  start      = c(     -Inf, 120992604, 141510003),
+  end        = c(120992603, 141510002,      +Inf)
+)
+
+
+# Paired PSCBS segmentation
+fit <- segmentByPairedPSCBS(dataS, knownSegments=knownSegments,
+                            seed=0xBEEF, verbose=-10)
 print(fit)
+
+# Plot results
+dev.set(3L)
 plotTracks(fit)
+abline(v=c(knownSegments$start, knownSegments$end)/1e6, lty=3)
 
+# Sanity check [TO FIX: See above]
+stopifnot(nbrOfSegments(fit) == nSegs)
+
+fit2 <- fit
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-# Calling segments with run of homozygosity (ROH)
+# (c) Do not segment the centromere (without a separator)
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-fit <- callROH(fit, verbose=-10)
+knownSegments <- data.frame(
+  chromosome = c(        1,         1),
+  start      = c(     -Inf, 141510003),
+  end        = c(120992603,      +Inf)
+)
+
+# Paired PSCBS segmentation
+fit <- segmentByPairedPSCBS(dataS, knownSegments=knownSegments,
+                            seed=0xBEEF, verbose=-10)
 print(fit)
+
+# Plot results
+dev.set(4L)
 plotTracks(fit)
+abline(v=c(knownSegments$start, knownSegments$end)/1e6, lty=3)
+
+# Sanity check
+stopifnot(nbrOfSegments(fit) == nSegs-1L)
+
+fit3 <- fit
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-# Estimate background
+# (d) Skip the identification of new change points
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-kappa <- estimateKappa(fit, verbose=-10)
-print(kappa)
-## [1] 0.226011
+knownSegments <- data.frame(
+  chromosome = c(        1,         1),
+  start      = c(     -Inf, 141510003),
+  end        = c(120992603,      +Inf)
+)
 
-
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-# Calling segments in allelic balance (AB)
-# NOTE: Ideally, this should be done on whole-genome data
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-# Explicitly estimate the threshold in DH for calling AB
-# (which be done by default by the caller, if skipped here)
-deltaAB <- estimateDeltaAB(fit, flavor="qq(DH)", verbose=-10)
-if (Sys.getenv("_R_CHECK_FULL_") == "") {
-  # Ad hoc workaround for not utilizing all of the data
-  # in the test, which results in a poor estimate
-  deltaAB <- 0.165
-}
-print(deltaAB)
-## [1] 0.1657131
-
-fit <- callAB(fit, delta=deltaAB, verbose=-10)
+# Paired PSCBS segmentation
+fit <- segmentByPairedPSCBS(dataS, knownSegments=knownSegments,
+                            undoTCN=Inf, undoDH=Inf,
+                            seed=0xBEEF, verbose=-10)
 print(fit)
+
+# Plot results
+dev.set(5L)
 plotTracks(fit)
+abline(v=c(knownSegments$start, knownSegments$end)/1e6, lty=3)
 
-# Even if not explicitly specified, the estimated
-# threshold parameter is returned by the caller
-stopifnot(fit$params$deltaAB == deltaAB)
+# Sanity check
+stopifnot(nbrOfSegments(fit) == nrow(knownSegments))
 
-
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-# Calling segments in loss-of-heterozygosity (LOH)
-# NOTE: Ideally, this should be done on whole-genome data
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-# Explicitly estimate the threshold in C1 for calling LOH
-# (which be done by default by the caller, if skipped here)
-deltaLOH <- estimateDeltaLOH(fit, flavor="minC1|nonAB", verbose=-10)
-print(deltaLOH)
-## [1] 0.625175
-
-fit <- callLOH(fit, delta=deltaLOH, verbose=-10)
-print(fit)
-plotTracks(fit)
-
-# Even if not explicitly specified, the estimated
-# threshold parameter is returned by the caller
-stopifnot(fit$params$deltaLOH == deltaLOH)
+fit4 <- fit
 
 
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-# Calling segments that are gained, copy neutral, and lost
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-fit <- callGNL(fit, verbose=-10)
-print(fit)
-plotTracks(fit)
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# Tiling multiple chromosomes
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# Simulate multiple chromosomes
+fit1 <- fit
+fit2 <- renameChromosomes(fit, from=1, to=2)
+fitM <- append(fit1, fit2)
+
+# Tile chromosomes
+fitT <- tileChromosomes(fitM)
+fitTb <- tileChromosomes(fitT)
+stopifnot(identical(fitTb, fitT))
+
+# Plotting multiple chromosomes
+plotTracks(fitT)

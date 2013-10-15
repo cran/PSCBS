@@ -111,7 +111,7 @@ setMethodS3("tileChromosomes", "CBS", function(fit, ..., verbose=FALSE) {
   stopifnot(nbrOfSegments(fitT) == nbrOfSegments(fit));
 
   # Flag object
-  attr(fit, "tiledChromosomes") <- TRUE;
+  attr(fitT, "tiledChromosomes") <- TRUE;
 
   verbose && exit(verbose);
 
@@ -128,6 +128,15 @@ setMethodS3("plotTracksManyChromosomes", "CBS", function(x, scatter=TRUE, pch=20
   # Validate arguments
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Argument 'fit':
+
+  # Argument 'add':
+  add <- Arguments$getLogical(add);
+
+  # Argument 'Clim':
+  if (!add) {
+    Clim <- Arguments$getNumerics(Clim, length=c(2L,2L),
+                                        disallow=c("Inf", "NA", "NaN"));
+  }
 
   # Argument 'xScale':
   xScale <- Arguments$getNumeric(xScale, range=c(0,Inf));
@@ -221,6 +230,12 @@ setMethodS3("plotTracksManyChromosomes", "CBS", function(x, scatter=TRUE, pch=20
 
 ############################################################################
 # HISTORY:
+# 2013-10-14
+# o Now plotTracksManyChromosomes() for CBS gives a more informative
+#   error if 'Clim' is invalid.
+# 2013-10-09
+# o BUG FIX: tileChromosomes() for CBS did not set "tiledChromosomes"
+#   attribute due to a typo.
 # 2013-05-07
 # o Now tileChromosomes() no longer gives warnings on "max(i): no
 #   non-missing arguments to max; returning -Inf".
