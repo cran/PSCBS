@@ -1,13 +1,13 @@
 Package: PSCBS
-Version: 0.38.0
-Depends: R (>= 2.14.0), utils
-Imports: R.methodsS3 (>= 1.5.1), R.oo (>= 1.15.1), R.utils (>= 1.27.1),
+Version: 0.38.4
+Depends: R (>= 2.15.0), utils
+Imports: R.methodsS3 (>= 1.5.2), R.oo (>= 1.15.8), R.utils (>= 1.27.1),
         R.cache (>= 0.8.1), matrixStats (>= 0.8.12), DNAcopy (>=
-        1.27.2)
-Suggests: aroma.light (>= 1.28.0), Hmisc (>= 3.12-2), R.rsp (>=
-        0.9.24), R.devices (>= 2.6.1), ggplot2 (>= 0.9.3.1)
+        1.32.0)
+Suggests: aroma.light (>= 1.30.5), Hmisc (>= 3.12-2), R.rsp (>=
+        0.9.28), R.devices (>= 2.7.2), ggplot2 (>= 0.9.3.1)
 VignetteBuilder: R.rsp
-Date: 2013-09-27
+Date: 2013-10-15
 Title: Analysis of Parent-Specific DNA Copy Numbers
 Authors@R: c(
   person("Henrik", "Bengtsson", role=c("aut", "cre", "cph"),
@@ -22,7 +22,7 @@ License: GPL (>= 2)
 LazyLoad: yes
 biocViews: aCGH, CopyNumberVariants, SNP, Microarray, OneChannel,
         TwoChannel, Genetics
-Packaged: 2013-09-28 06:59:01 UTC; hb
+Packaged: 2013-10-16 07:48:35 UTC; hb
 Author: Henrik Bengtsson [aut, cre, cph],
   Pierre Neuvial [aut],
   Venkatraman E. Seshan [aut],
@@ -32,4 +32,4 @@ Author: Henrik Bengtsson [aut, cre, cph],
 Maintainer: Henrik Bengtsson <henrikb@braju.com>
 NeedsCompilation: no
 Repository: CRAN
-Date/Publication: 2013-09-28 14:03:35
+Date/Publication: 2013-10-16 11:35:23

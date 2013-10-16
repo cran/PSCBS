@@ -67,7 +67,7 @@ which(segs$nbrOfLoci == 0)
 signalType
 signalType
 signalType
-toPNG(fullname, tags=c("tracks"), aspectRatio=0.35, {
+toPNG(fullname, tags=c(class(fit)[1L], "tracks"), aspectRatio=0.35, {
     plotTracks(fit);
   })
 signalType
@@ -82,7 +82,7 @@ signalType
 evalCapture({
 fitP <- pruneByHClust(fit, h=0.25, verbose=-10)
 })
-toPNG(fullname, tags=c("pruned", "tracks"), aspectRatio=0.35, {
+toPNG(fullname, tags=c(class(fitP)[1L], "pruned", "tracks"), aspectRatio=0.35, {
     plotTracks(fitP);
   })
 signalType

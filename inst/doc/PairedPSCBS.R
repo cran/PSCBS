@@ -1,7 +1,7 @@
 ###########################################################################
 ## This 'tangle' R script was created from an RSP document.
 ## RSP source document: 'PairedPSCBS.tex.rsp'
-## Metadata 'title': 'Paired PSCBS'
+## Metadata 'title': 'Parent-specific copy-number segmentation using Paired PSCBS'
 ## Metadata 'author': 'Henrik Bengtsson'
 ## Metadata 'keywords': 'copy numbers, allele specific, parent specific, genomic aberrations'
 ## Metadata 'engine': 'R.rsp::rsp'
@@ -54,7 +54,7 @@ getSegments(fit, simplify=TRUE)
 segs <- getSegments(fit, simplify=TRUE)
 which(segs$tcnNbrOfLoci == 0)
 which(segs$dhNbrOfLoci == 0)
-toPNG(fullname, tags=c("tracks"), aspectRatio=0.6, {
+toPNG(fullname, tags=c(class(fit)[1L], "tracks"), aspectRatio=0.6, {
     plotTracks(fit);
   })
 evalCapture({
@@ -76,7 +76,7 @@ segs <- getSegments(fit, simplify=TRUE)
 evalCapture({
 fitP <- pruneByHClust(fit, h=0.25, verbose=-10)
 })
-toPNG(fullname, tags=c("pruned", "tracks"), aspectRatio=0.6, {
+toPNG(fullname, tags=c(class(fitP)[1L], "pruned", "tracks"), aspectRatio=0.6, {
     plotTracks(fitP);
   })
 toLatex(sessionInfo())
