@@ -1,85 +1,4 @@
-###########################################################################/**
-# @RdocClass NonPairedPSCBS
-#
-# @title "The NonPairedPSCBS class"
-#
-# \description{
-#  @classhierarchy
-#
-#  A NonPairedPSCBS is an object containing the results from the
-#  Non-paired PSCBS method.
-# }
-#
-# \usage{NonPairedPSCBS(fit=list(), ...)}
-#
-# \arguments{
-#   \item{fit}{A @list structure containing the Non-paired PSCBS results.}
-#   \item{...}{Not used.}
-# }
-#
-# \section{Fields and Methods}{
-#  @allmethods "public"
-# }
-#
-# @author "HB"
-#
-# \seealso{
-#   The @see "segmentByNonPairedPSCBS" method returns an object of this class.
-# }
-#*/###########################################################################
-setConstructorS3("NonPairedPSCBS", function(fit=list(), ...) {
-  # Argument 'fit':
-  if (!is.list(fit)) {
-    throw("Argument 'fit' is not a list: ", class(fit)[1]);
-  }
-
-  extend(PSCBS(fit=fit, ...), "NonPairedPSCBS");
-})
-
-
-setMethodS3("getLocusData", "NonPairedPSCBS", function(fit, ..., fields=c("asis", "full")) {
-  # Argument 'fields':
-  fields <- match.arg(fields);
-
-
-  data <- NextMethod("getLocusData", fields="asis");
-
-
-  if (fields == "full") {
-    names <- colnames(data);
-
-    data$isHet <- (data$muN == 1/2);
-
-    # BACKWARD COMPATIBILITY: If 'rho' does not exists, calculate
-    # it on the fly from 'betaT'.
-    # NOTE: This should give an error in the future. /HB 2013-10-25
-    if (is.null(data$rho)) {
-      data$rho <- 2*abs(data$betaT-1/2);
-      data$rho[!data$isHet] <- NA_real_;
-      warning("Locus-level DH signals ('rho') did not exist and were calculated from tumor BAFs ('betaT')");
-    }
-
-    data$c1 <- 1/2*(1-data$rho)*data$CT;
-    data$c2 <- data$CT - data$c1;
-
-    data$isSNP <- (!is.na(data$betaT) | !is.na(data$muN));
-    data$type <- ifelse(data$isSNP, "SNP", "non-polymorphic locus");
-
-    # Labels
-    data$muNx <- c("AA", "AB", "BB")[2*data$muN + 1L];
-    data$isHetx <- c("AA|BB", "AB")[data$isHet + 1L];
-  }
-
-  data;
-}, protected=TRUE) # getLocusData()
-
-
-setMethodS3("callROH", "NonPairedPSCBS", function(fit, ...) {
-  throw(sprintf("Cannot call ROH from '%s' data.", class(fit)[1L]));
-}, private=TRUE) # callROH()
-
-
-setMethodS3("updateMeans", "NonPairedPSCBS", function(fit, from=c("loci", "segments"), adjustFor=NULL, ..., avgTCN=c("asis", "mean", "median"), avgDH=c("asis", "mean", "median"), verbose=FALSE) {
+setMethodS3("updateMeans", "PairedPSCBS", function(fit, from=c("loci", "segments"), adjustFor=NULL, ..., avgTCN=c("asis", "mean", "median"), avgDH=c("asis", "mean", "median"), clear=FALSE, verbose=FALSE) {
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Validate arguments
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -104,7 +23,6 @@ setMethodS3("updateMeans", "NonPairedPSCBS", function(fit, from=c("loci", "segme
     pushState(verbose);
     on.exit(popState(verbose));
   }
-
 
   verbose && enter(verbose, "Updating mean level estimates");
   verbose && cat(verbose, "Adjusting for:");
@@ -262,37 +180,26 @@ setMethodS3("updateMeans", "NonPairedPSCBS", function(fit, from=c("loci", "segme
   } # if (length(adjustFor) > 0)
 
 
+  # Update
+  fit$output <- segs;
+  fit <- setMeanEstimators(fit, tcn=avgTCN, dh=avgDH);
+  if (clear) {
+    fit <- clearBootstrapSummaries(fit);
+  }
 
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Update (C1,C2) mean levels
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  verbose && enter(verbose, "Update (C1,C2) per segment");
-  # Append (C1,C2) estimates
-  tcn <- segs$tcnMean;
-  dh <- segs$dhMean;
-  C1 <- 1/2*(1-dh)*tcn;
-  C2 <- tcn - C1;
-  segs$c1Mean <- C1;
-  segs$c2Mean <- C2;
-  verbose && exit(verbose);
-
-
-  # Return results
-  res <- fit;
-  res$output <- segs;
-  res <- setMeanEstimators(res, tcn=avgTCN, dh=avgDH);
+  fit <- updateMeansC1C2(fit, verbose=verbose);
 
   verbose && exit(verbose);
 
-  res;
+  fit;
 }, private=TRUE) # updateMeans()
 
 
-
-setMethodS3("resegment", "NonPairedPSCBS", function(fit, ..., verbose=FALSE) {
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+setMethodS3("updateMeansC1C2", "PairedPSCBS", function(fit, ..., verbose=FALSE) {
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Validate arguments
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Argument 'verbose':
   verbose <- Arguments$getVerbose(verbose);
   if (verbose) {
@@ -300,90 +207,50 @@ setMethodS3("resegment", "NonPairedPSCBS", function(fit, ..., verbose=FALSE) {
     on.exit(popState(verbose));
   }
 
+  verbose && enter(verbose, "Updating (C1,C2) segment mean levels");
+  segs <- getSegments(fit);
 
-  verbose && enter(verbose, "Resegmenting a ", class(fit)[1], " object");
+  if (nrow(segs) > 0L) {
+    tcn <- segs$tcnMean;
+    dh <- segs$dhMean;
 
-  # Use the locus-level data of the PairedPSCBS object
-  data <- getLocusData(fit);
-  class(data) <- "data.frame";
-  drop <- c("rho", "betaTN", "index");
-  keep <- !is.element(colnames(data), drop);
-  data <- data[,keep];
-  verbose && str(verbose, data);
+    C1 <- 1/2*(1-dh)*tcn;
+    C2 <- tcn - C1;
 
-  verbose && cat(verbose, "Number of loci: ", nrow(data));
+    segs$c1Mean <- C1;
+    segs$c2Mean <- C2;
 
-
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  # Setup arguments to be passed
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  verbose && enter(verbose, "Overriding default arguments");
-  segFcnName <- "segmentByPairedNonPSCBS";
-  segFcn <- getMethodS3(segFcnName, "default");
-
-  # (a) The default arguments
-  formals <- formals(segFcn);
-
-  formals <- formals[!sapply(formals, FUN=is.language)];
-  formals <- formals[!sapply(formals, FUN=is.name)];
-  drop <- c("chromosome", "x", "w", "CT", "betaT", "betaN", "muN", "...");
-  keep <- !is.element(names(formals), drop);
-  formals <- formals[keep];
-
-  # (b) The arguments used in previous fit
-  params <- fit$params;
-  keep <- is.element(names(params), names(formals));
-  params <- params[keep];
-  # Don't trust 'tbn'!  TODO. /HB 20111117
-  params$tbn <- NULL;
-
-  # (c) The arguments in '...'
-  userArgs <- list(..., verbose=verbose);
-
-  # (d) Merge
-  args <- formals;
-  args2 <- append(params, userArgs);
-  for (kk in seq(along=args2)) {
-    value <- args2[[kk]];
-    if (!is.null(value)) {
-      key <- names(args2)[kk];
-      if (!is.null(key)) {
-        args[[key]] <- value;
-      } else {
-        args <- append(args, list(value));
-      }
+    # Preserve (C1,C2) swaps / change-point flips?
+    swap <- segs$c1c2Swap;
+    if (!is.null(swap) && any(swap)) {
+      segs[swap, c("c1Mean","c2Mean")] <- segs[swap, c("c2Mean","c1Mean")];
     }
-  } # for (key ...)
-  verbose && str(verbose, args[names(args) != "verbose"]);
 
-  verbose && enter(verbose, sprintf("Calling %s()", segFcnName));
-  args <- append(list(data), args);
-  verbose && cat(verbose, "Arguments:");
-  verbose && str(verbose, args[names(args) != "verbose"]);
-  verbose && exit(verbose);
-
-  fit <- do.call(segFcnName, args);
-  verbose && exit(verbose);
+    fit$output <- segs;
+  }
 
   verbose && exit(verbose);
 
   fit;
-}, protected=TRUE) # resegment()
+}, protected=TRUE) # updateMeansC1C2()
 
 
 
 ##############################################################################
 # HISTORY
-# 2013-04-23
-# o BUG FIX: updateMeans() for PairedPSCBS and NonPairedPSCBS could
-#   include a signal from a neighboring segment when averaging, iff
-#   that signal was located at the exact locus of the change point.
-# 2013-04-09
-# o Added callROH() for NonPairedPSCBS that throws an exception.
-# 2013-03-08
-# o Added getLocusData() for NonPairedPSCBS.
-# 2013-01-15
-# o regsegment() was defined for PairedPSCBS instead of NonPairedPSCBS.
+# 2013-11-23
+# o Now updateMeans(..., clear=TRUE) clears bootstrap summaries, otherwise
+#   not.
+# 2013-10-26
+# o Now updateMeans() for PairedPSCBS always clears the bootstrap summaries.
+# o Added updateMeansC1C2().
+# o updateMeans() for PairedPSCBS did not preserve the (C1,C2) swaps.
 # 2012-04-21
-# o Created from PairedPSCBS.R.
+# o CLEANUP: Removed unused objects in updateMeans().
+# 2011-11-12
+# o Added arguments 'from' and 'adjustFor' to updateMeans().
+# 2011-01-16
+# o BUG FIX: updateMeans() save to the incorrect column names.
+# 2011-01-12
+# o Added updateMeans() for PairedPSCBS.
 ##############################################################################

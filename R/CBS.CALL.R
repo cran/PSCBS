@@ -133,15 +133,11 @@ setMethodS3("callGainsAndLosses", "CBS", function(fit, adjust=1.0, method=c("ucs
     verbose && cat(verbose, "Call parameters:");
     verbose && str(verbose, list(sigma=sigma, scale=scale, adjust=adjust));
 
-    # Calculate segment statistics (utilizing DNAcopy methods)
-    stats <- segments.summary(as.DNAcopy(fit));
-    kept <- is.element(rownames(segs), rownames(stats));
-
-    naValue <- as.double(NA);
-    mu <- rep(naValue, times=nbrOfRows);
-
-    # The segmented mean levels
-    mu[kept] <- stats$seg.median;
+    # Calculate segment levels using the median estimator
+    fitT <- updateMeans(fit, avg="median")
+    segsT <- getSegments(fitT, splitters=TRUE);
+    mu <- segsT$mean;
+    fitT <- segsT <- NULL; # Not needed anymore
 
     # The median segmented level
     muR <- median(mu, na.rm=TRUE);
@@ -168,6 +164,7 @@ setMethodS3("callGainsAndLosses", "CBS", function(fit, adjust=1.0, method=c("ucs
   }
 
   verbose && cat(verbose, "Number of called segments: ", length(lossCalls));
+
 
   # Sanity check
   stopifnot(length(lossCalls) == nbrOfRows);
@@ -1215,8 +1212,122 @@ setMethodS3("mergeNonCalledSegments", "CBS", function(fit, ..., verbose=FALSE) {
 }, protected=TRUE); # mergeNonCalledSegments()
 
 
+setMethodS3("estimateDeltaCN", "CBS", function(fit, adjust=0.3, ..., verbose=FALSE) {
+  # This will load the 'aroma.light' namespace, if not already done.
+  findPeaksAndValleys <- .useAromaLight("findPeaksAndValleys");
+
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  # Validate arguments
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  # Argument 'adjust':
+  adjust <- Arguments$getDouble(adjust, range=c(0,10));
+
+  # Get segment mean levels
+  segs <- getSegments(fit, splitters=FALSE);
+  x <- segs$mean;
+  w <- segs$nbrOfLoci;
+  keep <- is.finite(x) & is.finite(w);
+  x <- x[keep];
+  w <- w[keep];
+
+  # Estimate density
+  w <- w / sum(w, na.rm=TRUE);
+  d <- density(x, weights=w, adjust=adjust);
+
+  # Find peaks
+  pv <- findPeaksAndValleys(d, ...);
+  type <- NULL; rm(list="type"); # To please R CMD check
+  p <- subset(pv, type == "peak");
+  px <- p$x;
+  pw <- p$density;
+
+  # Distance between peaks
+  dx <- diff(px);
+  # Weights "between" peaks (AD HOC: sum up peak weights)
+  dw <- pw[-length(pw)] + pw[-1];
+
+  deltaCN <- weighted.mean(dx, w=dw);
+
+  deltaCN;
+}, protected=TRUE)
+
+
+
+setMethodS3("encodeCalls", "data.frame", function(calls, flavor="UCSF", ...) {
+  # Argument 'calls':
+  stopifnot(all(is.element(c("chromosome", "x"), colnames(calls))));
+  stopifnot(all(is.element(c("lossCall", "gainCall"), colnames(calls))));
+
+  # Argument 'flavor':
+  flavor <- match.arg(flavor);
+
+  calls0 <- calls;
+
+  # Allocate
+  calls <- rep(NA_real_, times=nrow(calls0));
+
+  # Encode loss, neutral and gain (required)
+  calls[!calls0$gainCall & !calls0$lossCall] <- 0;
+  calls[calls0$gainCall] <- +1;
+  calls[calls0$lossCall] <- -1;
+
+  # Encode amplifications, if any/called.
+  idxs <- which(calls0$amplificationCall);
+  calls[idxs] <- +9;
+
+  # Encode negative and positive outliers, if any/called.
+  idxs <- which(calls0$negOutlierCall);
+  calls[idxs] <- calls[idxs] - 0.1;
+
+  idxs <- which(calls0$posOutlierCall);
+  calls[idxs] <- calls[idxs] + 0.1;
+
+  calls;
+}, protected=TRUE) # encodeCalls()
+
+
+setMethodS3("callGLAO", "CBS", function(fit, ..., verbose=FALSE) {
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  # Validate arguments
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  # Argument 'verbose':
+  verbose <- Arguments$getVerbose(verbose);
+  if (verbose) {
+    pushState(verbose);
+    on.exit(popState(verbose));
+  }
+
+  verbose && enter(verbose, "Call gains, losses, amplifications and (negative and positive) outliers");
+  verbose && cat(verbose, "Number of segments: ", nbrOfSegments(fit));
+
+  # Call segments
+  fitC <- callGainsAndLosses(fit, ..., verbose=verbose);
+  fitC <- callAmplifications(fitC, ..., verbose=verbose);
+
+  # Call loci, i.e. locus-level negative and positive outliers
+  fitC <- callOutliers(fitC, ..., verbose=verbose);
+  verbose && print(verbose, fitC);
+
+  verbose && exit(verbose);
+
+  fitC;
+}, protected=TRUE) # callGLAO()
+
+
 ############################################################################
 # HISTORY:
+# 2013-11-27
+# o Added callGLAO() for CBS.
+# o Added encodeCalls() for 'data.frame' object returned by
+#   getLocusData(..., addCalls=TRUE).
+# 2013-11-23
+# o BUG FIX: estimateDeltaCN() assumed aroma.light was loaded.
+# 2013-11-14
+# o Added estimateDeltaCN() for CBS.
+# o BUG FIX: callGainsAndLosses() for CBS would not estimate the median
+#   median CN level correctly if there were "empty" segments (e.g. gaps).
+#   This was/is due to a bug in segments.summary() of the DNAcopy package.
+#   Instead, we are now calculating the segment median levels ourselves.
 # 2012-01-24
 # o ROBUSTNESS: Now getCallStatistics() for CBS asserts that calls have
 #   been made.  If not, an exception is thrown.

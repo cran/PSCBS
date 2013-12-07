@@ -317,6 +317,26 @@ setMethodS3("getSegments", "CBS", function(fit, simplify=FALSE, splitters=TRUE, 
 
 
 
+setMethodS3("getChangePoints", "CBS", function(fit, ...) {
+  # Already available?
+  cps <- fit$changepoints;
+  if (!is.null(cps)) return(cps);
+
+  segs <- getSegments(fit, splitters=TRUE);
+  tcn <- segs[["tcnMean"]];
+  n <- length(tcn);
+
+  # Calculate observed (d) data
+  D <- tcn[-n] - tcn[-1L];
+  cps <- data.frame(
+    d = D
+  );
+
+  cps;
+}, private=TRUE) # getChangePoints()
+
+
+
 setMethodS3("updateBoundaries", "CBS", function(fit, ..., verbose=FALSE) {
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Validate arguments
@@ -625,6 +645,8 @@ setMethodS3("resegment", "CBS", function(fit, ..., verbose=FALSE) {
 
 ############################################################################
 # HISTORY:
+# 2013-10-20
+# o Added getChangePoints() for CBS.
 # 2012-09-21
 # o Now getSegments(..., splitters=TRUE) for CBS and PSCBS inserts NA
 #   rows whereever there is a "gap" between segments.  A "gap" is when

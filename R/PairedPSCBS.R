@@ -53,8 +53,14 @@ setMethodS3("getLocusData", "PairedPSCBS", function(fit, ..., fields=c("asis", "
       data$muN <- callNaiveGenotypes(data$betaN);
     }
     data$isHet <- (data$muN == 1/2);
-
-    data$rho <- 2*abs(data$betaT-1/2);
+    # BACKWARD COMPATIBILITY: If 'rho' does not exists, calculate
+    # it on the fly from 'betaT'.
+    # NOTE: This should give an error in the future. /HB 2013-10-25
+    if (is.null(data$rho)) {
+      data$rho <- 2*abs(data$betaT-1/2);
+      data$rho[!data$isHet] <- NA_real_;
+      warning("Locus-level DH signals ('rho') did not exist and were calculated from tumor BAFs ('betaT')");
+    }
     data$c1 <- 1/2*(1-data$rho)*data$CT;
     data$c2 <- data$CT - data$c1;
 
@@ -64,6 +70,7 @@ setMethodS3("getLocusData", "PairedPSCBS", function(fit, ..., fields=c("asis", "
       data$betaTN <- normalizeTumorBoost(betaN=data$betaN, betaT=data$betaT, muN=data$muN);
     }
     data$rhoN <- 2*abs(data$betaTN-1/2);
+    data$rhoN[!data$isHet] <- NA_real_;
     data$c1N <- 1/2*(1-data$rhoN)*data$CT;
     data$c2N <- data$CT - data$c1N;
 
@@ -77,214 +84,6 @@ setMethodS3("getLocusData", "PairedPSCBS", function(fit, ..., fields=c("asis", "
 
   data;
 }, protected=TRUE) # getLocusData()
-
-
-setMethodS3("updateMeans", "PairedPSCBS", function(fit, from=c("loci", "segments"), adjustFor=NULL, ..., avgTCN=c("asis", "mean", "median"), avgDH=c("asis", "mean", "median"), verbose=FALSE) {
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  # Validate arguments
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  # Argument 'from':
-  from <- match.arg(from);
-
-  # Argument 'adjustFor':
-  if (!is.null(adjustFor)) {
-    adjustFor <- Arguments$getCharacters(adjustFor);
-    adjustFor <- tolower(adjustFor);
-    knownValues <- c("ab", "loh", "roh");
-    adjustFor <- match.arg(adjustFor, choices=knownValues, several.ok=TRUE);
-  }
-
-  # Argument 'avgTCN' & 'avgDH':
-  avgTCN <- match.arg(avgTCN);
-  avgDH <- match.arg(avgDH);
-
-  # Argument 'verbose':
-  verbose <- Arguments$getVerbose(verbose);
-  if (verbose) {
-    pushState(verbose);
-    on.exit(popState(verbose));
-  }
-
-  verbose && enter(verbose, "Updating mean level estimates");
-  verbose && cat(verbose, "Adjusting for:");
-  verbose && print(verbose, adjustFor);
-
-
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  # Setting up averaging functions
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  if (avgTCN == "asis" || avgDH == "asis") {
-    est <- fit$params$meanEstimators;
-    if (avgTCN == "asis") {
-      avgTCN <- est$tcn;
-      if (is.null(avgTCN)) avgTCN <- "mean";
-      avgTCN <- match.arg(avgTCN);
-    }
-    if (avgDH == "asis") {
-      avgDH <- est$dh;
-      if (is.null(avgDH)) avgDH <- "mean";
-      avgDH <- match.arg(avgDH);
-    }
-  }
-
-  avgList <- list(
-    tcn = get(avgTCN, mode="function"),
-    dh = get(avgDH, mode="function")
-  );
-
-
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  # Extract the segmentation results
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  segs <- getSegments(fit, splitters=TRUE);
-  segRows <- list(tcn=fit$tcnSegRows, dh=fit$dhSegRows);
-  nbrOfSegments <- nrow(segs);
-  verbose && cat(verbose, "Number of segments: ", nbrOfSegments);
-
-
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  # Assert that adjustments can be made
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  if (is.element("ab", adjustFor)) {
-    if (!is.element("abCall", names(segs))) {
-      adjustFor <- setdiff(adjustFor, "ab");
-      throw("Cannot adjust for AB, because they haven't been called.");
-    }
-  }
-
-  if (is.element("loh", adjustFor)) {
-    if (!is.element("lohCall", names(segs))) {
-      adjustFor <- setdiff(adjustFor, "loh");
-      throw("Cannot adjust for LOH, because they haven't been called.");
-    }
-  }
-
-  if (is.element("roh", adjustFor)) {
-    if (!is.element("rohCall", names(segs))) {
-      adjustFor <- setdiff(adjustFor, "roh");
-      throw("Cannot adjust for ROH, because they haven't been called.");
-    }
-  }
-
-
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  # Update the (TCN,DH) mean levels from locus-level data?
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  if (from == "loci") {
-    data <- getLocusData(fit);
-    chromosome <- data$chromosome;
-    x <- data$x;
-    CT <- data$CT;
-    rho <- data$rho;
-
-    isSplitter <- isSegmentSplitter(fit);
-    for (ss in seq(length=nbrOfSegments)[!isSplitter]) {
-      verbose && enter(verbose, sprintf("Segment %d of %d", ss, nbrOfSegments));
-      seg <- segs[ss,];
-      verbose && print(verbose, seg);
-
-      chr <- seg[["chromosome"]];
-      chrTag <- sprintf("chr%02d", chr);
-
-      for (what in c("tcn", "dh")) {
-        segRow <- segRows[[what]][ss,];
-
-        # (a) A splitter - nothing todo?
-        if (!is.finite(segRow[[1]]) || !is.finite(segRow[[2]])) {
-          next;
-        }
-
-        # (b) Identify units (loci)
-        units <- segRow[[1]]:segRow[[2]];
-
-        # (c) Adjust for missing values
-        if (what == "tcn") {
-          value <- CT;
-        } else if (what == "dh") {
-          value <- rho;
-        }
-        keep <- which(!is.na(value[units]));
-        units <- units[keep];
-
-        # (d) Update mean
-        avgFUN <- avgList[[what]];
-        gamma <- avgFUN(value[units]);
-
-        # Sanity check
-        stopifnot(length(units) == 0 || !is.na(gamma));
-
-        # Update the segment boundaries, estimates and counts
-        key <- paste(what, "Mean", sep="");
-        seg[[key]] <- gamma;
-      }
-
-      verbose && print(verbose, seg);
-
-      segs[ss,] <- seg;
-
-      verbose && exit(verbose);
-    } # for (ss ...)
-  } # if (from ...)
-
-
-
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  # Adjust segment means from various types of calls
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  if (length(adjustFor) > 0) {
-    verbose && enter(verbose, "Adjusting segment means");
-    verbose && cat(verbose, "Adjusting for:");
-    verbose && print(verbose, adjustFor);
-
-    if (is.element("ab", adjustFor)) {
-      verbose && enter(verbose, "Adjusting for AB");
-      calls <- segs$abCall;
-      segs$dhMean[calls] <- 1/2;
-      verbose && exit(verbose);
-    }
-
-    if (is.element("loh", adjustFor)) {
-      verbose && enter(verbose, "Adjusting for LOH");
-      calls <- segs$lohCall;
-      segs$dhMean[calls] <- 0;
-      verbose && exit(verbose);
-    }
-
-    if (is.element("roh", adjustFor)) {
-      verbose && enter(verbose, "Adjusting for ROH");
-      calls <- segs$rohCall;
-      segs$dhMean[calls] <- as.double(NA);
-      verbose && exit(verbose);
-    }
-
-    verbose && exit(verbose);
-  } # if (length(adjustFor) > 0)
-
-
-
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  # Update (C1,C2) mean levels
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  verbose && enter(verbose, "Update (C1,C2) per segment");
-  # Append (C1,C2) estimates
-  tcn <- segs$tcnMean;
-  dh <- segs$dhMean;
-  C1 <- 1/2*(1-dh)*tcn;
-  C2 <- tcn - C1;
-  segs$c1Mean <- C1;
-  segs$c2Mean <- C2;
-  verbose && exit(verbose);
-
-
-  # Return results
-  res <- fit;
-  res$output <- segs;
-  res <- setMeanEstimators(res, tcn=avgTCN, dh=avgDH);
-
-  verbose && exit(verbose);
-
-  res;
-}, private=TRUE) # updateMeans()
 
 
 
@@ -415,22 +214,18 @@ setMethodS3("adjustPloidyScale", "PairedPSCBS", function(fit, scale, ...) {
 
 ##############################################################################
 # HISTORY
+# 2013-10-25
+# o BUG FIX: The 'rho' signals returned by getLocusData(..., fields="full")
+#   for PairedPSCBS would have values also for homozygote SNPs.
 # 2013-03-08
 # o Added getLocusData() for PairedPSCBS.
 # 2012-04-21
-# o CLEANUP: Removed unused objects in updateMeans().
 # o CLEANUP: Moved getSegmentSizes() from PairedPSCBS to PSCBS.
 # 2011-11-21
 # o BUG FIX: resegment() was trying to call segmentByCBS() instead
 #   of segmentByPairedPSCBS().
 # 2011-11-17
 # o Added resegment() for PairedPSCBS for easy resegmentation.
-# 2011-11-12
-# o Added arguments 'from' and 'adjustFor' to updateMeans().
-# 2011-01-16
-# o BUG FIX: updateMeans() save to the incorrect column names.
-# 2011-01-12
-# o Added updateMeans() for PairedPSCBS.
 # 2011-10-02
 # o CLEANUP: Moved print() and as.data.frame() to PSCBS.
 # o Added Rdoc help.

@@ -62,8 +62,6 @@
 \alias{dropChangePoint}
 \alias{dropRegion}
 \alias{dropRegions}
-\alias{dropSegmentationOutliers}
-\alias{dropSegmentationOutliers.default}
 \alias{estimateDeltaAB}
 \alias{estimateDeltaABBySmallDH}
 \alias{estimateDeltaLOH}
@@ -137,7 +135,6 @@
 \alias{isWholeChromosomeLost}
 \alias{isWholeChromosomeLost.CBS}
 \alias{joinSegments}
-\alias{joinSegments.CBS}
 \alias{linesC1C2}
 \alias{linesC1C2.PairedPSCBS}
 \alias{linesDeltaC1C2}
@@ -176,10 +173,8 @@
 \alias{sampleName}
 \alias{sampleName<-}
 \alias{setLocusData}
-\alias{setLocusData.AbstractCBS}
 \alias{setSampleName}
 \alias{setSegments}
-\alias{setSegments.AbstractCBS}
 \alias{signalType}
 \alias{signalType.CBS}
 \alias{signalType<-}
@@ -225,8 +220,6 @@
 \alias{resegment.AbstractCBS}
 \alias{resegment.CBS}
 \alias{resegment.PairedPSCBS}
-\alias{callSegmentationOutliers.data.frame}
-\alias{dropSegmentationOutliers.data.frame}
 \alias{hclustCNs}
 \alias{pruneByHClust}
 \alias{updateMeansTogether}
@@ -290,6 +283,29 @@
 \alias{plotTracks2}
 \alias{plotTracksManyChromosomes}
 \alias{getSmoothLocusData}
+\alias{bootstrapSegmentsAndChangepoints}
+\alias{bootstrapSegmentsAndChangepoints.PairedPSCBS}
+\alias{getChangePoints}
+\alias{getChangePoints.AbstractCBS}
+\alias{getChangePoints.CBS}
+\alias{getChangePoints.PSCBS}
+\alias{clearBootstrapSummaries}
+\alias{clearBootstrapSummaries.PairedPSCBS}
+\alias{findBootstrapSummaries}
+\alias{findBootstrapSummaries.PairedPSCBS}
+\alias{hasBootstrapSummaries}
+\alias{hasBootstrapSummaries.PairedPSCBS}
+\alias{clearCalls}
+\alias{clearCalls.AbstractCBS}
+\alias{estimateDeltaCN.CBS}
+\alias{extractSegmentDataByLocus}
+\alias{extractSegmentDataByLocus.PairedPSCBS}
+\alias{updateMeansC1C2}
+\alias{updateMeansC1C2.PairedPSCBS}
+\alias{encodeCalls}
+\alias{encodeCalls.data.frame}
+\alias{callGLAO}
+\alias{callGLAO.CBS}
 
 \description{
   This page contains aliases for all "non-documented" objects that
