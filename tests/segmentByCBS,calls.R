@@ -5,6 +5,7 @@
 # Only run this test in full testing mode
 if (Sys.getenv("_R_CHECK_FULL_") != "") {
 library("PSCBS")
+stext <- R.utils::stext
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Load SNP microarray data
@@ -33,12 +34,30 @@ knownSegments <- gapsToSegments(gaps)
 fit <- segmentByCBS(dataS, knownSegments=knownSegments,
                             seed=0xBEEF, verbose=-10)
 signalType(fit) <- "ratio"
+plotTracks(fit)
 
-# Fake a multi-chromosome segmentation
-fit1 <- fit
-fit2 <- renameChromosomes(fit, from=1, to=2)
-fit <- append(fit1, fit2)
 
-report(fit, sampleName="CBS", studyName="CBS-Ex", verbose=-10)
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# Call using the UCSF MAD caller (not recommended)
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+fitC <- callGainsAndLosses(fit)
+plotTracks(fitC)
+pars <- fitC$params$callGainsAndLosses
+stext(side=3, pos=1/2, line=-1, substitute(sigma==x, list(x=sprintf("%.2f", pars$sigmaMAD))))
+mu <- pars$muR
+tau <- unlist(pars[c("tauLoss", "tauGain")], use.names=FALSE)
+abline(h=mu, lty=2, lwd=2)
+abline(h=tau, lwd=2)
+mtext(side=4, at=tau[1], expression(Delta[LOSS]), adj=-0.2, cex=0.7, las=2, xpd=TRUE)
+mtext(side=4, at=tau[2], expression(Delta[GAIN]), adj=-0.2, cex=0.7, las=2, xpd=TRUE)
+title(main="CN caller: \"ucsf-mad\"")
+
+
+# Caller to be implemented
+deltaCN <- estimateDeltaCN(fit)
+tau <- mu + 1/2*c(-1,+1)*deltaCN
+abline(h=tau, lty=2, lwd=1, col="red")
+
+
 
 } # if (Sys.getenv("_R_CHECK_FULL_"))

@@ -104,6 +104,10 @@
 #   \emph{with} a matched normal, see @see "segmentByPairedPSCBS".
 #   For the same \emph{without} a matched normal,
 #   see @see "segmentByNonPairedPSCBS".
+#
+#   It is also possible to prune change points after segmentation (with
+#   identical results) using
+#   \code{\link[PSCBS:pruneBySdUndo.CBS]{pruneBySdUndo}()}.
 # }
 # @keyword IO
 #*/###########################################################################
@@ -630,14 +634,19 @@ setMethodS3("segmentByCBS", "default", function(y, chromosome=0L, x=NULL, index=
 
   sampleName <- "y";  # This is going to be the name of the data field
 
-  cnData <- DNAcopy::CNA(
-    genomdat  = data$y,
-    chrom     = data$chrom,
-    data.type = "logratio",
-    maploc    = data$x,
-    sampleid  = sampleName,
-    presorted = TRUE
-  );
+  # Supress all warnings, in order to avoid warnings by DNAcopy::CNA()
+  # on "array has repeated maploc positions".  Ideally we should filter
+  # just those out. /HB 2013-10-22
+  suppressWarnings({
+    cnData <- DNAcopy::CNA(
+      genomdat  = data$y,
+      chrom     = data$chrom,
+      data.type = "logratio",
+      maploc    = data$x,
+      sampleid  = sampleName,
+      presorted = TRUE
+    );
+  });
   verbose && str(verbose, cnData);
   names(cnData)[3] <- sampleName;
   verbose && str(verbose, cnData);
