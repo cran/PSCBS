@@ -200,10 +200,10 @@ To plot the <%=signalType%> segmentation results, do:
 \begin{verbatim}
 plotTracks(fit)
 \end{verbatim}
-which by default displays <%=signalType%> as in Figure~\ref{figTracks}.
+which displays <%=signalType%> as in Figure~\ref{figTracks}.
 To zoom in on a partical region, do:
 \begin{verbatim}
-plotTracks(fit, tracks="tcn,c1,c2", xlim=c(120,244)*1e6)
+plotTracks(fit, xlim=c(120,244)*1e6)
 \end{verbatim}
 \begin{figure}[htp]
  \begin{center}
@@ -212,7 +212,7 @@ plotTracks(fit, tracks="tcn,c1,c2", xlim=c(120,244)*1e6)
   })%>}}
  \end{center}
  \caption{Segments identified by CBS.
-  \textbf{Top}: The <%=signalType%> signals with the <%=signalType%> mean levels (purple).
+  The <%=signalType%> signals with the <%=signalType%> mean levels (purple).
  }
  \label{figTracks}
 \end{figure}
@@ -225,7 +225,7 @@ plotTracks(fit, tracks="tcn,c1,c2", xlim=c(120,244)*1e6)
 \section{Calling segments}
 TBA.
 
-
+<%---
 \subsection{Results from calling <%=signalType%> states}
 All calls are appended to the segmentation results as logical columns:
 \begin{verbatim}
@@ -234,7 +234,7 @@ getSegments(fit, simplify=TRUE)
 })%>
 \end{verbatim}
 <% segs <- getSegments(fit, simplify=TRUE) %>
-
+---%>
 
 \section{Saving results}
 
@@ -272,7 +272,7 @@ A multipage PDF report that contains both whole-genome and per-chromosome summar
 \begin{verbatim}
 > report(fit, sampleName="CBS", studyName="CBS-Ex", verbose=-10)
 \end{verbatim}
-By default, the reports are written to directory \code{reports/<studyName>/} under the current working directory.  In addition to the PDF, that directory also contains subdirectory \code{figures/} holding all generated figure files (e.g. PNGs and PDFs) for easy inclusing elsewhere.
+By default, the reports are written to directory \code{reports/<studyName>/} under the current working directory.  In addition to the PDF, that directory also contains subdirectory \code{figures/} holding all generated figure files (e.g. PNGs and PDFs) for easy inclusion elsewhere.
 
 
 

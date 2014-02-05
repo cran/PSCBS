@@ -73,11 +73,6 @@ toPNG(fullname, tags=c(class(fit)[1L], "tracks"), aspectRatio=0.35, {
 signalType
 signalType
 signalType
-evalCapture({
-getSegments(fit, simplify=TRUE)
-})
-segs <- getSegments(fit, simplify=TRUE)
-signalType
 signalType
 evalCapture({
 fitP <- pruneByHClust(fit, h=0.25, verbose=-10)
