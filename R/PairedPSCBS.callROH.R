@@ -58,7 +58,7 @@ setMethodS3("callROH", "PairedPSCBS", function(fit, ..., updateMeans=TRUE, force
   if (is.null(calls)) {
     segs <- cbind(segs, rohCall=calls);
   }
-  delta <- as.double(NA);
+  delta <- NA_real_;
 
   # For each segment...
   for (ss in seq(length=nbrOfSegments)) {
@@ -67,10 +67,10 @@ setMethodS3("callROH", "PairedPSCBS", function(fit, ..., updateMeans=TRUE, force
     fitT <- extractSegment(fit, ss);
 
     # Call only "non-splitter" segments
-    if (nbrOfSegments(fitT) > 0) {
+    if (nbrOfSegments(fitT) > 0L) {
       callSS <- callROHOneSegment(fitT, ..., verbose=less(verbose, 1));
       calls[ss] <- callSS;
-      if (is.na(delta)) {
+      if (is.na(delta) && !is.na(callSS)) {
         delta <- attr(callSS, "delta");
       }
     }
@@ -119,11 +119,12 @@ setMethodS3("callROHOneSegment", "PairedPSCBS", function(fit, ..., verbose=FALSE
   verbose && enter(verbose, "Calling ROH for a single segment");
 
   # Make sure that there is only a single segment in this object
-  stopifnot(nbrOfSegments(fit, splitters=TRUE) == 1);
+  stopifnot(nbrOfSegments(fit, splitters=TRUE) == 1L);
 
 
   # Extract the locus-level data for the segment tested
   data <- getLocusData(fit);
+
 
   # Keep only SNPs:
   # SNPs are identifies as those loci that have non-missing
@@ -139,7 +140,7 @@ setMethodS3("callROHOneSegment", "PairedPSCBS", function(fit, ..., verbose=FALSE
   csN <- data$csN;  # Genotyping confidence scores, if available
 
   # Test for ROH
-  fit <- testROH(betaN=betaN, muN=muN, csN=csN, ..., verbose=less(verbose, 10));
+  fit <- testROH(muN=muN, csN=csN, betaN=betaN, ..., verbose=less(verbose, 10));
 
   # Get the ROH call (TRUE, FALSE, or NA)
   call <- fit;
@@ -152,6 +153,9 @@ setMethodS3("callROHOneSegment", "PairedPSCBS", function(fit, ..., verbose=FALSE
 
 ##############################################################################
 # HISTORY
+# 2014-03-29 [HB]
+# o BUG FIX: In rare cases, callROH() could throw "Error in if (is.na(delta))
+#   { : argument is of length zero".
 # 2012-05-30 [HB]
 # o Now callROH() records paramter 'deltaROH' in the results.
 # 2011-11-26 [HB]

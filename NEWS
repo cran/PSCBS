@@ -2,6 +2,81 @@
 Package: PSCBS
 ==============
 
+Version: 0.43.0 [2014-06-08]
+o Now segmentByPairedPSCBS() gives a warning about future change of the
+  default value of argument 'preserveScale' (from current TRUE to FALSE).
+  The warning only appears if the argument is not specified explicitly.
+o Now using use() of R.utils where possible.
+o Package now requires R (>= 3.0.0) and BioC (>= 2.13), which were 
+  released April 2013 and are in fact old and it's recommended to
+  use a more recent version of R.
+o Bumped package dependencies.
+
+
+Version: 0.42.2 [2014-05-24]
+o Bumped package dependencies.
+
+
+Version: 0.42.1 [2014-05-05]
+o BUG FIX: pruneByHClust() for PairedPSCBS would give an error on
+  "unable to find an inherited method for function 'anyMissing' for
+  signature '"PairedPSCNSegments"'", unless the object contained
+  bootstrap statistics.  This is no longer needed.  Thanks to
+  Junsong Zhao, Los Angeles, CA for reporting on this.
+
+
+Version: 0.42.0 [2014-04-25]
+o SPEEDUP: Minor speedup (a few percents) by now byte compiling the
+  package by default.
+o CLEANUP: Dropped unnecessary usage of '::'.
+o Bumped package dependencies.
+
+
+Version: 0.41.4 [2014-03-30]
+o GENERALIZATION: Now callROH() also works if paired PSCBS was done
+  with only 'muN' available (and not 'betaN').  In that case, it assumes
+  that all genotype confidence scores are equal.
+o Updated the ordering and the defaults of testROH() arguments to make
+  it clear that 'betaN' is optional and only used if 'csN' is not given.
+o As an alternative to argument 'CT', segmentByPairedPSCBS() now accepts
+  arguments 'thetaT' and 'thetaN', in case 'CT' is calculated as
+  CT=2*thetaT/thetaN.
+
+
+Version: 0.41.3 [2014-03-29]
+o Methods no longer generates warnings on "in max(c(NA_integer_,
+  NA_integer_), na.rm = TRUE) : no non-missing arguments to max;
+  returning -Inf".
+o BUG FIX: In rare cases, callROH() could throw "Error in if
+  (is.na(delta)) { : argument is of length zero".
+
+
+Version: 0.41.2 [2014-03-28]
+o Added argument 'preserveScale' to segmentByPairedPSCBS(), which is
+  passed as is to normalizeTumorBoost() with the default being TRUE
+  corresponding to the previous default behavior.
+
+
+Version: 0.41.1 [2014-03-28]
+o Added unTumorBoost() to recalculating the segment means and other
+  statistics for a given PairedPSCBS profile based on non-TumorBoosted
+  tumor BAFs (rather than TumorBoost:ed tumor BAFs).
+
+
+Version: 0.41.0 [2014-03-26]
+o Now estimateKappaByC1Density() give more informative error messages
+  if it failed to identify modes for estimating the parameter.
+o Added argument 'from' to estimateKappaByC1Density().
+o BUG FIX: updateMeansC1C2() for PairedPSCBS did not handle missing
+  values (=splitters) in the 'c1c2Swap' field.
+o BUG FIX: updateMeans() for PairedPSCBS and NonPairedPSCBS returned the
+  incorrect DH segment levels for region in AB if adjustFor="ab" and
+  likewise for segments in LOH if adjustFor="loh".  This bug does *not*
+  affect any of PSCBS methods themselves, because none of them utilizes
+  those 'adjustFor' options.
+o Bumped package dependencies.
+
+
 Version: 0.40.4 [2014-02-04]
 o BUG FIX: all.equal() for CBS would pass the first/dispatch argument
   to NextMethod() as 'target=target' and not as 'object=target', which
@@ -30,7 +105,7 @@ o BUG FIX: getChangePoints() for CBS returned empty results.
 Version: 0.40.1 [2013-12-09]
 o DOCUMENTATION: The CBS vignette referred to C1 and C2 in one of
   the code examples.
-o Bumped up package dependencies.
+o Bumped package dependencies.
 
 
 Version: 0.40.0 [2013-12-07]
@@ -48,7 +123,7 @@ Version: 0.39.7 [2013-11-27]
 o Added callGLAO() for CBS.
 o Added encodeCalls() for 'data.frame' object returned by
   getLocusData(..., addCalls=TRUE).
-o Bumped up package dependencies.
+o Bumped package dependencies.
 
 
 Version: 0.39.6 [2013-11-23]
@@ -114,7 +189,7 @@ o BUG FIX: The CBS and Paired PSCBS report templates assumed that
 
 Version: 0.38.4 [2013-10-15]
 o CLEANUP: Removed a few unnecessary NAMESPACE imports.
-o Bumped up package dependencies.
+o Bumped package dependencies.
 
 
 Version: 0.38.3 [2013-10-14]
@@ -149,7 +224,7 @@ o BUG FIX: tileChromosomes() for CBS did not set "tiledChromosomes"
   horizontally misplace the plotted segment levels.
   Added a system tests for this for CBS and PairedPSCBS objects.
   Thanks to Ilari Scheinin at VUMC for reporting on this.
-o Bumped up package dependencies.
+o Bumped package dependencies.
 
 
 Version: 0.38.0 [2013-09-27]
@@ -164,7 +239,7 @@ Version: 0.37.2 [2013-09-27]
 o SPEEDUP: Now utilizing 'matrixStats' functions in more places.
 o ROBUSTNESS: Further improved how aroma.light is handled for
   backward compatibility.
-o Bumped up package dependencies.
+o Bumped package dependencies.
 
 
 Version: 0.37.1 [2013-09-26]
@@ -202,7 +277,7 @@ o WORKAROUND: For R (< 3.0.0), hclustCNs() for AbstractCBS would generate
   'Error in rowAlls(ok) : could not find function "loadMethod"'. This
   seems to be a bug in R (< 3.0.0), which we can avoid by attaching the
   'methods' package in hclustCNs().
-o Bumped up package dependencies.
+o Bumped package dependencies.
 
 
 Version: 0.36.1 [2013-09-10]
@@ -228,7 +303,7 @@ o Updated the Makefile for the vignettes and added .Rinstignore such
   that auxiliary (bib and bst) LaTeX files are not installed but
   part of the build so they are available to R CMD check, which
   is recently needed by R devel.
-o Bumped up package dependencies.
+o Bumped package dependencies.
 
 
 Version: 0.35.3 [2013-05-25]
@@ -439,7 +514,7 @@ o Updated deprecated ggplot2 functions in the RSP reports.
 
 
 Version: 0.29.6 [2012-11-01]
-o Bumped up package dependencies.
+o Bumped package dependencies.
 o CRAN POLICY: Made the examples run faster for R CMD check.
 
 
@@ -1604,3 +1679,4 @@ o Now psSegment(..., matching.reference=TRUE) does TumorBoost
 
 Version: 0.5.0 [2010-03-12]
 o Added to R-forge repository.
+

@@ -5,7 +5,7 @@ importFrom("R.methodsS3", "setMethodS3")
 importFrom("R.methodsS3", "getMethodS3")
 importFrom("R.oo", "setConstructorS3")
 importFrom("R.methodsS3", "throw")
-
+importFrom("R.utils", "use")
 
 ## Importing Object classes
 importFrom("R.oo", "Package")
@@ -51,6 +51,7 @@ importFrom("R.utils", "capitalize")
 importFrom("R.utils", "copyDirectory")
 importFrom("R.utils", "createLink")
 importFrom("R.utils", "enter")
+importFrom("R.utils", "enterf")
 importFrom("R.utils", "exit")
 importFrom("R.utils", "filePath")
 importFrom("R.utils", "getAbsolutePath")
@@ -88,9 +89,6 @@ importFrom("DNAcopy", "getbdry")
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # EXPORTS
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-# Object that must exported explicitly
-# export(.conflicts.OK)
-
 # Export all public methods, that is, those without a preceeding dot
 # in their names.
 exportPattern("^[^\\.]")

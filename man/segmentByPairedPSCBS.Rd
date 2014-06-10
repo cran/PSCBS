@@ -23,11 +23,12 @@
 }
 
 \usage{
-\method{segmentByPairedPSCBS}{default}(CT, betaT, betaN=NULL, muN=NULL, chromosome=0, x=NULL,
-  alphaTCN=0.009, alphaDH=0.001, undoTCN=0, undoDH=0, ..., avgTCN=c("mean", "median"),
-  avgDH=c("mean", "median"), flavor=c("tcn&dh", "tcn,dh", "sqrt(tcn),dh", "sqrt(tcn)&dh",
-  "tcn"), tbn=TRUE, joinSegments=TRUE, knownSegments=NULL, dropMissingCT=TRUE, seed=NULL,
-  verbose=FALSE)
+\method{segmentByPairedPSCBS}{default}(CT, thetaT=NULL, thetaN=NULL, betaT, betaN=NULL, muN=NULL,
+  chromosome=0, x=NULL, alphaTCN=0.009, alphaDH=0.001, undoTCN=0, undoDH=0, ...,
+  avgTCN=c("mean", "median"), avgDH=c("mean", "median"), flavor=c("tcn&dh", "tcn,dh",
+  "sqrt(tcn),dh", "sqrt(tcn)&dh", "tcn"), tbn=TRUE,
+  preserveScale=getOption("PSCBS/preserveScale", TRUE), joinSegments=TRUE,
+  knownSegments=NULL, dropMissingCT=TRUE, seed=NULL, verbose=FALSE)
 }
 
 \arguments{
@@ -35,6 +36,11 @@
        ratios in [0,+\code{\link[base:is.finite]{Inf}}) (due to noise, small negative values are
        also allowed).  The TCN ratios are typically scaled such that
        copy-neutral diploid loci have a mean of two.}
+  \item{thetaT, thetaN}{(alternative) As an alternative to specifying
+       tumor TCN \emph{ratios} relative to the match normal by
+       argument \code{CT}, on may specify total tumor and normal
+       signals seperately, in which case the TCN ratios \code{CT} are
+       calculated as \eqn{CT = 2*thetaT/thetaN}.}
   \item{betaT}{A \code{\link[base]{numeric}} \code{\link[base]{vector}} of J tumor allele B fractions (BAFs)
        in [0,1] (due to noise, values may be slightly outside as well)
        or \code{\link[base]{NA}} for non-polymorphic loci.}
@@ -66,6 +72,12 @@
     calling algorithm to be used.}
   \item{tbn}{If \code{\link[base:logical]{TRUE}}, \code{betaT} is normalized before segmentation
     using the TumorBoost method [2], otherwise not.}
+  \item{preserveScale}{Passed to \code{\link[aroma.light]{normalizeTumorBoost}},
+    which is only called if \code{tbn} is \code{\link[base:logical]{TRUE}}.
+    Currently the default is \code{\link[base:logical]{TRUE}}, but this will be migrated to become
+    \code{\link[base:logical]{FALSE}} in a future version. You can migrate already now by setting
+    \code{options("PSCBS/preserveScale"=FALSE)}, otherwise we recommend
+    you to set this argument explicitly to avoid relying on its default.}
   \item{joinSegments}{If \code{\link[base:logical]{TRUE}}, there are no gaps between neighboring
     segments.
     If \code{\link[base:logical]{FALSE}}, the boundaries of a segment are defined by the support

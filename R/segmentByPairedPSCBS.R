@@ -20,6 +20,11 @@
 #        ratios in [0,+@Inf) (due to noise, small negative values are
 #        also allowed).  The TCN ratios are typically scaled such that
 #        copy-neutral diploid loci have a mean of two.}
+#   \item{thetaT, thetaN}{(alternative) As an alternative to specifying
+#        tumor TCN \emph{ratios} relative to the match normal by
+#        argument \code{CT}, on may specify total tumor and normal
+#        signals seperately, in which case the TCN ratios \code{CT} are
+#        calculated as \eqn{CT = 2*thetaT/thetaN}.}
 #   \item{betaT}{A @numeric @vector of J tumor allele B fractions (BAFs)
 #        in [0,1] (due to noise, values may be slightly outside as well)
 #        or @NA for non-polymorphic loci.}
@@ -51,6 +56,12 @@
 #     calling algorithm to be used.}
 #   \item{tbn}{If @TRUE, \code{betaT} is normalized before segmentation
 #     using the TumorBoost method [2], otherwise not.}
+#   \item{preserveScale}{Passed to @see "aroma.light::normalizeTumorBoost",
+#     which is only called if \code{tbn} is @TRUE.
+#     Currently the default is @TRUE, but this will be migrated to become
+#     @FALSE in a future version. You can migrate already now by setting
+#     \code{options("PSCBS/preserveScale"=FALSE)}, otherwise we recommend
+#     you to set this argument explicitly to avoid relying on its default.}
 #   \item{joinSegments}{If @TRUE, there are no gaps between neighboring
 #     segments.
 #     If @FALSE, the boundaries of a segment are defined by the support
@@ -139,7 +150,7 @@
 #
 # @keyword IO
 #*/###########################################################################
-setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN=NULL, muN=NULL, chromosome=0, x=NULL, alphaTCN=0.009, alphaDH=0.001, undoTCN=0, undoDH=0, ..., avgTCN=c("mean", "median"), avgDH=c("mean", "median"), flavor=c("tcn&dh", "tcn,dh", "sqrt(tcn),dh", "sqrt(tcn)&dh", "tcn"), tbn=TRUE, joinSegments=TRUE, knownSegments=NULL, dropMissingCT=TRUE, seed=NULL, verbose=FALSE) {
+setMethodS3("segmentByPairedPSCBS", "default", function(CT, thetaT=NULL, thetaN=NULL, betaT, betaN=NULL, muN=NULL, chromosome=0, x=NULL, alphaTCN=0.009, alphaDH=0.001, undoTCN=0, undoDH=0, ..., avgTCN=c("mean", "median"), avgDH=c("mean", "median"), flavor=c("tcn&dh", "tcn,dh", "sqrt(tcn),dh", "sqrt(tcn)&dh", "tcn"), tbn=TRUE, preserveScale=getOption("PSCBS/preserveScale", TRUE), joinSegments=TRUE, knownSegments=NULL, dropMissingCT=TRUE, seed=NULL, verbose=FALSE) {
   # WORKAROUND: If Hmisc is loaded after R.utils, it provides a buggy
   # capitalize() that overrides the one we want to use. Until PSCBS
   # gets a namespace, we do the following workaround. /HB 2011-07-14
@@ -154,11 +165,23 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN=NULL, m
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Validate arguments
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  # Argument 'thetaT' & 'thetaN':
+  if (!is.null(thetaT) && !is.null(thetaN)) {
+    thetaT <- Arguments$getDoubles(thetaT, disallow=disallow);
+    nbrOfLoci <- length(thetaT);
+    length2 <- rep(nbrOfLoci, times=2L);
+    thetaN <- Arguments$getDoubles(thetaN, length=length2, disallow=disallow);
+    CT <- 2 * thetaT / thetaN;
+  } else if (!is.null(thetaT) || !is.null(thetaN)) {
+    throw("Either argument 'CT' needs to be specified or *both* of arguments 'thetaT' and 'thetaN'");
+  }
+
   # Argument 'CT':
   disallow <- c("Inf");
   CT <- Arguments$getDoubles(CT, disallow=disallow);
   nbrOfLoci <- length(CT);
   length2 <- rep(nbrOfLoci, times=2L);
+
 
   # Argument 'betaT':
   betaT <- Arguments$getDoubles(betaT, length=length2, disallow="Inf");
@@ -185,6 +208,15 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN=NULL, m
   if (tbn && is.null(betaN)) {
     throw("When argument 'betaN' is not available, then argument 'tbn' must FALSE.");
   }
+
+  # Argument 'preserveScale':
+  if (missing(preserveScale)) {
+    # MIGRATION: Prepare for changing the default argument value. /HB 2014-06-08
+    if (!identical(getOption("PSCBS/preserveScale"), FALSE)) {
+      warning("Argument 'preserveScale' for segmentByPairedPSCBS() currently defaults to TRUE. However, in a future version of PSCBS it will default to FALSE (which is also the recommended value). To avoid this warning, explicitly specify this argument when calling segmentByPairedPSCBS(). Alternatively, set option 'PSCBS/preserveScale' to FALSE to migrate to the upcoming default already now.");
+    }
+  }
+  preserveScale <- Arguments$getLogical(preserveScale);
 
   # Argument 'chromosome':
   if (is.null(chromosome)) {
@@ -300,7 +332,7 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN=NULL, m
   if (is.null(muN)) {
     verbose && enter(verbose, "Calling genotypes from normal allele B fractions");
     verbose && str(verbose, betaN);
-    callNaiveGenotypes <- .useAromaLight("callNaiveGenotypes");
+    callNaiveGenotypes <- .use("callNaiveGenotypes", package="aroma.light");
     muN <- callNaiveGenotypes(betaN, censorAt=c(0,1));
     verbose && cat(verbose, "Called genotypes:");
     verbose && str(verbose, muN);
@@ -320,8 +352,8 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN=NULL, m
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   if (tbn) {
     verbose && enter(verbose, "Normalizing betaT using betaN (TumorBoost)");
-    normalizeTumorBoost <- .useAromaLight("normalizeTumorBoost");
-    betaTN <- normalizeTumorBoost(betaT=betaT, betaN=betaN, muN=muN, preserveScale=TRUE);
+    normalizeTumorBoost <- .use("normalizeTumorBoost", package="aroma.light");
+    betaTN <- normalizeTumorBoost(betaT=betaT, betaN=betaN, muN=muN, preserveScale=preserveScale);
     verbose && cat(verbose, "Normalized BAFs:");
     verbose && str(verbose, betaTN);
 
@@ -343,12 +375,16 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN=NULL, m
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   verbose && enter(verbose, "Setup up data");
   data <- data.frame(chromosome=chromosome, x=x, CT=CT, betaT=betaT, betaTN=betaTN, muN=muN);
+  if (!is.null(thetaT)) {
+    data$thetaT <- thetaT;
+    data$thetaN <- thetaN;
+  }
   if (!is.null(betaN)) {
     data$betaN <- betaN;
   }
   verbose && str(verbose, data);
   # Not needed anymore
-  chromosome <- x <- CT <- betaT <- betaTN <- betaN <- muN <- NULL;
+  chromosome <- x <- CT <- thetaT <- thetaN <- betaT <- betaTN <- betaN <- muN <- NULL;
 
   # Sanity check
   stopifnot(nrow(data) == nbrOfLoci);
@@ -378,9 +414,9 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN=NULL, m
   # Drop loci for which CT is missing (regardless of betaT)
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   if (dropMissingCT) {
-    ok <- (!is.na(data$CT));
+    ok <- (!is.na(data$CT))
     if (any(!ok)) {
-      verbose && enter(verbose, "Dropping loci for which CT is missing");
+      verbose && enter(verbose, "Dropping loci for which TCNs are missing");
       verbose && cat(verbose, "Number of loci dropped: ", sum(!ok));
       data <- data[ok,,drop=FALSE];
       nbrOfLoci <- nrow(data);
@@ -429,7 +465,7 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN=NULL, m
   if (dropMissingCT) {
     ok <- (!is.na(data$CT));
     if (!all(ok)) {
-      throw("INTERNAL ERROR: Detected CT with missing values also after filtering.");
+      throw("INTERNAL ERROR: Detected TCN with missing values also after filtering.");
     }
   }
 
@@ -453,7 +489,7 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN=NULL, m
       # Extract subset of data and parameters for this chromosome
       dataKK <- subset(data, chromosome == chromosomeKK);
       verbose && str(verbose, dataKK);
-      fields <- attachLocally(dataKK, fields=c("CT", "betaT", "betaTN", "betaN", "muN", "chromosome", "x"));
+      fields <- attachLocally(dataKK, fields=c("CT", "thetaT", "thetaN", "betaT", "betaTN", "betaN", "muN", "chromosome", "x"));
       dataKK <- NULL; # Not needed anymore
 
       knownSegmentsKK <- NULL;
@@ -463,8 +499,8 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN=NULL, m
         verbose && print(verbose, knownSegmentsKK);
       }
 
-      fit <- segmentByPairedPSCBS(CT=CT, betaT=betaTN,
-                betaN=betaN, muN=muN,
+      fit <- segmentByPairedPSCBS(CT=CT, thetaT=thetaT, thetaN=thetaN,
+                betaT=betaTN, betaN=betaN, muN=muN,
                 chromosome=chromosome, x=x,
                 tbn=FALSE, joinSegments=joinSegments,
                 knownSegments=knownSegmentsKK,
@@ -564,7 +600,7 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN=NULL, m
   if (dropMissingCT) {
     ok <- (!is.na(data$CT));
     if (!all(ok)) {
-      throw("INTERNAL ERROR: Detected CT with missing values also after filtering.");
+      throw("INTERNAL ERROR: Detected TCN with missing values also after filtering.");
     }
   }
 
@@ -591,8 +627,7 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN=NULL, m
   isHet <- isSnp & (data$muN == 1/2);
   verbose && printf(verbose, "Number of heterozygous SNPs: %d (%.2f%%)\n",
                                      sum(isHet), 100*sum(isHet)/nbrOfSnps);
-  naValue <- as.double(NA);
-  rho <- rep(naValue, length=nbrOfLoci);
+  rho <- rep(NA_real_, length=nbrOfLoci);
   rho[isHet] <- 2*abs(data$betaTN[isHet]-1/2);
   verbose && cat(verbose, "Normalized DHs:");
   verbose && str(verbose, rho);
@@ -607,7 +642,7 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN=NULL, m
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   verbose && enter(verbose, "Identification of change points by total copy numbers");
 
-  fields <- attachLocally(data, fields=c("CT", "chromosome", "x", "index"));
+  fields <- attachLocally(data, fields=c("CT", "thetaT", "thetaN", "chromosome", "x", "index"));
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # Assert no missing values in (chromosome, x, CT)
@@ -627,7 +662,8 @@ setMethodS3("segmentByPairedPSCBS", "default", function(CT, betaT, betaN=NULL, m
   }
 
 
-  # Physical positions of loci
+  # Segment TCN ratios
+  # Calculate tumor-normal TCN ratios?
   fit <- segmentByCBS(CT,
                       chromosome=chromosome, x=x, index=index,
                       joinSegments=joinSegments,
@@ -1120,9 +1156,10 @@ setMethodS3("segmentByPairedPSCBS", "data.frame", function(CT, ...) {
   # To please R CMD check
   data <- CT;
 
-
-  segmentByPairedPSCBS(CT=data$CT, betaT=data$betaT, betaN=data$betaN,
-                   muN=data$muN, chromosome=data$chromosome, x=data$x, ...);
+  segmentByPairedPSCBS(CT=data$CT, thetaT=data$thetaT, thetaN=data$thetaN,
+                       betaT=data$betaT, betaN=data$betaN,
+                       muN=data$muN,
+                       chromosome=data$chromosome, x=data$x, ...);
 })
 
 
@@ -1135,6 +1172,15 @@ setMethodS3("segmentByPairedPSCBS", "PairedPSCBS", function(...) {
 
 ############################################################################
 # HISTORY:
+# 2014-06-08
+# o Now segmentByPairedPSCBS() gives a warning about future change of the
+#   default value of argument 'preserveScale' (from current TRUE to FALSE).
+#   The warning only appears if the argument is not specified explicitly.
+# 2014-03-30
+# o As an alternative to argument 'CT', segmentByPairedPSCBS() now accepts
+#   arguments 'thetaT' and 'thetaN', in case 'CT' is calculated as
+#   CT=2*thetaT/thetaN (and all of 'CT', 'thetaT' and 'thetaN' are stored
+#   as part the locus-level data signals.
 # 2014-01-29
 # o ROBUSTNESS: Now segmentByPairedPSCBS() asserts that argument 'muN'
 #   is not all NAs.  Similarily, if 'muN' is called from 'betaN' the

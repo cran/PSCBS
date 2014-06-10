@@ -8,29 +8,36 @@
 ###########################################################################
 
 t0 <- Sys.time()
-library("PSCBS");
-library("R.devices");
-evalCapture <- R.utils::evalCapture;
-PSCBS <- R.oo::Package("PSCBS");
-R.rsp <- R.oo::Package("R.rsp");
+R.utils::use("R.utils")
+
+# RSP specific
+R.rsp <- R.oo::Package("R.rsp")
+withCapture <- R.utils::withCapture
+options("withCapture/newline"=FALSE)
+options(str=strOptions(strict.width="cut"))
+options(width=85)
+options(digits=3)
+
+# Graphics
+use("R.devices")
+devOptions("png", width=840)
+
+# Analysis
+use("PSCBS")
+PSCBS <- R.oo::Package("PSCBS")
 fixLocations <- function(fit, ...) {
   for (key in grep("(end|start)$", colnames(fit$output))) {
-    fit$output[[key]] <- as.integer(fit$output[[key]]);
+    fit$output[[key]] <- as.integer(fit$output[[key]])
   }
-  fit;
+  fit
 } # fixLocations()
 
-signalType <- "TCN";
-
-devOptions("png", width=840);
-options(width=85);
-options(digits=3);
-options(str=strOptions(strict.width="cut"));
+signalType <- "TCN"
 R.rsp$version
 R.rsp$author
 format(as.Date(PSCBS$date), format="%B %d, %Y")
-fullname <- "PairedPSCBS,exData,chr01";
-evalCapture({
+fullname <- "PairedPSCBS,exData,chr01"
+withCapture({
 data <- PSCBS::exampleData("paired.chr01")
 data <- data[,c("chromosome", "x", "CT")]
 colnames(data)[3] <- "y"
@@ -38,28 +45,28 @@ str(data)
 })
 signalType
 signalType
-evalCapture({
+withCapture({
 data <- dropSegmentationOutliers(data)
 })
 signalType
-evalCapture({
+withCapture({
 gaps <- findLargeGaps(data, minLength=1e6)
 gaps
 })
-evalCapture({
+withCapture({
 knownSegments <- gapsToSegments(gaps)
 knownSegments
 })
 signalType
 signalType
-evalCapture({
+withCapture({
 fit <- segmentByCBS(data, knownSegments=knownSegments, seed=0xBEEF, verbose=-10)
 })
 signalType
 nbrOfSegments(fit)
 signalType
-fit <- fixLocations(fit);
-evalCapture({
+fit <- fixLocations(fit)
+withCapture({
 getSegments(fit, simplify=TRUE)
 })
 segs <- getSegments(fit, simplify=TRUE)
@@ -68,17 +75,17 @@ signalType
 signalType
 signalType
 toPNG(fullname, tags=c(class(fit)[1L], "tracks"), aspectRatio=0.35, {
-    plotTracks(fit);
+    plotTracks(fit)
   })
 signalType
 signalType
 signalType
 signalType
-evalCapture({
+withCapture({
 fitP <- pruneByHClust(fit, h=0.25, verbose=-10)
 })
 toPNG(fullname, tags=c(class(fitP)[1L], "pruned", "tracks"), aspectRatio=0.35, {
-    plotTracks(fitP);
+    plotTracks(fitP)
   })
 signalType
 toLatex(sessionInfo())

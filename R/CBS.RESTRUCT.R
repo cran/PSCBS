@@ -227,7 +227,7 @@ setMethodS3("extractSegments", "CBS", function(this, idxs, ..., verbose=FALSE) {
   segRows <- segRows[idxs,,drop=FALSE] - d;
   verbose && str(verbose, segRows);
   # Sanity checks
-  stopifnot(max(segRows, na.rm=TRUE) <= nrow(dataT));
+  stopifnot(suppressWarnings(max(segRows, na.rm=TRUE)) <= nrow(dataT));
   drow <- segRows[-1,1] - segRows[-nrow(segRows),2];
   stopifnot(all(is.na(drow) | (drow > 0)));
   if (!all(is.na(drow) | (drow > 0))) {
@@ -299,12 +299,14 @@ setMethodS3("mergeTwoSegments", "CBS", function(this, left, update=TRUE, verbose
 
   # Starts
   idxs <- grep("(S|s)tart$", fields);
-  segT[,idxs] <- colMins(segsT[,idxs,drop=FALSE], na.rm=TRUE);
+  T <- as.matrix(segsT[,idxs,drop=FALSE]);
+  segT[,idxs] <- colMins(T, na.rm=TRUE);
   idxsUsed <- c(idxsUsed, idxs);
 
   # Ends
   idxs <- grep("(E|e)nd$", fields);
-  segT[,idxs] <- colMaxs(segsT[,idxs,drop=FALSE], na.rm=TRUE);
+  T <- as.matrix(segsT[,idxs,drop=FALSE]);
+  segT[,idxs] <- colMaxs(T, na.rm=TRUE);
   idxsUsed <- c(idxsUsed, idxs);
 
   # Counts

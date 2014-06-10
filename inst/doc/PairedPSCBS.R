@@ -8,76 +8,83 @@
 ###########################################################################
 
 t0 <- Sys.time()
-library("PSCBS");
-library("R.devices");
-evalCapture <- R.utils::evalCapture;
-PSCBS <- R.oo::Package("PSCBS");
-R.rsp <- R.oo::Package("R.rsp");
-fixLocations <- function(fit, ...) {
-  for (key in grep("(End|Start)$", colnames(fit$output))) {
-    fit$output[[key]] <- as.integer(fit$output[[key]]);
-  }
-  fit;
-} # fixLocations()
+R.utils::use("R.utils")
 
-devOptions("png", width=840);
-options(width=85);
-options(digits=3);
-options(str=strOptions(strict.width="cut"));
+# RSP specific
+R.rsp <- R.oo::Package("R.rsp")
+withCapture <- R.utils::withCapture
+options("withCapture/newline"=FALSE)
+options(str=strOptions(strict.width="cut"))
+options(width=85)
+options(digits=3)
+
+# Graphics
+use("R.devices")
+devOptions("png", width=840)
+
+# Analysis
+use("PSCBS")
+PSCBS <- R.oo::Package("PSCBS")
+fixLocations <- function(fit, ...) {
+  for (key in grep("(end|start)$", colnames(fit$output))) {
+    fit$output[[key]] <- as.integer(fit$output[[key]])
+  }
+  fit
+} # fixLocations()
 R.rsp$version
 R.rsp$author
 format(as.Date(PSCBS$date), format="%B %d, %Y")
-fullname <- "PairedPSCBS,exData,chr01";
-evalCapture({
+fullname <- "PairedPSCBS,exData,chr01"
+withCapture({
 data <- PSCBS::exampleData("paired.chr01")
 str(data)
 })
-evalCapture({
+withCapture({
 data <- dropSegmentationOutliers(data)
 })
-evalCapture({
+withCapture({
 gaps <- findLargeGaps(data, minLength=1e6)
 gaps
 })
-evalCapture({
+withCapture({
 knownSegments <- gapsToSegments(gaps)
 knownSegments
 })
-evalCapture({
-fit <- segmentByPairedPSCBS(data, knownSegments=knownSegments, seed=0xBEEF, verbose=-10)
+withCapture({
+fit <- segmentByPairedPSCBS(data, knownSegments=knownSegments, preserveScale=FALSE, seed=0xBEEF, verbose=-10)
 })
 nbrOfSegments(fit)
-fit <- fixLocations(fit);
-evalCapture({
+fit <- fixLocations(fit)
+withCapture({
 getSegments(fit, simplify=TRUE)
 })
 segs <- getSegments(fit, simplify=TRUE)
 which(segs$tcnNbrOfLoci == 0)
 which(segs$dhNbrOfLoci == 0)
 toPNG(fullname, tags=c(class(fit)[1L], "tracks"), aspectRatio=0.6, {
-    plotTracks(fit);
+    plotTracks(fit)
   })
-evalCapture({
+withCapture({
 fit <- callROH(fit, verbose=-10)
 })
-evalCapture({
+withCapture({
 fit <- callAB(fit, verbose=-10)
 })
-evalCapture({
+withCapture({
 fit <- callLOH(fit, verbose=-10)
 })
-evalCapture({
+withCapture({
 fit <- callNTCN(fit, verbose=-10)
 })
-evalCapture({
+withCapture({
 getSegments(fit, simplify=TRUE)
 })
 segs <- getSegments(fit, simplify=TRUE)
-evalCapture({
+withCapture({
 fitP <- pruneByHClust(fit, h=0.25, verbose=-10)
 })
 toPNG(fullname, tags=c(class(fitP)[1L], "pruned", "tracks"), aspectRatio=0.6, {
-    plotTracks(fitP);
+    plotTracks(fitP)
   })
 toLatex(sessionInfo())
 dt <- round(Sys.time()-t0, digits=2)

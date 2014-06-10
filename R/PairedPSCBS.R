@@ -49,7 +49,7 @@ setMethodS3("getLocusData", "PairedPSCBS", function(fit, ..., fields=c("asis", "
 
     # Genotype calls
     if (!is.element("muN", names)) {
-      callNaiveGenotypes <- .useAromaLight("callNaiveGenotypes");
+      callNaiveGenotypes <- .use("callNaiveGenotypes", package="aroma.light");
       data$muN <- callNaiveGenotypes(data$betaN);
     }
     data$isHet <- (data$muN == 1/2);
@@ -66,7 +66,7 @@ setMethodS3("getLocusData", "PairedPSCBS", function(fit, ..., fields=c("asis", "
 
     # TumorBoost BAFs
     if (!is.element("betaTN", names)) {
-      normalizeTumorBoost <- .useAromaLight("normalizeTumorBoost");
+      normalizeTumorBoost <- .use("normalizeTumorBoost", package="aroma.light");
       data$betaTN <- normalizeTumorBoost(betaN=data$betaN, betaT=data$betaT, muN=data$muN);
     }
     data$rhoN <- 2*abs(data$betaTN-1/2);
@@ -124,7 +124,7 @@ setMethodS3("resegment", "PairedPSCBS", function(fit, ..., verbose=FALSE) {
 
   formals <- formals[!sapply(formals, FUN=is.language)];
   formals <- formals[!sapply(formals, FUN=is.name)];
-  drop <- c("chromosome", "x", "w", "CT", "betaT", "betaN", "muN", "...");
+  drop <- c("chromosome", "x", "w", "CT", "thetaT", "thetaN", "betaT", "betaN", "muN", "...");
   keep <- !is.element(names(formals), drop);
   formals <- formals[keep];
 
@@ -214,6 +214,8 @@ setMethodS3("adjustPloidyScale", "PairedPSCBS", function(fit, scale, ...) {
 
 ##############################################################################
 # HISTORY
+# 2014-03-30
+# o Update resegment() for PairedPSCBS to handle 'thetaT' and 'thetaN'.
 # 2013-10-25
 # o BUG FIX: The 'rho' signals returned by getLocusData(..., fields="full")
 #   for PairedPSCBS would have values also for homozygote SNPs.
