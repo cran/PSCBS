@@ -1,10 +1,10 @@
 ###########################################################################
 ## This 'tangle' R script was created from an RSP document.
-## RSP source document: 'PairedPSCBS.tex.rsp'
+## RSP source document: './PairedPSCBS.tex.rsp'
 ## Metadata 'title': 'Parent-specific copy-number segmentation using Paired PSCBS'
 ## Metadata 'author': 'Henrik Bengtsson'
-## Metadata 'keywords': 'copy numbers, allele specific, parent specific, genomic aberrations'
 ## Metadata 'engine': 'R.rsp::rsp'
+## Metadata 'keywords': 'copy numbers, allele specific, parent specific, genomic aberrations'
 ###########################################################################
 
 t0 <- Sys.time()
@@ -20,6 +20,7 @@ options(digits=3)
 
 # Graphics
 use("R.devices")
+options("devEval/args/field"="fullname") # Preferred for LaTeX
 devOptions("png", width=840)
 
 # Analysis

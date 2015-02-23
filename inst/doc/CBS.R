@@ -1,10 +1,10 @@
 ###########################################################################
 ## This 'tangle' R script was created from an RSP document.
-## RSP source document: 'CBS.tex.rsp'
+## RSP source document: './CBS.tex.rsp'
 ## Metadata 'title': 'Total copy-number segmentation using CBS'
-## Metadata 'keywords': 'copy numbers, genomic aberrations'
 ## Metadata 'author': 'Henrik Bengtsson'
 ## Metadata 'engine': 'R.rsp::rsp'
+## Metadata 'keywords': 'copy numbers, genomic aberrations'
 ###########################################################################
 
 t0 <- Sys.time()
@@ -20,6 +20,7 @@ options(digits=3)
 
 # Graphics
 use("R.devices")
+options("devEval/args/field"="fullname") # Preferred for LaTeX
 devOptions("png", width=840)
 
 # Analysis
