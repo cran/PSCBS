@@ -1,6 +1,6 @@
-06583a37c7cbbfbcc8716dcf8bf2805c *DESCRIPTION
+b0c126e9408d007d299be6fecec3c53f *DESCRIPTION
 f43e82c82ed0ab9cde7047aedd7be1e4 *NAMESPACE
-bf0e88ef00a09fa8a558b05a7aadb260 *NEWS
+1e4f7c3846f6cf8d226bc7849202f3b3 *NEWS
 5b3e0291bcc049d9ada9005162c5259a *R/000.R
 3e3dabecfb506b75e8e24743c5336630 *R/006.fixVarArgs.R
 dcb0e44d79e9859ee6006eb8c70b2837 *R/999.NonDocumentedObjects.R
@@ -19,7 +19,7 @@ ca86e31fe1a32e7d30d84d585e4d0160 *R/CBS.EXTS.R
 b7d874d9e15ba5cf30764c6a0ececf90 *R/CBS.PLOT.R
 665fd7d0139647f0ba86219ebf4ec694 *R/CBS.PRUNE.R
 06674bc847e8a00addfbfce9141e0f4b *R/CBS.R
-ff0b961b3f527f5fa85ea303bb1f0d28 *R/CBS.RESTRUCT.R
+68a889a49937d29e84a7a37da6302daf *R/CBS.RESTRUCT.R
 6cbb38b5afda180074d6e7ae6944f1c2 *R/CBS.SMOOTH.R
 e32f90f662ac61156143354aa1b7ce91 *R/CBS.joinSegments.R
 6c28fb753c160132793c26ae474c36c6 *R/CBS.updateMeansTogether.R
@@ -28,7 +28,7 @@ ed080a928098a7ee721079af992f640c *R/CNA.EXTS.R
 f69b8289ad106512524734731ed10ef0 *R/NonPairedPSCBS.R
 07f118d9fd7942687f57c76e3c4f78a3 *R/PSCBS.IO.R
 39633082d3a2008d3a425fe542f45b5e *R/PSCBS.R
-a2fcd9252c9e1aae1c982a81e9c9eaad *R/PSCBS.RESTRUCT.R
+094569b0a307b6fee63b8df5859c4823 *R/PSCBS.RESTRUCT.R
 27defc5ee56ac322b2bd8d2eaae2ba33 *R/PairedPSCBS.BOOT,DEFUNCT.R
 89f3b460915b166b9ac8cab5d0749da1 *R/PairedPSCBS.BOOT.R
 4f418586d64dc05081f02d304e876dec *R/PairedPSCBS.BOOT.sets.R
@@ -62,7 +62,7 @@ b8d3de9af9b4ff8bb516c8c430a4b28e *R/findLargeGaps.R
 6668141241a50eb225890ca7cce13a7d *R/gapsToSegments.R
 d48f6ff09d630cac23b3db8d5819e216 *R/installDNAcopy.R
 71483b466dfb355f14ad5d4ce9ed0233 *R/prememoize.R
-32db6530e671d5c7e1561ffcff4024c1 *R/segmentByCBS.R
+19c8e9f0ddc6cd58e2e88bfb08190740 *R/segmentByCBS.R
 da90c04cddc9f3d4c7253ddadf83d9fc *R/segmentByNonPairedPSCBS.R
 896a00134a489028e199a32a5f52ebe8 *R/segmentByPairedPSCBS.R
 7d1907ae7ab66a48b4eded1d496b277b *R/testROH.R
@@ -73,10 +73,10 @@ da90c04cddc9f3d4c7253ddadf83d9fc *R/segmentByNonPairedPSCBS.R
 a1ff7cb79a888bb3032d330227f179e0 *inst/CITATION
 14659728b7be1bb8e37e953a87060e6c *inst/data-ex/PairedPSCBS,exData,chr01.Rbin
 ee696a0e37a95e63c90f466a0fe7c663 *inst/doc/CBS.R
-12e930df27de8758175d8f78e161c5db *inst/doc/CBS.pdf
+df1d644b91d82deee350a9465be688c4 *inst/doc/CBS.pdf
 fe36d40a38d3201214ce662d4271b9df *inst/doc/CBS.tex.rsp
 6c46948f6e05e07e8f621aff3082fcac *inst/doc/PairedPSCBS.R
-a33a05f5b7ff9d7caac556489efa27c8 *inst/doc/PairedPSCBS.pdf
+c7ef15a86d5d0a29cb4ec00d95f47c03 *inst/doc/PairedPSCBS.pdf
 4f1745be74ffe7b192c632445b6af5b5 *inst/doc/PairedPSCBS.tex.rsp
 56e6435959f6387651a30e915e54baab *inst/misc/_Rcache/PSCBS/segmentByCBS/sbdry/0109d43cd74c8e7e46db1abde235c808.Rcache
 17a5a6d6c343e587021f5e4c7c3ec97e *inst/misc/_Rcache/PSCBS/segmentByCBS/sbdry/2aba5b85ae757609b8b4c9fc60be1156.Rcache
@@ -189,7 +189,7 @@ f04ed0148cf6f6b62c2af44ccdbdb7e4 *tests/segmentByCBS,median.R
 2237835c4c7d3019d0fb50a86efc5604 *tests/segmentByCBS,prune.R
 31fc411fec814fe4d12ff9b59772c9d0 *tests/segmentByCBS,report.R
 08d09f321e3267db055017c2164d7691 *tests/segmentByCBS,shiftTCN.R
-e6cbc1a03d49d3f1e04cb1c0396c9afb *tests/segmentByCBS,weights.R
+4770dcbd22a8f1f0aa7ec339059eda83 *tests/segmentByCBS,weights.R
 b6b41f53af25eb3d23d9423b3b18386c *tests/segmentByCBS.R
 065319c9e5582cb4b5c7ea4b9bbbc793 *tests/segmentByNonPairedPSCBS,medianDH.R
 ff1b3680367ad127bc28fd9d24a484b2 *tests/segmentByPairedPSCBS,calls.R
