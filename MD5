@@ -1,6 +1,6 @@
-b0c126e9408d007d299be6fecec3c53f *DESCRIPTION
+08bb40099743b4ead096a1104a782631 *DESCRIPTION
 f43e82c82ed0ab9cde7047aedd7be1e4 *NAMESPACE
-1e4f7c3846f6cf8d226bc7849202f3b3 *NEWS
+5fe384295cdfc2bb0d0151d2c7ce6f54 *NEWS
 5b3e0291bcc049d9ada9005162c5259a *R/000.R
 3e3dabecfb506b75e8e24743c5336630 *R/006.fixVarArgs.R
 dcb0e44d79e9859ee6006eb8c70b2837 *R/999.NonDocumentedObjects.R
@@ -64,7 +64,7 @@ d48f6ff09d630cac23b3db8d5819e216 *R/installDNAcopy.R
 71483b466dfb355f14ad5d4ce9ed0233 *R/prememoize.R
 19c8e9f0ddc6cd58e2e88bfb08190740 *R/segmentByCBS.R
 da90c04cddc9f3d4c7253ddadf83d9fc *R/segmentByNonPairedPSCBS.R
-896a00134a489028e199a32a5f52ebe8 *R/segmentByPairedPSCBS.R
+4661e25638b4bd205014da35911fc020 *R/segmentByPairedPSCBS.R
 7d1907ae7ab66a48b4eded1d496b277b *R/testROH.R
 77f2deda918f6b83918eecc219f212d1 *R/weightedQuantile.R
 08127f8c76110ee2407c9841533e08db *R/writeWIG.R
@@ -73,10 +73,10 @@ da90c04cddc9f3d4c7253ddadf83d9fc *R/segmentByNonPairedPSCBS.R
 a1ff7cb79a888bb3032d330227f179e0 *inst/CITATION
 14659728b7be1bb8e37e953a87060e6c *inst/data-ex/PairedPSCBS,exData,chr01.Rbin
 ee696a0e37a95e63c90f466a0fe7c663 *inst/doc/CBS.R
-df1d644b91d82deee350a9465be688c4 *inst/doc/CBS.pdf
+f706370d213d006e3d1175a4b241172f *inst/doc/CBS.pdf
 fe36d40a38d3201214ce662d4271b9df *inst/doc/CBS.tex.rsp
 6c46948f6e05e07e8f621aff3082fcac *inst/doc/PairedPSCBS.R
-c7ef15a86d5d0a29cb4ec00d95f47c03 *inst/doc/PairedPSCBS.pdf
+f963547436c9dccbf45f30dd8f1ab055 *inst/doc/PairedPSCBS.pdf
 4f1745be74ffe7b192c632445b6af5b5 *inst/doc/PairedPSCBS.tex.rsp
 56e6435959f6387651a30e915e54baab *inst/misc/_Rcache/PSCBS/segmentByCBS/sbdry/0109d43cd74c8e7e46db1abde235c808.Rcache
 17a5a6d6c343e587021f5e4c7c3ec97e *inst/misc/_Rcache/PSCBS/segmentByCBS/sbdry/2aba5b85ae757609b8b4c9fc60be1156.Rcache
@@ -172,7 +172,7 @@ ae6ca7420cb0fca1837b96e407f6b0d6 *man/pruneByDP.AbstractCBS.Rd
 c5008992920a8e9f86507297712cdfb1 *man/save.AbstractCBS.Rd
 54783f9dba18d63f9f20a8d717109689 *man/segmentByCBS.Rd
 b3fb1177bdb0fc8680745b9315392ad9 *man/segmentByNonPairedPSCBS.Rd
-7e763646cab290947a8f631d9e537bb9 *man/segmentByPairedPSCBS.Rd
+4473b9d8ce34c16fb973627801a1e4ac *man/segmentByPairedPSCBS.Rd
 4c4181efced223c39066439f8741c498 *man/setSampleName.AbstractCBS.Rd
 6e9676b9f9825c488bdf96d410cc9539 *man/testROH.numeric.Rd
 e9dd20a0adf9def1b9523d189a35e4f6 *man/updateMeans.AbstractCBS.Rd
