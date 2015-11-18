@@ -1,14 +1,14 @@
 Package: PSCBS
-Version: 0.50.0
+Version: 0.60.0
 Depends: R (>= 3.1.1), utils
 Imports: R.methodsS3 (>= 1.7.0), R.oo (>= 1.19.0), R.utils (>= 2.1.0),
-        R.cache (>= 0.10.0), matrixStats (>= 0.14.2), DNAcopy (>=
-        1.40.0)
+        R.cache (>= 0.12.0), matrixStats (>= 0.15.0), DNAcopy (>=
+        1.40.0), listenv (>= 0.5.0), future (>= 0.8.2), parallel
 Suggests: Hmisc (>= 3.16-0), R.rsp (>= 0.20.0), R.devices (>= 2.13.1),
         ggplot2 (>= 1.0.1), aroma.light (>= 2.2.1)
 SuggestsNote: BioC (>= 3.0), Recommended: Hmisc, aroma.light
 VignetteBuilder: R.rsp
-Date: 2015-10-14
+Date: 2015-11-17
 Title: Analysis of Parent-Specific DNA Copy Numbers
 Authors@R: c(
   person("Henrik", "Bengtsson", role=c("aut", "cre", "cph"),
@@ -27,7 +27,7 @@ biocViews: aCGH, CopyNumberVariants, SNP, Microarray, OneChannel,
 URL: https://github.com/HenrikBengtsson/PSCBS
 BugReports: https://github.com/HenrikBengtsson/PSCBS/issues
 NeedsCompilation: no
-Packaged: 2015-10-15 03:49:17 UTC; hb
+Packaged: 2015-11-17 17:52:13 UTC; hb
 Author: Henrik Bengtsson [aut, cre, cph],
   Pierre Neuvial [aut],
   Venkatraman E. Seshan [aut],
@@ -36,4 +36,4 @@ Author: Henrik Bengtsson [aut, cre, cph],
   Richard A. Olshen [aut]
 Maintainer: Henrik Bengtsson <henrikb@braju.com>
 Repository: CRAN
-Date/Publication: 2015-10-15 13:24:50
+Date/Publication: 2015-11-18 09:31:06
