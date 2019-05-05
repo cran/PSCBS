@@ -1,6 +1,6 @@
 ###########################################################################
 ### This 'tangle' R script was created from an RSP document.
-### RSP source document: './CBS.tex.rsp'
+### RSP source document: 'CBS.tex.rsp'
 ### Metadata 'title': 'Total copy-number segmentation using CBS'
 ### Metadata 'author': 'Henrik Bengtsson'
 ### Metadata 'engine': 'R.rsp::rsp'

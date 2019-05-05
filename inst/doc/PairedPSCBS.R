@@ -1,6 +1,6 @@
 ###########################################################################
 ### This 'tangle' R script was created from an RSP document.
-### RSP source document: './PairedPSCBS.tex.rsp'
+### RSP source document: 'PairedPSCBS.tex.rsp'
 ### Metadata 'title': 'Parent-specific copy-number segmentation using Paired PSCBS'
 ### Metadata 'author': 'Henrik Bengtsson'
 ### Metadata 'engine': 'R.rsp::rsp'
@@ -52,7 +52,7 @@ knownSegments <- gapsToSegments(gaps)
 knownSegments
 })
 withCapture({
-fit <- segmentByPairedPSCBS(data, knownSegments=knownSegments, preserveScale=FALSE, seed=0xBEEF, verbose=-10)
+fit <- segmentByPairedPSCBS(data, knownSegments=knownSegments, seed=0xBEEF, verbose=-10)
 })
 nbrOfSegments(fit)
 fit <- fixLocations(fit)
